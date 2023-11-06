@@ -41,6 +41,15 @@ class TrackingWorker(QtCore.QObject):
         self.tracking_data = {}
         self.trackers = {}
 
+    def reset_trackers(self):
+        self.mutex.lock()
+        for name, (_, offset, tracker_type) in self.trackers.items():
+            bbox = self.tracking_data[name]["bbox"][self.frame_no]
+            tracker = self.create_tracker(tracker_type)
+            tracker.init(self.frame, bbox.astype(np.int32))
+            self.trackers[name] = (tracker, offset, tracker_type)
+        self.mutex.unlock()
+
     def remove_tracker(self, name):
         self.mutex.lock()
         self.tracking_data.pop(name, None)
@@ -60,40 +69,42 @@ class TrackingWorker(QtCore.QObject):
         bbox = (*bbox_pos, *bbox_size)
         target = bbox_to_target(*bbox, *offset)
 
-        i = self.frame_no
-        self.tracking_data[name]["time"][i] = self.timestamp
-        self.tracking_data[name]["bbox"][i] = bbox
-        self.tracking_data[name]["target"][i] = target
+        self.tracking_data[name]["time"][self.frame_no] = self.timestamp
+        self.tracking_data[name]["bbox"][self.frame_no] = bbox
+        self.tracking_data[name]["target"][self.frame_no] = target
 
         try:
             if tracker := self.tracking_data.get(name) is not None:
                 del tracker
 
-            if tracker_type == "CSRT":
-                tracker = cv.TrackerCSRT_create()
-            elif tracker_type == "KCF":
-                tracker = cv.TrackerKCF_create()
-            elif tracker_type == "MedianFlow":
-                tracker = cv.legacy.TrackerMedianFlow_create()
-            elif tracker_type == "Boosting":
-                tracker = cv.legacy.TrackerBoosting_create()
-            elif tracker_type == "MOSSE":
-                tracker = cv.legacy.TrackerMOSSE_create()
-            elif tracker_type == "MIL":
-                tracker = cv.legacy.TrackerMIL_create()
-            elif tracker_type == "Static":
-                tracker = StaticTracker()
-            else:
-                raise NotImplementedError
-
+            tracker = self.create_tracker(tracker_type)
             tracker.init(self.frame, bbox)
-            self.trackers[name] = (tracker, offset)
+            self.trackers[name] = (tracker, offset, tracker_type)
         except Exception as e:
             self.tracking_data.pop(name, None)
             self.trackers.pop(name, None)
             self.add_tracker_failed.emit(name, e)
 
         self.mutex.unlock()
+
+    def create_tracker(self, tracker_type):
+        if tracker_type == "CSRT":
+            tracker = cv.TrackerCSRT_create()
+        elif tracker_type == "KCF":
+            tracker = cv.TrackerKCF_create()
+        elif tracker_type == "MedianFlow":
+            tracker = cv.legacy.TrackerMedianFlow_create()
+        elif tracker_type == "Boosting":
+            tracker = cv.legacy.TrackerBoosting_create()
+        elif tracker_type == "MOSSE":
+            tracker = cv.legacy.TrackerMOSSE_create()
+        elif tracker_type == "MIL":
+            tracker = cv.legacy.TrackerMIL_create()
+        elif tracker_type == "Static":
+            tracker = StaticTracker()
+        else:
+            raise NotImplementedError
+        return tracker
 
     def run(self):
         self.stop_flag = False
@@ -122,7 +133,7 @@ class TrackingWorker(QtCore.QObject):
         self.deleteLater()
 
     def run_trackers(self, frame_no, timestamp, frame):
-        for name, (tracker, offset) in self.trackers.items():
+        for name, (tracker, offset, tracker_type) in self.trackers.items():
             ret, bbox = tracker.update(frame)
             if ret:
                 bbox = bbox

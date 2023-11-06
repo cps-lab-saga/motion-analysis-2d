@@ -1,9 +1,4 @@
-from functools import partial
-
-import qtawesome as qta
-from superqt import QCollapsible
-
-from defs import QtWidgets, QtGui, Signal
+from defs import QtWidgets
 from motion_analysis_2d.custom_components import BaseDock
 from motion_analysis_2d.display_widgets import XYPlotWidget
 

@@ -78,6 +78,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Files"].video_file_changed.connect(self.video_file_changed)
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Tracking"].track_enabled.connect(self.track_enabled)
+        self.docks["Tracking"].reset_trackers_button.clicked.connect(
+            self.reset_trackers
+        )
 
         self.processed_data = {}
 
@@ -264,6 +267,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.remove_tracker(name)
         self.docks["Items"].remove_row(name, "marker")
         self.docks["XYPlot"].remove_marker(name)
+
+    def reset_trackers(self):
+        self.tracking_worker.reset_trackers()
 
     def move_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         self.tracking_worker.add_tracker(
