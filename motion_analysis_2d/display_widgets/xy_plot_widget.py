@@ -24,8 +24,8 @@ class XYPlotWidget(QtWidgets.QWidget):
         plot_widget.setLabel("left", y_label)
         if x_label is not None:
             plot_widget.setLabel("bottom", x_label)
-        plot_widget.getAxis("left").setWidth(40)
-        plot_widget.addLegend()
+        plot_widget.getAxis("left").setWidth(60)
+        plot_widget.addLegend(offset=(-1, 1))
 
         plot_widget.setMenuEnabled(False)
         plot_widget.autoBtn.clicked.disconnect()
@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
     app = QtWidgets.QApplication([])
     widget = XYPlotWidget()
+    widget.add_marker("test")
     widget.show()
 
     app.exec()

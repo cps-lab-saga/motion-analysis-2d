@@ -164,6 +164,10 @@ class MainWidget(QtWidgets.QMainWindow):
         if self.stream_worker is not None:
             if play:
                 self.stream_worker.set_play()
+                self.edit_controls.blockSignals(True)
+                self.edit_controls.set_normal_mode()
+                self.frame_widget.set_mouse_mode("normal")
+                self.edit_controls.blockSignals(False)
             else:
                 self.stream_worker.set_pause()
 
@@ -302,6 +306,14 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def error_dialog(self, error):
         QtWidgets.QMessageBox.critical(self, "Error", error)
+
+    def keyPressEvent(self, evt):
+        if evt.key() == QtCore.Qt.Key_Escape:
+            self.edit_controls.set_normal_mode()
+        elif evt.key() == QtCore.Qt.Key_F:
+            self.move_frame_forwards()
+        elif evt.key() == QtCore.Qt.Key_S:
+            self.move_frame_backwards()
 
     @staticmethod
     def setup_logger():
