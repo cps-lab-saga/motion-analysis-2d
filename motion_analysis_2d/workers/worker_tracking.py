@@ -31,7 +31,6 @@ class TrackingWorker(QtCore.QObject):
         self.no_of_frames = 0
 
         self.stop_flag = False
-        self.track_flag = False
         self.mutex = QtCore.QMutex()
 
     def set_props(self, no_of_frames):
@@ -110,10 +109,10 @@ class TrackingWorker(QtCore.QObject):
         self.stop_flag = False
         while not self.stop_flag:
             try:
-                (frame_no, timestamp, frame) = self.stream_queue.get(
+                (frame_no, timestamp, frame, track) = self.stream_queue.get(
                     block=True, timeout=1
                 )
-                if self.track_flag:
+                if track:
                     success = self.run_trackers(frame_no, timestamp, frame)
                     if not success:
                         while not self.stream_queue.empty():
@@ -156,9 +155,6 @@ class TrackingWorker(QtCore.QObject):
 
     def set_stop(self):
         self.stop_flag = True
-
-    def set_tracking(self, track):
-        self.track_flag = track
 
 
 if __name__ == "__main__":

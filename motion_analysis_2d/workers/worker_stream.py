@@ -78,6 +78,7 @@ class StreamWorker(QtCore.QObject):
                 self.frame_no,
                 self.timestamp,
                 self.frame,
+                self.track_flag,
             )
         )
         self.mutex.unlock()
@@ -111,6 +112,9 @@ class StreamWorker(QtCore.QObject):
 
     def set_pause(self):
         self.play_flag = False
+
+    def set_tracking(self, track):
+        self.track_flag = track
 
 
 if __name__ == "__main__":

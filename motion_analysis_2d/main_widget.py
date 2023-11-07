@@ -133,6 +133,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.start_stream(path)
             self.edit_controls.setDisabled(False)
             self.media_controls.setDisabled(False)
+            self.docks["Tracking"].track_button_toggled()
 
     def close_video(self):
         if self.streaming:
@@ -177,7 +178,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.streaming = False
 
     def track_enabled(self, track):
-        self.tracking_worker.set_tracking(track)
+        if self.stream_worker is not None:
+            self.stream_worker.set_tracking(track)
 
     def update_frame_view(self):
         if self.stream_worker is not None:
