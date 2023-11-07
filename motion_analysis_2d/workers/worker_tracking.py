@@ -55,7 +55,7 @@ class TrackingWorker(QtCore.QObject):
         self.trackers.pop(name, None)
         self.mutex.unlock()
 
-    def add_tracker(self, name, bbox_pos, bbox_size, offset, tracker_type):
+    def add_tracker(self, name, bbox_pos, bbox_size, offset, tracker_type="Static"):
         self.mutex.lock()
         if self.tracking_data.get(name) is None:
             self.tracking_data[name] = {
@@ -67,7 +67,6 @@ class TrackingWorker(QtCore.QObject):
 
         bbox = (*bbox_pos, *bbox_size)
         target = bbox_to_target(*bbox, *offset)
-
         self.tracking_data[name]["time"][self.frame_no] = self.timestamp
         self.tracking_data[name]["bbox"][self.frame_no] = bbox
         self.tracking_data[name]["target"][self.frame_no] = target
@@ -115,8 +114,8 @@ class TrackingWorker(QtCore.QObject):
                 if track:
                     success = self.run_trackers(frame_no, timestamp, frame)
                     if not success:
-                        while not self.stream_queue.empty():
-                            self.stream_queue.get()
+                        if not self.stream_queue.empty():
+                            self.stream_queue.queue.clear()
                 else:
                     self.frame_no, self.timestamp, self.frame = (
                         frame_no,
@@ -155,6 +154,9 @@ class TrackingWorker(QtCore.QObject):
 
     def set_stop(self):
         self.stop_flag = True
+
+    def set_tracking_data(self, data):
+        self.tracking_data.update(data)
 
 
 if __name__ == "__main__":

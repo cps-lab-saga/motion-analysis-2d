@@ -16,9 +16,11 @@ from motion_analysis_2d.docks import (
     LoadExtrinsicDock,
     OrientDock,
     TrackingDock,
+    SaveDock,
     ItemsDock,
     DataPlotDock,
 )
+from motion_analysis_2d.funcs import save_json, load_json
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
 
@@ -68,6 +70,7 @@ class MainWidget(QtWidgets.QMainWindow):
             "Extrinsic": LoadExtrinsicDock(),
             "Orient": OrientDock(),
             "Tracking": TrackingDock(),
+            "Save": SaveDock(),
             "Items": ItemsDock(),
             "DataPlot": DataPlotDock(),
         }
@@ -81,6 +84,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Tracking"].reset_trackers_button.clicked.connect(
             self.reset_trackers
         )
+        self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
+        self.docks["Save"].export_clicked.connect(self.save_data)
         self.docks["DataPlot"].frame_line_dragged.connect(
             self.media_controls.seek_bar.setValue
         )
@@ -109,6 +114,10 @@ class MainWidget(QtWidgets.QMainWindow):
         self.camera_frame_update_timer.timeout.connect(self.update_frame_view)
         self.camera_frame_update_timer.start(30)
 
+        # periodically autosave data if enabled
+        self.autosave_timer = QtCore.QTimer()
+        self.autosave_timer.timeout.connect(self.save_data)
+
         # load settings from previous session
         self.settings_file = settings_file()
         if self.settings_file.is_file():
@@ -119,14 +128,17 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def video_file_changed(self, path):
         self.media_controls.pause()
+
         self.edit_controls.set_normal_mode()
         self.edit_controls.setDisabled(True)
         self.media_controls.set_seek_bar_value(0)
         self.media_controls.setDisabled(True)
+        self.docks["Save"].autosave_button_toggled()
         self.docks["Items"].clear()
         self.docks["DataPlot"].clear()
         self.docks["DataPlot"].set_frame_line_draggable(False)
         self.docks["DataPlot"].move_frame_line(0)
+        self.tracking_worker.no_of_frames = 0
 
         self.close_video()
         self.frame_widget.clear()
@@ -140,6 +152,15 @@ class MainWidget(QtWidgets.QMainWindow):
             self.media_controls.setDisabled(False)
             self.docks["Tracking"].track_button_toggled()
             self.docks["DataPlot"].set_frame_line_draggable(True)
+
+            while self.tracking_worker.no_of_frames == 0:
+                sleep(0.1)
+                QtCore.QCoreApplication.processEvents()
+
+            track_file = path.parent / (path.stem + ".json")
+            if track_file.is_file():
+                logging.info("Data file exist!")
+                self.load_data(track_file)
 
     def close_video(self):
         if self.streaming:
@@ -164,9 +185,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.streaming = True
 
     def set_stream_props(self, frame_rate, no_of_frames):
-        self.media_controls.set_seeking_props(no_of_frames)
         self.tracking_worker.set_props(no_of_frames)
-        self.docks["DataPlot"].set_frame_bound((0, no_of_frames))
+        self.media_controls.set_seeking_props(no_of_frames - 2)
+        self.docks["DataPlot"].set_frame_bound((0, no_of_frames - 2))
 
     def play_video(self, play):
         if self.stream_worker is not None:
@@ -253,11 +274,11 @@ class MainWidget(QtWidgets.QMainWindow):
         dialog = TrackerDialog()
         dialog.exec()
         if dialog.result():
-            name, color, tracking = dialog.get_inputs()
+            name, color, tracker_type = dialog.get_inputs()
             self.frame_widget.remove_temp_tracker()
 
             self.frame_widget.add_tracker(
-                name, bbox_pos, bbox_size, offset, color, tracking
+                name, bbox_pos, bbox_size, offset, color, tracker_type
             )
 
         else:
@@ -292,6 +313,49 @@ class MainWidget(QtWidgets.QMainWindow):
             name, bbox_pos, bbox_size, offset, tracker_type
         )
 
+    def save_data(self):
+        if self.stream_worker is not None:
+            video_path = self.stream_worker.path
+            save_path = video_path.parent / f"{video_path.stem}.json"
+            save_json(
+                save_path,
+                {
+                    k: v
+                    for k, v in self.frame_widget.trackers.items()
+                    if k in ["name", "offset", "color", "tracker_type"]
+                },
+                self.tracking_worker.tracking_data,
+                self.tracking_worker.frame_no,
+            )
+
+    def load_data(self, path):
+        tracker_properties, tracking_data, current_frame = load_json(path)
+        self.media_controls.seek_bar.setValue(current_frame)
+        self.tracking_worker.set_tracking_data(tracking_data)
+        for name, offset, color, tracker_type in zip(
+            tracker_properties["name"],
+            tracker_properties["offset"],
+            tracker_properties["color"],
+            tracker_properties["tracker_type"],
+        ):
+            bbox = tracking_data[name]["bbox"][current_frame].astype(np.int32)
+
+            self.frame_widget.add_tracker(
+                name,
+                bbox[:2],
+                bbox[2:],
+                offset,
+                color,
+                tracker_type,
+            )
+
+    def autosave_toggled(self, autosave):
+        self.save_data()
+        if autosave:
+            self.autosave_timer.start(30000)  # every 30 s
+        else:
+            self.autosave_timer.stop()
+
     def gui_save(self, settings):
         for dock in self.docks.values():
             dock.gui_save(settings)
@@ -312,6 +376,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """save before closing"""
+        self.docks["Save"].autosave_button_toggled()
         settings = QtCore.QSettings(str(self.settings_file), QtCore.QSettings.IniFormat)
         self.gui_save(settings)
         event.accept()

@@ -290,7 +290,7 @@ class FrameWidget(QtWidgets.QWidget):
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
         pen = pg.mkPen(color=color, width=2)
-        hover_pen = pg.mkPen(color=color, width=5)
+        hover_pen = pg.mkPen(color=color, width=4)
 
         roi = pg.ROI(
             bbox_pos,

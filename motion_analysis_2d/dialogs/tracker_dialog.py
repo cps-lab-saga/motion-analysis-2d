@@ -8,7 +8,7 @@ class TrackerDialog(QtWidgets.QDialog):
 
         self.name = ""
         self.color = tab10_rgb["green"]
-        self.tracking = "CSRT"
+        self.tracker_type = "CSRT"
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
         self.resize(60, 10)
@@ -37,7 +37,7 @@ class TrackerDialog(QtWidgets.QDialog):
                 "Static",
             ]
         )
-        self.tracking_combobox.setCurrentText(self.tracking)
+        self.tracking_combobox.setCurrentText(self.tracker_type)
         self.form_layout.addRow("Tracker: ", self.tracking_combobox)
 
         self.color_button = ColorButton(self)
@@ -56,12 +56,12 @@ class TrackerDialog(QtWidgets.QDialog):
     def completed(self):
         self.name = self.name_edit.text()
         self.color = self.color_button.get_rgb()
-        self.tracking = self.tracking_combobox.currentText()
+        self.tracker_type = self.tracking_combobox.currentText()
         self.accept()
         self.close()
 
     def get_inputs(self):
-        return self.name, self.color, self.tracking
+        return self.name, self.color, self.tracker_type
 
 
 if __name__ == "__main__":
