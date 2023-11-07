@@ -1,3 +1,4 @@
+import csv
 import json
 
 import numpy as np
@@ -37,3 +38,33 @@ def load_json(path):
     current_frame = save_data["current_frame"]
 
     return tracker_properties, tracking_data, current_frame
+
+
+def export_csv(path, tracking_data):
+    header = ["frame_no", "time"]
+    targets = []
+    params = next(iter(tracking_data.values()))
+    index = [np.expand_dims(params[x], axis=1) for x in header]
+    for name, params in tracking_data.items():
+        header.extend([f"{name}-x", f"{name}-y"])
+        targets.append(params["target"])
+
+    data = np.concatenate(index + targets, axis=1)
+
+    with open(path, mode="w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f, delimiter=",")
+        writer.writerow(header)
+        np.savetxt(f, data, delimiter=",", fmt="%.4f")
+
+
+if __name__ == "__main__":
+    data = {}
+    no_of_frames = 50
+    for name in ["test1", "test2", "test3", "test4"]:
+        data[name] = {
+            "frame_no": np.arange(no_of_frames),
+            "time": np.full(no_of_frames, 1, dtype=float),
+            "bbox": np.full((no_of_frames, 4), 2, dtype=float),
+            "target": np.full((no_of_frames, 2), 3, dtype=float),
+        }
+    export_csv("test.csv", data)

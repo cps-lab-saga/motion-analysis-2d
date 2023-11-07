@@ -20,7 +20,7 @@ from motion_analysis_2d.docks import (
     ItemsDock,
     DataPlotDock,
 )
-from motion_analysis_2d.funcs import save_json, load_json
+from motion_analysis_2d.funcs import save_json, load_json, export_csv
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
 
@@ -85,7 +85,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.reset_trackers
         )
         self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
-        self.docks["Save"].export_clicked.connect(self.save_data)
+        self.docks["Save"].export_clicked.connect(self.export_data)
         self.docks["DataPlot"].frame_line_dragged.connect(
             self.media_controls.seek_bar.setValue
         )
@@ -348,6 +348,12 @@ class MainWidget(QtWidgets.QMainWindow):
                 color,
                 tracker_type,
             )
+
+    def export_data(self, path):
+        try:
+            export_csv(path, self.tracking_worker.tracking_data)
+        except Exception as e:
+            self.error_dialog(e)
 
     def autosave_toggled(self, autosave):
         self.save_data()
