@@ -63,7 +63,10 @@ class StreamWorker(QtCore.QObject):
         self.stop_flag = False
         self.deleteLater()
 
-    def read_single_frame(self):
+    def read_single_frame(self, track=None):
+        if track is None:
+            track = self.track_flag
+
         ret, frame = self.cap.read()
         if not ret:
             return
@@ -78,7 +81,7 @@ class StreamWorker(QtCore.QObject):
                 self.frame_no,
                 self.timestamp,
                 self.frame,
-                self.track_flag,
+                track,
             )
         )
         self.mutex.unlock()
@@ -90,19 +93,19 @@ class StreamWorker(QtCore.QObject):
         return frame
 
     def move_frame_forwards(self):
-        self.read_single_frame()
+        self.read_single_frame(track=False)
 
     def move_frame_backwards(self):
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 2)
-        self.read_single_frame()
+        self.read_single_frame(track=False)
 
     def read_current_frame(self):
-        self.read_single_frame()
+        self.read_single_frame(track=False)
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 1)
 
     def move_frame_to(self, frame_no):
         self.cap.set(cv.CAP_PROP_POS_FRAMES, frame_no)
-        self.read_single_frame()
+        self.read_single_frame(track=False)
 
     def set_stop(self):
         self.stop_flag = True

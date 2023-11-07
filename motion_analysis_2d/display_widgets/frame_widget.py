@@ -478,7 +478,6 @@ class FrameWidget(QtWidgets.QWidget):
 
         roi.blockSignals(True)
         target.blockSignals(True)
-        roi.setSize((10, 10))
         roi.setPos((0, 0))
         target.setPos((0, 0))
         roi.blockSignals(False)

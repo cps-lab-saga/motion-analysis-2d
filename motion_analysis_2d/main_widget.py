@@ -17,7 +17,7 @@ from motion_analysis_2d.docks import (
     OrientDock,
     TrackingDock,
     ItemsDock,
-    XYPlotDock,
+    DataPlotDock,
 )
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
@@ -69,17 +69,20 @@ class MainWidget(QtWidgets.QMainWindow):
             "Orient": OrientDock(),
             "Tracking": TrackingDock(),
             "Items": ItemsDock(),
-            "XYPlot": XYPlotDock(),
+            "DataPlot": DataPlotDock(),
         }
         for dock in self.docks.values():
             self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, dock)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.docks["Items"])
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.docks["XYPlot"])
+        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.docks["DataPlot"])
         self.docks["Files"].video_file_changed.connect(self.video_file_changed)
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Tracking"].track_enabled.connect(self.track_enabled)
         self.docks["Tracking"].reset_trackers_button.clicked.connect(
             self.reset_trackers
+        )
+        self.docks["DataPlot"].frame_line_dragged.connect(
+            self.media_controls.seek_bar.setValue
         )
 
         self.processed_data = {}
@@ -121,7 +124,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.media_controls.set_seek_bar_value(0)
         self.media_controls.setDisabled(True)
         self.docks["Items"].clear()
-        self.docks["XYPlot"].clear()
+        self.docks["DataPlot"].clear()
+        self.docks["DataPlot"].set_frame_line_draggable(False)
+        self.docks["DataPlot"].move_frame_line(0)
 
         self.close_video()
         self.frame_widget.clear()
@@ -134,6 +139,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.edit_controls.setDisabled(False)
             self.media_controls.setDisabled(False)
             self.docks["Tracking"].track_button_toggled()
+            self.docks["DataPlot"].set_frame_line_draggable(True)
 
     def close_video(self):
         if self.streaming:
@@ -160,16 +166,19 @@ class MainWidget(QtWidgets.QMainWindow):
     def set_stream_props(self, frame_rate, no_of_frames):
         self.media_controls.set_seeking_props(no_of_frames)
         self.tracking_worker.set_props(no_of_frames)
+        self.docks["DataPlot"].set_frame_bound((0, no_of_frames))
 
     def play_video(self, play):
         if self.stream_worker is not None:
             if play:
                 self.stream_worker.set_play()
+                self.docks["DataPlot"].set_frame_line_draggable(False)
                 self.edit_controls.blockSignals(True)
                 self.edit_controls.set_normal_mode()
                 self.frame_widget.set_mouse_mode("normal")
                 self.edit_controls.blockSignals(False)
             else:
+                self.docks["DataPlot"].set_frame_line_draggable(True)
                 self.stream_worker.set_pause()
 
     def stream_finished(self):
@@ -204,11 +213,12 @@ class MainWidget(QtWidgets.QMainWindow):
                     self.tracking_worker.frame_no,
                     tracking_data["target"],
                 )
-                self.docks["XYPlot"].update_marker(
+                self.docks["DataPlot"].update_marker(
                     name,
                     tracking_data["target"],
                 )
             self.media_controls.set_seek_bar_value(self.tracking_worker.frame_no)
+            self.docks["DataPlot"].move_frame_line(self.tracking_worker.frame_no)
 
     def move_frame_forwards(self):
         if self.stream_worker is not None:
@@ -258,7 +268,7 @@ class MainWidget(QtWidgets.QMainWindow):
             name, bbox_pos, bbox_size, offset, tracker_type
         )
         self.docks["Items"].add_row(name, color, "marker")
-        self.docks["XYPlot"].add_marker(name, color)
+        self.docks["DataPlot"].add_marker(name, color)
 
     def tracking_failed(self, name, frame_no):
         self.media_controls.pause()
@@ -272,7 +282,7 @@ class MainWidget(QtWidgets.QMainWindow):
     def remove_tracker(self, name):
         self.tracking_worker.remove_tracker(name)
         self.docks["Items"].remove_row(name, "marker")
-        self.docks["XYPlot"].remove_marker(name)
+        self.docks["DataPlot"].remove_marker(name)
 
     def reset_trackers(self):
         self.tracking_worker.reset_trackers()
