@@ -92,15 +92,15 @@ class StreamWorker(QtCore.QObject):
         frame = self.orient.orient_img(frame)
         return frame
 
-    def move_frame_forwards(self):
-        self.read_single_frame(track=False)
+    def move_frame_forwards(self, track=False):
+        self.read_single_frame(track=track)
 
-    def move_frame_backwards(self):
+    def move_frame_backwards(self, track=False):
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 2)
-        self.read_single_frame(track=False)
+        self.read_single_frame(track=track)
 
-    def read_current_frame(self):
-        self.read_single_frame(track=False)
+    def read_current_frame(self, track=False):
+        self.read_single_frame(track=track)
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 1)
 
     def move_frame_to(self, frame_no):

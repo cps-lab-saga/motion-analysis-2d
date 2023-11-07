@@ -249,6 +249,14 @@ class MainWidget(QtWidgets.QMainWindow):
         if self.stream_worker is not None:
             self.stream_worker.move_frame_backwards()
 
+    def track_forwards(self):
+        if self.stream_worker is not None:
+            self.stream_worker.move_frame_forwards(track=True)
+
+    def track_backwards(self):
+        if self.stream_worker is not None:
+            self.stream_worker.move_frame_backwards(track=True)
+
     def frame_shape_changed(self):
         if self.stream_worker is not None:
             self.stream_worker.read_current_frame()
@@ -293,7 +301,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def tracking_failed(self, name, frame_no):
         self.media_controls.pause()
-        self.stream_queue.empty()
+        with self.stream_queue.mutex:
+            self.stream_queue.queue.clear()
         self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
 
     def add_tracker_failed(self, name, error):
@@ -356,8 +365,8 @@ class MainWidget(QtWidgets.QMainWindow):
             self.error_dialog(e)
 
     def autosave_toggled(self, autosave):
-        self.save_data()
         if autosave:
+            self.save_data()
             self.autosave_timer.start(30000)  # every 30 s
         else:
             self.autosave_timer.stop()
@@ -397,6 +406,10 @@ class MainWidget(QtWidgets.QMainWindow):
             self.move_frame_forwards()
         elif evt.key() == QtCore.Qt.Key_S:
             self.move_frame_backwards()
+        elif evt.key() == QtCore.Qt.Key_L:
+            self.track_forwards()
+        elif evt.key() == QtCore.Qt.Key_H:
+            self.track_backwards()
 
     @staticmethod
     def setup_logger():

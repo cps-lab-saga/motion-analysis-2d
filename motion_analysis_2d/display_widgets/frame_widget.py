@@ -165,6 +165,9 @@ class FrameWidget(QtWidgets.QWidget):
             self.plot_widget.setCursor(QtCore.Qt.CrossCursor)
         self.mouse_mode = mode
 
+        # Reset steps
+        self.add_tracker_steps = AddTrackerSteps.SELECT_BBOX_POINT1
+
     def start_new_tracker(self, pos):
         mouse_point = self.fig.vb.mapSceneToView(pos)
         x = round(mouse_point.x())
