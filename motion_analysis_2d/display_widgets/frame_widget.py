@@ -6,7 +6,7 @@ import cv2 as cv
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import StepsEnum, tab10_rgb
+from motion_analysis_2d.custom_components import tab10_rgb
 from motion_analysis_2d.funcs import is_json_file, prevent_name_collision
 
 
@@ -32,15 +32,31 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.show_crosshairs = False
         self.mouse_mode = MouseModes.NORMAL
-        self.add_tracker_steps = AddTrackerSteps.SELECT_BBOX_POINT1
+        self.add_tracker_steps = (
+            "Select first point for tracking box.",
+            "Select second point for tracking box.",
+            "Select target point.",
+        )
+        self.tracker_steps_index = 0
+        self.add_angle_steps = (
+            "Select tracker for start point of first vector.",
+            "Select tracker for end point of first vector.",
+            "Select tracker for start point of second vector.",
+            "Select tracker for end point of second vector.",
+        )
+        self.angle_steps_index = 0
+        self.remove_tracker_instructions = "Select tracker to remove."
+        self.remove_angle_instructions = "Select angle to remove."
 
         self.traj_len = 30
         self.frame_label_text_color = (255, 255, 255)
         self.frame_label_fill_color = (0, 0, 0, 150)
         self.roi_label_fill_color = (0, 0, 0, 150)
+        self.instruction_label_text_color = (255, 255, 255)
+        self.instruction_label_fill_color = tab10_rgb["green"]
 
         self.transparent_pen = pg.mkPen(color=(0, 0, 0, 0), width=0)
-        self.new_roi_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
+        self.new_item_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.trajectory_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.crosshair_pen = pg.mkPen(color=tab10_rgb["cyan"], width=1)
 
@@ -53,6 +69,13 @@ class FrameWidget(QtWidgets.QWidget):
             "offset": [],
             "color": [],
             "tracker_type": [],
+        }
+        self.vectors = {
+            "name": [],
+            "start": [],
+            "end": [],
+            "line": [],
+            "arrow": [],
         }
 
         self.plot_widget = pg.PlotWidget()
@@ -70,6 +93,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.hideAxis("left")
         self.fig.hideAxis("bottom")
         self.frame_label = self.add_frame_label()
+        self.instruction_label = self.add_instruction_label()
 
         self.v_crosshair = pg.InfiniteLine(
             pos=pg.Point(-1000, -1000), angle=90, movable=False, pen=self.crosshair_pen
@@ -90,6 +114,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.img = None
         self.dropped_img = None
         self.temp_tracker = None
+        self.temp_angle = None
 
         self.plot_widget.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot_widget.scene().sigMouseMoved.connect(self.mouse_moved)
@@ -98,12 +123,13 @@ class FrameWidget(QtWidgets.QWidget):
     def mouse_clicked(self, evt):
         if self.mouse_mode == MouseModes.ADD_TRACKER:
             if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
-                if self.add_tracker_steps == AddTrackerSteps.SELECT_BBOX_POINT1:
+                if self.tracker_steps_index == 0:
                     self.start_new_tracker(evt.scenePos())
-                elif self.add_tracker_steps == AddTrackerSteps.SELECT_BBOX_POINT2:
+                elif self.tracker_steps_index == 1:
                     self.finish_new_tracker(evt.scenePos())
-                elif self.add_tracker_steps.SELECT_OFFSET:
+                elif self.tracker_steps_index == 2:
                     self.select_tracker_target(evt.scenePos())
+
         elif self.mouse_mode == MouseModes.REMOVE_TRACKER:
             if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
                 pos = evt.scenePos()
@@ -113,19 +139,59 @@ class FrameWidget(QtWidgets.QWidget):
                         self.remove_tracker(item)
                         break
 
+        elif self.mouse_mode == MouseModes.ADD_ANGLE:
+            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
+                if self.angle_steps_index == 0:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.start_new_angle(item)
+                            break
+                elif self.angle_steps_index == 1:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.select_angle_tracker_end1(item)
+                            break
+                elif self.angle_steps_index == 2:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.select_angle_tracker_start2(item)
+                            break
+                elif self.angle_steps_index == 3:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.select_angle_tracker_end2(item)
+                            break
+                print(self.angle_steps_index)
+
+        self.update_instructions()
+
         # Double right click to toggle crosshairs
         if evt.double() and evt.button() == QtCore.Qt.RightButton:
             self.toggle_crosshairs(evt)
 
     def mouse_moved(self, pos):
         if self.mouse_mode == MouseModes.ADD_TRACKER:
-            if self.add_tracker_steps == AddTrackerSteps.SELECT_BBOX_POINT2:
+            if self.tracker_steps_index == 1:
                 self.shape_new_tracker(pos)
+        elif self.mouse_mode == MouseModes.ADD_ANGLE:
+            if self.angle_steps_index == 1:
+                self.shape_new_angle(pos, 1)
+            elif self.angle_steps_index == 3:
+                self.shape_new_angle(pos, 2)
 
         self.animate_crosshairs(pos)
 
     def range_changed(self):
         self.adjust_crosshairs()
+        self.adjust_instruction_label()
 
     def set_image(self, img):
         if img is None:
@@ -156,6 +222,42 @@ class FrameWidget(QtWidgets.QWidget):
                 f"Frame: {frame_no}\n" f"Time: {time:.2f} s\n" f"FPS: {fps:.0f}\n"
             )
 
+    def add_instruction_label(self):
+        frame_label = pg.TextItem(
+            "",
+            anchor=(0.5, 1),
+            color=self.instruction_label_text_color,
+            fill=self.instruction_label_fill_color,
+        )
+        view_box = self.fig.getViewBox()
+        frame_label.setPos(view_box.width() / 2, view_box.height())
+        # frame_label.setParentItem(view_box)
+        return frame_label
+
+    def adjust_instruction_label(self):
+        view_box = self.fig.getViewBox()
+        self.instruction_label.setPos(view_box.width() / 2, view_box.height())
+
+    def show_instruction(self, text):
+        self.instruction_label.setText(text)
+        self.instruction_label.setParentItem(self.fig.getViewBox())
+
+    def hide_instruction(self):
+        self.instruction_label.setText("")
+        self.fig.getViewBox().removeItem(self.instruction_label)
+
+    def update_instructions(self):
+        if self.mouse_mode == MouseModes.ADD_TRACKER:
+            self.show_instruction(self.add_tracker_steps[self.tracker_steps_index])
+        elif self.mouse_mode == MouseModes.REMOVE_TRACKER:
+            self.show_instruction(self.remove_tracker_instructions)
+        elif self.mouse_mode == MouseModes.ADD_ANGLE:
+            self.show_instruction(self.add_angle_steps[self.angle_steps_index])
+        elif self.mouse_mode == MouseModes.REMOVE_ANGLE:
+            self.show_instruction(self.remove_angle_instructions)
+        else:
+            self.hide_instruction()
+
     def set_mouse_mode(self, mode):
         if isinstance(mode, str):
             mode = MouseModes[mode.upper()]
@@ -166,7 +268,10 @@ class FrameWidget(QtWidgets.QWidget):
         self.mouse_mode = mode
 
         # Reset steps
-        self.add_tracker_steps = AddTrackerSteps.SELECT_BBOX_POINT1
+        self.tracker_steps_index = 0
+        self.angle_steps_index = 0
+
+        self.update_instructions()
 
     def start_new_tracker(self, pos):
         mouse_point = self.fig.vb.mapSceneToView(pos)
@@ -176,7 +281,7 @@ class FrameWidget(QtWidgets.QWidget):
         new_roi = pg.ROI(
             (x, y),
             size=(0, 0),
-            pen=self.new_roi_pen,
+            pen=self.new_item_pen,
             movable=False,
             resizable=False,
             rotatable=False,
@@ -198,11 +303,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.addItem(self.temp_tracker["roi"])
         self.fig.addItem(self.temp_tracker["target"])
 
-        # move to next step
-        if self.add_tracker_steps.is_last():
-            self.emit_new_tracker_suggestion()
-        else:
-            self.add_tracker_steps = self.add_tracker_steps.next()
+        self.next_add_tracker_step()
 
     def shape_new_tracker(self, pos):
         roi_x, roi_y = self.temp_tracker["roi"].pos()
@@ -239,25 +340,23 @@ class FrameWidget(QtWidgets.QWidget):
         ]
         self.temp_tracker["target"].setPos((target_x, target_y))
 
-        # move to next step
-        if self.add_tracker_steps.is_last():
-            self.emit_new_tracker_suggestion()
-        else:
-            self.add_tracker_steps = self.add_tracker_steps.next()
+        self.next_add_tracker_step()
 
     def select_tracker_target(self, pos):
         mouse_point = self.fig.vb.mapSceneToView(pos)
         x = round(mouse_point.x())
         y = round(mouse_point.y())
         self.temp_tracker["target"].setPos((x, y))
-        self.temp_tracker["target"].setPen(self.new_roi_pen)
+        self.temp_tracker["target"].setPen(self.new_item_pen)
 
-        # move to next step
-        if self.add_tracker_steps.is_last():
+        self.next_add_tracker_step()
+
+    def next_add_tracker_step(self):
+        if self.tracker_steps_index >= len(self.add_tracker_steps) - 1:
             self.emit_new_tracker_suggestion()
-            self.add_tracker_steps = self.add_tracker_steps.first()
+            self.tracker_steps_index = 0
         else:
-            self.add_tracker_steps = self.add_tracker_steps.next()
+            self.tracker_steps_index += 1
 
     def emit_new_tracker_suggestion(self):
         if self.temp_tracker is None:
@@ -289,6 +388,12 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.temp_tracker["roi"])
             self.fig.removeItem(self.temp_tracker["target"])
             self.temp_tracker = None
+
+    def remove_temp_angle(self):
+        if self.temp_angle is not None:
+            self.fig.removeItem(self.temp_angle["vec1"])
+            self.fig.removeItem(self.temp_angle["vec2"])
+            self.temp_angle = None
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
@@ -407,6 +512,76 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["offset"][i] = offset
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
+
+    def start_new_angle(self, target_item):
+        x, y = target_item.pos()
+        i = self.trackers["target"].index(target_item)
+        start_name = self.trackers["name"][i]
+
+        vec1 = self.fig.plot([x], [y], pen=self.new_item_pen)
+        vec2 = self.fig.plot(pen=self.new_item_pen)
+
+        self.temp_angle = {
+            "vec1": vec1,
+            "vec2": vec2,
+            "start1": start_name,
+            "end1": None,
+            "start2": None,
+            "end2": None,
+        }
+
+        self.next_add_angle_step()
+
+    def select_angle_tracker_end(self, target_item, vec_no):
+        i = self.trackers["target"].index(target_item)
+        name = self.trackers["name"][i]
+        self.temp_angle[f"end{vec_no}"] = name
+
+        start_name = self.temp_angle[f"start{vec_no}"]
+        tracker_start_i = self.trackers["name"].index(start_name)
+        start_x, start_y = self.trackers["target"][tracker_start_i].pos()
+
+        end_name = self.temp_angle[f"end{vec_no}"]
+        tracker_end_i = self.trackers["name"].index(end_name)
+        end_x, end_y = self.trackers["target"][tracker_end_i].pos()
+
+        self.temp_angle[f"vec{vec_no}"].setData([start_x, end_x], [start_y, end_y])
+        self.next_add_angle_step()
+
+    def select_angle_tracker_end1(self, target_item):
+        self.select_angle_tracker_end(target_item, 1)
+
+    def select_angle_tracker_start2(self, target_item):
+        i = self.trackers["target"].index(target_item)
+        name = self.trackers["name"][i]
+        self.temp_angle[f"start2"] = name
+        self.next_add_angle_step()
+
+    def select_angle_tracker_end2(self, target_item):
+        self.select_angle_tracker_end(target_item, 2)
+
+    def shape_new_angle(self, pos, vec_no):
+        start_name = self.temp_angle[f"start{vec_no}"]
+        vec = self.temp_angle[f"vec{vec_no}"]
+
+        tracker_i = self.trackers["name"].index(start_name)
+        start_x, start_y = self.trackers["target"][tracker_i].pos()
+
+        mouse_point = self.fig.vb.mapSceneToView(pos)
+        vec.setData([start_x, mouse_point.x()], [start_y, mouse_point.y()])
+
+    def next_add_angle_step(self):
+        if self.angle_steps_index >= len(self.add_angle_steps) - 1:
+            print("test")
+            # self.emit_new_tracker_suggestion()
+            self.angle_steps_index = 0
+        else:
+            self.angle_steps_index += 1
+
+    def emit_new_angler_suggestion(self):
+        if self.temp_angle is None:
+            return
+        print("TODO! angle_create")
 
     def clear(self):
         for l in self.trackers.values():
@@ -584,12 +759,8 @@ class MouseModes(Enum):
     NORMAL = 0
     ADD_TRACKER = 1
     REMOVE_TRACKER = 2
-
-
-class AddTrackerSteps(StepsEnum):
-    SELECT_BBOX_POINT1 = 1
-    SELECT_BBOX_POINT2 = 2
-    SELECT_OFFSET = 3
+    ADD_ANGLE = 3
+    REMOVE_ANGLE = 4
 
 
 if __name__ == "__main__":
@@ -600,8 +771,13 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     widget = FrameWidget()
     widget.set_image(black_img)
-    widget.set_mouse_mode("add_tracker")
-    # widget.add_tracker("test", (20, 20), (20, 20), (20, 20), "green", "")
+    # widget.set_mouse_mode("add_tracker")
+    widget.add_tracker("test1", (20, 20), (20, 20), (0, 0), "green", "")
+    widget.add_tracker("test2", (40, 20), (20, 20), (0, 0), "green", "")
+    widget.add_tracker("test3", (20, 40), (20, 20), (0, 0), "green", "")
+    widget.add_tracker("test4", (40, 40), (20, 20), (0, 0), "green", "")
+
+    widget.set_mouse_mode("add_angle")
     widget.show()
 
     app.exec()

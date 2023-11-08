@@ -27,15 +27,25 @@ class EditControls(QtWidgets.QFrame):
         self.buttons = []
 
         self.add_button(
-            "Add Tracker", "add_tracker", qta.icon("mdi6.square-outline"), "+", "blue"
+            "Add Tracker", "add_tracker", qta.icon("mdi6.vector-rectangle"), "+", "blue"
         )
         self.add_button(
             "Remove Tracker",
             "remove_tracker",
-            qta.icon("mdi6.square-outline"),
+            qta.icon("mdi6.vector-rectangle"),
             "−",
             "red",
         )
+        # self.add_button(
+        #     "Add Vector", "add_vector", qta.icon("mdi6.vector-line"), "+", "blue"
+        # )
+        # self.add_button(
+        #     "Remove Vector",
+        #     "remove_vector",
+        #     qta.icon("mdi6.vector-line"),
+        #     "−",
+        #     "red",
+        # )
         self.add_button(
             "Add Angle", "add_angle", qta.icon("mdi6.angle-acute"), "+", "blue"
         )

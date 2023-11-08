@@ -276,6 +276,10 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.set_mouse_mode("add_tracker")
         elif mode == "remove_tracker":
             self.frame_widget.set_mouse_mode("remove_tracker")
+        elif mode == "add_angle":
+            self.frame_widget.set_mouse_mode("add_angle")
+        elif mode == "remove_angle":
+            self.frame_widget.set_mouse_mode("remove_angle")
         else:
             self.frame_widget.remove_temp_tracker()
             self.frame_widget.set_mouse_mode("normal")

@@ -35,7 +35,8 @@ class XYPlotWidget(QtWidgets.QWidget):
         if x_label is not None:
             plot_widget.setLabel("bottom", x_label)
         plot_widget.getAxis("left").setWidth(60)
-        plot_widget.addLegend(offset=(-1, 1))
+        legend = plot_widget.addLegend(offset=(-1, 1))
+        # legend.setColumnCount(2)
 
         plot_widget.setMenuEnabled(False)
         plot_widget.autoBtn.clicked.disconnect()
