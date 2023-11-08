@@ -45,6 +45,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.tracker_added.connect(self.add_tracker)
         self.frame_widget.tracker_moved.connect(self.move_tracker)
         self.frame_widget.tracker_removed.connect(self.remove_tracker)
+        self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.edit_controls = EditControls(self, "vertical")
@@ -363,6 +364,28 @@ class MainWidget(QtWidgets.QMainWindow):
                 color,
                 tracker_type,
             )
+
+    def load_markers(self, path):
+        try:
+            tracker_properties, tracking_data, _ = load_json(path)
+            for name, offset, color, tracker_type in zip(
+                tracker_properties["name"],
+                tracker_properties["offset"],
+                tracker_properties["color"],
+                tracker_properties["tracker_type"],
+            ):
+                bbox = tracking_data[name]["bbox"][1].astype(np.int32)
+
+                self.frame_widget.add_tracker(
+                    name,
+                    bbox[:2],
+                    bbox[2:],
+                    offset,
+                    color,
+                    tracker_type,
+                )
+        except Exception as e:
+            self.error_dialog(f"Failed to load markers.\n{e}")
 
     def export_data(self, path):
         try:

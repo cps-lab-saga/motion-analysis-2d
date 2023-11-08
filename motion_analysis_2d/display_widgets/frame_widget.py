@@ -112,7 +112,6 @@ class FrameWidget(QtWidgets.QWidget):
         )
 
         self.img = None
-        self.dropped_img = None
         self.temp_tracker = None
         self.temp_angle = None
 
@@ -732,21 +731,21 @@ class FrameWidget(QtWidgets.QWidget):
         if e.mimeData().hasUrls():
             if is_json_file(e.mimeData().urls()[0].toLocalFile()):
                 e.acceptProposedAction()
-                e.setDropAction(QtCore.Qt.CopyAction)
+                e.setDropAction(QtCore.Qt.LinkAction)
         else:
             super().dragEnterEvent(e)
 
     def dragMoveEvent(self, e):
         if e.mimeData().hasUrls():
             if is_json_file(e.mimeData().urls()[0].toLocalFile()):
-                e.setDropAction(QtCore.Qt.CopyAction)
+                e.setDropAction(QtCore.Qt.LinkAction)
                 e.accept()
         else:
             super().dragMoveEvent(e)
 
     def dropEvent(self, e):
         if e.mimeData().hasUrls():
-            e.setDropAction(QtCore.Qt.CopyAction)
+            e.setDropAction(QtCore.Qt.LinkAction)
             path = Path(e.mimeData().urls()[0].toLocalFile())
             if is_json_file(path):
                 e.accept()
