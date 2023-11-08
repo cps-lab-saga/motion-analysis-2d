@@ -59,10 +59,10 @@ class TrackingWorker(QtCore.QObject):
         self.mutex.lock()
         if self.tracking_data.get(name) is None:
             self.tracking_data[name] = {
-                "frame_no": np.arange(self.no_of_frames),
-                "time": np.full(self.no_of_frames, np.nan, dtype=float),
-                "bbox": np.full((self.no_of_frames, 4), np.nan, dtype=float),
-                "target": np.full((self.no_of_frames, 2), np.nan, dtype=float),
+                "frame_no": np.arange(self.no_of_frames + 1),
+                "time": np.full(self.no_of_frames + 1, np.nan, dtype=float),
+                "bbox": np.full((self.no_of_frames + 1, 4), np.nan, dtype=float),
+                "target": np.full((self.no_of_frames + 1, 2), np.nan, dtype=float),
             }
 
         bbox = (*bbox_pos, *bbox_size)

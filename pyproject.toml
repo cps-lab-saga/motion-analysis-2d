@@ -22,3 +22,6 @@ pyinstaller = "^6.1.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+motion_analysis_2d = "motion_analysis_2d.main_widget:main"
