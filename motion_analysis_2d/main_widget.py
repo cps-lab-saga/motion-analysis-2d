@@ -8,6 +8,7 @@ from PySide6 import QtGui
 
 from defs import QtCore, QtWidgets, log_file, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
+from motion_analysis_2d.custom_components import tab10_rgb_cycle
 from motion_analysis_2d.dialogs import TrackerDialog
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
@@ -112,7 +113,6 @@ class MainWidget(QtWidgets.QMainWindow):
         # periodically update display widgets
         self.camera_frame_update_timer = QtCore.QTimer()
         self.camera_frame_update_timer.timeout.connect(self.update_frame_view)
-        self.camera_frame_update_timer.start(30)
 
         # periodically autosave data if enabled
         self.autosave_timer = QtCore.QTimer()
@@ -129,6 +129,7 @@ class MainWidget(QtWidgets.QMainWindow):
     def video_file_changed(self, path):
         self.media_controls.pause()
 
+        self.camera_frame_update_timer.stop()
         self.edit_controls.set_normal_mode()
         self.edit_controls.setDisabled(True)
         self.media_controls.set_seek_bar_value(0)
@@ -152,10 +153,11 @@ class MainWidget(QtWidgets.QMainWindow):
             self.media_controls.setDisabled(False)
             self.docks["Tracking"].track_button_toggled()
             self.docks["DataPlot"].set_frame_line_draggable(True)
+            self.camera_frame_update_timer.start(30)
 
             while self.tracking_worker.no_of_frames == 0:
-                sleep(0.1)
                 QtCore.QCoreApplication.processEvents()
+                sleep(0.2)
 
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
@@ -279,7 +281,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.set_mouse_mode("normal")
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
-        dialog = TrackerDialog()
+        dialog = TrackerDialog(default_color=next(tab10_rgb_cycle))
         dialog.exec()
         if dialog.result():
             name, color, tracker_type = dialog.get_inputs()

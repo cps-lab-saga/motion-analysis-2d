@@ -3,12 +3,12 @@ from motion_analysis_2d.custom_components import ColorButton, tab10_rgb
 
 
 class TrackerDialog(QtWidgets.QDialog):
-    def __init__(self):
+    def __init__(self, default_color=tab10_rgb["green"], default_tracker_type="CSRT"):
         super().__init__()
 
         self.name = ""
-        self.color = tab10_rgb["green"]
-        self.tracker_type = "CSRT"
+        self.color = default_color
+        self.tracker_type = default_tracker_type
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 
         self.resize(60, 10)
