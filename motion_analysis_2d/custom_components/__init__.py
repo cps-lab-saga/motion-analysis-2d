@@ -7,3 +7,4 @@ from .my_colors import tab10_rgb, tab10_qcolor, tab10_gbr
 from .path_edit import PathEdit
 from .spinbox_slider import SpinBoxSlider
 from .static_tracker import StaticTracker
+from .steps_enum import StepsEnum

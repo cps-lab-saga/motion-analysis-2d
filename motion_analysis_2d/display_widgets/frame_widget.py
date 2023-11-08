@@ -6,7 +6,7 @@ import cv2 as cv
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import tab10_rgb
+from motion_analysis_2d.custom_components import StepsEnum, tab10_rgb
 from motion_analysis_2d.funcs import is_json_file, prevent_name_collision
 
 
@@ -586,29 +586,10 @@ class MouseModes(Enum):
     REMOVE_TRACKER = 2
 
 
-class AddTrackerSteps(Enum):
+class AddTrackerSteps(StepsEnum):
     SELECT_BBOX_POINT1 = 1
     SELECT_BBOX_POINT2 = 2
     SELECT_OFFSET = 3
-
-    def next(self):
-        members = list(self.__class__)
-        index = members.index(self) + 1
-        if index >= len(members):
-            index = 0
-        return members[index]
-
-    def first(self):
-        members = list(self.__class__)
-        return members[0]
-
-    def is_last(self):
-        members = list(self.__class__)
-        index = members.index(self)
-        if index >= len(members) - 1:
-            return True
-        else:
-            return False
 
 
 if __name__ == "__main__":
