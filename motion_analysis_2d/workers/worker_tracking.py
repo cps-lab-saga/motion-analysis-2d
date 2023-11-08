@@ -112,10 +112,7 @@ class TrackingWorker(QtCore.QObject):
                     block=True, timeout=1
                 )
                 if track:
-                    success = self.run_trackers(frame_no, timestamp, frame)
-                    if not success:
-                        if not self.stream_queue.empty():
-                            self.stream_queue.queue.clear()
+                    self.run_trackers(frame_no, timestamp, frame)
                 else:
                     self.frame_no, self.timestamp, self.frame = (
                         frame_no,
@@ -144,13 +141,12 @@ class TrackingWorker(QtCore.QObject):
                 self.mutex.unlock()
             else:
                 self.tracking_failed.emit(name, frame_no)
-                return False
+
         self.mutex.lock()
         self.frame_no = frame_no
         self.frame = frame
         self.timestamp = timestamp
         self.mutex.unlock()
-        return True
 
     def set_stop(self):
         self.stop_flag = True

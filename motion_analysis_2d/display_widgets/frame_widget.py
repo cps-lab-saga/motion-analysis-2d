@@ -386,7 +386,10 @@ class FrameWidget(QtWidgets.QWidget):
 
         cx, cy = [round(a) for a in self.calc_centre_roi(roi)]
         target_pos = cx + offset[0], cy + offset[1]
+
+        target.blockSignals(True)
         target.setPos(target_pos)
+        target.blockSignals(False)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
@@ -469,7 +472,10 @@ class FrameWidget(QtWidgets.QWidget):
         roi.setSize(bbox_size)
         roi.blockSignals(False)
 
+        target.blockSignals(True)
         target.setPos(target_pos)
+        target.blockSignals(False)
+
         self.trackers["offset"][i] = [
             round(a) for a in target.pos() - self.calc_centre_roi(roi)
         ]
@@ -546,10 +552,6 @@ class FrameWidget(QtWidgets.QWidget):
             self.v_crosshair_label.setPos(self.v_crosshair_label.pos().x(), ylim[1])
             self.h_crosshair_label.setPos(xlim[0], self.h_crosshair_label.pos().y())
             self.intensity_crosshair_label.setPos(xlim[1], ylim[0])
-
-    def update_vis(self, markers_data):
-        self.update_marker_vis(markers_data)
-        self.update_traj_vis(markers_data)
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls():
