@@ -1,4 +1,5 @@
 from .badge_button import BadgeButton
+from .chord_item import ChordItem
 from .color_button import ColorButton
 from .dock_base import BaseDock
 from .file_list import FileListWidget

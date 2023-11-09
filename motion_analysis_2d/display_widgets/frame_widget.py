@@ -6,8 +6,8 @@ import cv2 as cv
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import tab10_rgb
-from motion_analysis_2d.funcs import is_json_file, prevent_name_collision
+from motion_analysis_2d.custom_components import ChordItem, tab10_rgb
+from motion_analysis_2d.funcs import is_json_file, prevent_name_collision, angle_vec
 
 
 class FrameWidget(QtWidgets.QWidget):
@@ -15,6 +15,9 @@ class FrameWidget(QtWidgets.QWidget):
     tracker_added = Signal(str, tuple, tuple, tuple, tuple, str)
     tracker_moved = Signal(str, tuple, tuple, tuple, tuple, str)
     tracker_removed = Signal(str)
+    new_angle_suggested = Signal(str, str, str, str)
+    angle_added = Signal(str, str, str, str, str, tuple)
+    angle_removed = Signal(str)
     marker_file_dropped = Signal(object)
 
     def __init__(self, parent=None):
@@ -49,6 +52,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.remove_angle_instructions = "Select angle to remove."
 
         self.traj_len = 30
+        self.chord_radius = 30
         self.frame_label_text_color = (255, 255, 255)
         self.frame_label_fill_color = (0, 0, 0, 150)
         self.roi_label_fill_color = (0, 0, 0, 150)
@@ -69,13 +73,18 @@ class FrameWidget(QtWidgets.QWidget):
             "offset": [],
             "color": [],
             "tracker_type": [],
+            "children": [],
         }
-        self.vectors = {
+        self.angles = {
             "name": [],
-            "start": [],
-            "end": [],
-            "line": [],
-            "arrow": [],
+            "vec1": [],
+            "vec2": [],
+            "chord": [],
+            "label": [],
+            "start1": [],
+            "end1": [],
+            "start2": [],
+            "end2": [],
         }
 
         self.plot_widget = pg.PlotWidget()
@@ -168,8 +177,6 @@ class FrameWidget(QtWidgets.QWidget):
                         if isinstance(item, pg.TargetItem):
                             self.select_angle_tracker_end2(item)
                             break
-                print(self.angle_steps_index)
-
         self.update_instructions()
 
         # Double right click to toggle crosshairs
@@ -431,6 +438,7 @@ class FrameWidget(QtWidgets.QWidget):
         label = pg.TargetLabel(
             target,
             name,
+            offset=(-20, 0),
             anchor=(0, 1),
             color=pen.color(),
             fill=self.roi_label_fill_color,
@@ -446,6 +454,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["offset"].append(offset)
         self.trackers["color"].append(color)
         self.trackers["tracker_type"].append(tracker_type)
+        self.trackers["children"].append([])
 
         self.tracker_added.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
@@ -467,8 +476,11 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.tracker_removed.emit(name)
 
-    def prevent_name_collision(self, name):
-        return prevent_name_collision(name, self.trackers["name"])
+    def prevent_name_collision(self, name, item_type="tracker"):
+        if item_type == "tracker":
+            return prevent_name_collision(name, self.trackers["name"])
+        elif item_type == "angle":
+            return prevent_name_collision(name, self.angles["name"])
 
     def frame_shape_changed(self):
         for roi in self.trackers["roi"]:
@@ -487,12 +499,17 @@ class FrameWidget(QtWidgets.QWidget):
         bbox_size = [round(a) for a in roi.size()]
         tracker_type = self.trackers["tracker_type"][i]
         color = self.trackers["color"][i]
+        children = self.trackers["children"][i]
 
         cx, cy = [round(a) for a in self.calc_centre_roi(roi)]
         target_pos = cx + offset[0], cy + offset[1]
 
         target.blockSignals(True)
         target.setPos(target_pos)
+        if len(children) > 0:
+            for child_name, child_type in children:
+                if child_type == "angle":
+                    self.update_angle_item(child_name)
         target.blockSignals(False)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
@@ -508,7 +525,13 @@ class FrameWidget(QtWidgets.QWidget):
         offset = [round(a) for a in target.pos() - self.calc_centre_roi(roi)]
         tracker_type = self.trackers["tracker_type"][i]
         color = self.trackers["color"][i]
+        children = self.trackers["children"][i]
         self.trackers["offset"][i] = offset
+
+        if len(children) > 0:
+            for child_name, child_type in children:
+                if child_type == "angle":
+                    self.update_angle_item(child_name)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
@@ -537,12 +560,10 @@ class FrameWidget(QtWidgets.QWidget):
         self.temp_angle[f"end{vec_no}"] = name
 
         start_name = self.temp_angle[f"start{vec_no}"]
-        tracker_start_i = self.trackers["name"].index(start_name)
-        start_x, start_y = self.trackers["target"][tracker_start_i].pos()
+        start_x, start_y = self.get_target_pos_from_tracker_name(start_name)
 
         end_name = self.temp_angle[f"end{vec_no}"]
-        tracker_end_i = self.trackers["name"].index(end_name)
-        end_x, end_y = self.trackers["target"][tracker_end_i].pos()
+        end_x, end_y = self.get_target_pos_from_tracker_name(end_name)
 
         self.temp_angle[f"vec{vec_no}"].setData([start_x, end_x], [start_y, end_y])
         self.next_add_angle_step()
@@ -563,16 +584,22 @@ class FrameWidget(QtWidgets.QWidget):
         start_name = self.temp_angle[f"start{vec_no}"]
         vec = self.temp_angle[f"vec{vec_no}"]
 
-        tracker_i = self.trackers["name"].index(start_name)
-        start_x, start_y = self.trackers["target"][tracker_i].pos()
+        start_x, start_y = self.get_target_pos_from_tracker_name(start_name)
 
         mouse_point = self.fig.vb.mapSceneToView(pos)
         vec.setData([start_x, mouse_point.x()], [start_y, mouse_point.y()])
 
+    def get_target_pos_from_tracker_name(self, name):
+        i = self.trackers["name"].index(name)
+        return self.trackers["target"][i].pos()
+
+    def add_children_to_tracker(self, tracker_name, child_name, child_type):
+        i = self.trackers["name"].index(tracker_name)
+        self.trackers["children"][i].append((child_name, child_type))
+
     def next_add_angle_step(self):
         if self.angle_steps_index >= len(self.add_angle_steps) - 1:
-            print("test")
-            # self.emit_new_tracker_suggestion()
+            self.emit_new_angler_suggestion()
             self.angle_steps_index = 0
         else:
             self.angle_steps_index += 1
@@ -580,7 +607,106 @@ class FrameWidget(QtWidgets.QWidget):
     def emit_new_angler_suggestion(self):
         if self.temp_angle is None:
             return
-        print("TODO! angle_create")
+
+        self.new_angle_suggested.emit(
+            self.temp_angle["start1"],
+            self.temp_angle["end1"],
+            self.temp_angle["start2"],
+            self.temp_angle["end2"],
+        )
+
+    def add_angle(self, name, start1, end1, start2, end2, color):
+        name = self.prevent_name_collision(name, item_type="angle")
+        pen = pg.mkPen(color=color, width=1)
+        brush = pg.mkBrush(color=(*pen.color().toTuple()[:3], 150))
+
+        for n in [start1, end1, start2, end2]:
+            self.add_children_to_tracker(n, name, "angle")
+
+        vec1_start_x, vec1_start_y = self.get_target_pos_from_tracker_name(start1)
+        vec1_end_x, vec1_end_y = self.get_target_pos_from_tracker_name(end1)
+        vec2_start_x, vec2_start_y = self.get_target_pos_from_tracker_name(start2)
+        vec2_end_x, vec2_end_y = self.get_target_pos_from_tracker_name(end2)
+
+        vec1 = self.fig.plot(
+            [vec1_start_x, vec1_end_x],
+            [vec1_start_y, vec1_end_y],
+            pen=pen,
+        )
+        vec2 = self.fig.plot(
+            [vec2_start_x, vec2_end_x],
+            [vec2_start_y, vec2_end_y],
+            pen=pen,
+        )
+        vec1_angle = angle_vec([vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y])
+        vec2_angle = angle_vec([vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y])
+
+        chord = ChordItem(
+            center=(vec1_start_x, vec1_start_y),
+            radius=self.chord_radius,
+            start_angle=vec1_angle,
+            span_angle=vec2_angle - vec1_angle,
+            pen=pen,
+            brush=brush,
+        )
+        self.fig.addItem(chord)
+
+        label = pg.TextItem(
+            name,
+            anchor=(0, 0.5),
+            color=pen.color(),
+            fill=self.roi_label_fill_color,
+        )
+        label.setPos(round(vec1_start_x) + self.chord_radius, round(vec1_start_y))
+        self.fig.addItem(label)
+
+        self.angles["name"].append(name)
+        self.angles["vec1"].append(vec1)
+        self.angles["vec2"].append(vec2)
+        self.angles["chord"].append(chord)
+        self.angles["label"].append(label)
+        self.angles["start1"].append(start1)
+        self.angles["end1"].append(end1)
+        self.angles["start2"].append(start2)
+        self.angles["end2"].append(end2)
+
+        self.angle_added.emit(name, start1, end1, start2, end2, color)
+
+    def update_angle_item(self, name):
+        i = self.angles["name"].index(name)
+        start1 = self.angles["start1"][i]
+        end1 = self.angles["end1"][i]
+        start2 = self.angles["start2"][i]
+        end2 = self.angles["end2"][i]
+        vec1 = self.angles["vec1"][i]
+        vec2 = self.angles["vec2"][i]
+        chord = self.angles["chord"][i]
+        label = self.angles["label"][i]
+
+        vec1_start_x, vec1_start_y = self.get_target_pos_from_tracker_name(start1)
+        vec1_end_x, vec1_end_y = self.get_target_pos_from_tracker_name(end1)
+        vec2_start_x, vec2_start_y = self.get_target_pos_from_tracker_name(start2)
+        vec2_end_x, vec2_end_y = self.get_target_pos_from_tracker_name(end2)
+
+        vec1_angle = angle_vec([vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y])
+        vec2_angle = angle_vec([vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y])
+
+        vec1.setData(
+            [vec1_start_x, vec1_end_x],
+            [vec1_start_y, vec1_end_y],
+        )
+        vec2.setData(
+            [vec2_start_x, vec2_end_x],
+            [vec2_start_y, vec2_end_y],
+        )
+
+        chord.setData(
+            center=(vec1_start_x, vec1_start_y),
+            radius=self.chord_radius,
+            start_angle=vec1_angle,
+            span_angle=vec2_angle - vec1_angle,
+        )
+        label.setPos(round(vec1_start_x) + self.chord_radius, round(vec1_start_y))
 
     def clear(self):
         for l in self.trackers.values():
@@ -638,6 +764,7 @@ class FrameWidget(QtWidgets.QWidget):
         i = self.trackers["name"].index(name)
         roi = self.trackers["roi"][i]
         target = self.trackers["target"][i]
+        children = self.trackers["children"][i]
 
         bbox_pos = bbox[:2]
         bbox_size = bbox[2:]
@@ -649,6 +776,11 @@ class FrameWidget(QtWidgets.QWidget):
         target.blockSignals(True)
         target.setPos(target_pos)
         target.blockSignals(False)
+
+        if len(children) > 0:
+            for child_name, child_type in children:
+                if child_type == "angle":
+                    self.update_angle_item(child_name)
 
         self.trackers["offset"][i] = [
             round(a) for a in target.pos() - self.calc_centre_roi(roi)
@@ -771,12 +903,14 @@ if __name__ == "__main__":
     widget = FrameWidget()
     widget.set_image(black_img)
     # widget.set_mouse_mode("add_tracker")
-    widget.add_tracker("test1", (20, 20), (20, 20), (0, 0), "green", "")
-    widget.add_tracker("test2", (40, 20), (20, 20), (0, 0), "green", "")
-    widget.add_tracker("test3", (20, 40), (20, 20), (0, 0), "green", "")
-    widget.add_tracker("test4", (40, 40), (20, 20), (0, 0), "green", "")
 
-    widget.set_mouse_mode("add_angle")
+    widget.add_tracker("test1", (20, 30), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test2", (40, 20), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
+
+    # widget.set_mouse_mode("add_angle")
+    widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
     widget.show()
 
     app.exec()

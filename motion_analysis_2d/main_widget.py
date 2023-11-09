@@ -9,7 +9,7 @@ from PySide6 import QtGui
 from defs import QtCore, QtWidgets, log_file, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
-from motion_analysis_2d.dialogs import TrackerDialog
+from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
     FilesDock,
@@ -46,6 +46,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.tracker_moved.connect(self.move_tracker)
         self.frame_widget.tracker_removed.connect(self.remove_tracker)
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
+        self.frame_widget.new_angle_suggested.connect(self.angle_suggested)
+        self.frame_widget.angle_added.connect(self.add_angle)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.edit_controls = EditControls(self, "vertical")
@@ -283,6 +285,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.set_mouse_mode("remove_angle")
         else:
             self.frame_widget.remove_temp_tracker()
+            self.frame_widget.remove_temp_angle()
             self.frame_widget.set_mouse_mode("normal")
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
@@ -328,6 +331,29 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.add_tracker(
             name, bbox_pos, bbox_size, offset, tracker_type
         )
+
+    def angle_suggested(self, start1, end1, start2, end2):
+        dialog = AngleDialog(default_color=next(tab10_rgb_cycle))
+        dialog.exec()
+        if dialog.result():
+            name, color = dialog.get_inputs()
+            self.frame_widget.remove_temp_angle()
+
+            self.frame_widget.add_angle(
+                name,
+                start1,
+                end1,
+                start2,
+                end2,
+                color,
+            )
+
+        else:
+            self.frame_widget.remove_temp_angle()
+
+    def add_angle(self, name, start1, end1, start2, end2, color):
+        self.docks["Items"].add_row(name, color, "angle")
+        # self.docks["DataPlot"].add_marker(name, color)
 
     def save_data(self):
         if self.stream_worker is not None:

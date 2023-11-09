@@ -2,6 +2,19 @@ import numpy as np
 from scipy import signal
 
 
+def angle_vec(vec1):
+    mag1 = np.linalg.norm(vec1)
+    vec1_hat = vec1 / mag1
+    vec2_hat = np.array([1, 0])
+    dot_product = np.dot(vec1_hat, vec2_hat)
+    cross_product = np.cross(vec1_hat, vec2_hat)
+    angle = np.degrees(np.arccos(dot_product))
+    if cross_product < 0:
+        return -angle
+    else:
+        return angle
+
+
 def angle_between(vec1, vec2):
     mag1 = np.linalg.norm(vec1, axis=1)
     mag2 = np.linalg.norm(vec2, axis=1)
@@ -11,8 +24,11 @@ def angle_between(vec1, vec2):
 
     # dot_product = np.diag(vec1_hat @ vec2_hat.T)
     dot_product = np.einsum("ij, ij->i", vec1_hat, vec2_hat)
-    angle = np.arccos(dot_product)
-    return np.degrees(angle)
+    angle = np.degrees(np.arccos(dot_product))
+    if dot_product < 0:
+        return -angle
+    else:
+        return angle
 
 
 def angle_360(vec1, vec2):
