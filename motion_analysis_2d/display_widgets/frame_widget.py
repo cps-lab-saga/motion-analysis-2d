@@ -85,6 +85,7 @@ class FrameWidget(QtWidgets.QWidget):
             "end1": [],
             "start2": [],
             "end2": [],
+            "color": [],
         }
 
         self.plot_widget = pg.PlotWidget()
@@ -177,6 +178,16 @@ class FrameWidget(QtWidgets.QWidget):
                         if isinstance(item, pg.TargetItem):
                             self.select_angle_tracker_end2(item)
                             break
+
+        elif self.mouse_mode == MouseModes.REMOVE_ANGLE:
+            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
+                pos = evt.scenePos()
+                items = self.fig.scene().items(pos)
+                for item in items:
+                    if isinstance(item, ChordItem):
+                        self.remove_angle(item)
+                        break
+
         self.update_instructions()
 
         # Double right click to toggle crosshairs
@@ -467,9 +478,17 @@ class FrameWidget(QtWidgets.QWidget):
             raise TypeError("Unrecognized item type")
 
         name = self.trackers["name"][i]
+        children = self.trackers["children"][i]
         self.fig.removeItem(self.trackers["roi"][i])
         self.fig.removeItem(self.trackers["target"][i])
         self.fig.removeItem(self.trackers["traj"][i])
+
+        if len(children) > 0:
+            for child_name, child_type in children:
+                if child_type == "angle":
+                    child_i = self.angles["name"].index(child_name)
+                    chord = self.angles["chord"][child_i]
+                    self.remove_angle(chord)
 
         for item in self.trackers.values():
             item.pop(i)
@@ -597,6 +616,10 @@ class FrameWidget(QtWidgets.QWidget):
         i = self.trackers["name"].index(tracker_name)
         self.trackers["children"][i].append((child_name, child_type))
 
+    def remove_children_from_tracker(self, tracker_name, child_name, child_type):
+        i = self.trackers["name"].index(tracker_name)
+        self.trackers["children"][i].remove((child_name, child_type))
+
     def next_add_angle_step(self):
         if self.angle_steps_index >= len(self.add_angle_steps) - 1:
             self.emit_new_angler_suggestion()
@@ -669,6 +692,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.angles["end1"].append(end1)
         self.angles["start2"].append(start2)
         self.angles["end2"].append(end2)
+        self.angles["color"].append(color)
 
         self.angle_added.emit(name, start1, end1, start2, end2, color)
 
@@ -707,6 +731,30 @@ class FrameWidget(QtWidgets.QWidget):
             span_angle=vec2_angle - vec1_angle,
         )
         label.setPos(round(vec1_start_x) + self.chord_radius, round(vec1_start_y))
+
+    def remove_angle(self, item):
+        if isinstance(item, ChordItem):
+            i = self.angles["chord"].index(item)
+        else:
+            raise TypeError("Unrecognized item type")
+
+        name = self.angles["name"][i]
+        start1 = self.angles["start1"][i]
+        end1 = self.angles["end1"][i]
+        start2 = self.angles["start2"][i]
+        end2 = self.angles["end2"][i]
+        self.fig.removeItem(self.angles["vec1"][i])
+        self.fig.removeItem(self.angles["vec2"][i])
+        self.fig.removeItem(self.angles["chord"][i])
+        self.fig.removeItem(self.angles["label"][i])
+
+        for n in [start1, end1, start2, end2]:
+            self.remove_children_from_tracker(n, name, "angle")
+
+        for item in self.angles.values():
+            item.pop(i)
+
+        self.angle_removed.emit(name)
 
     def clear(self):
         for l in self.trackers.values():

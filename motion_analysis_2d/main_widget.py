@@ -48,6 +48,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.frame_widget.new_angle_suggested.connect(self.angle_suggested)
         self.frame_widget.angle_added.connect(self.add_angle)
+        self.frame_widget.angle_removed.connect(self.remove_angle)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.edit_controls = EditControls(self, "vertical")
@@ -354,6 +355,10 @@ class MainWidget(QtWidgets.QMainWindow):
     def add_angle(self, name, start1, end1, start2, end2, color):
         self.docks["Items"].add_row(name, color, "angle")
         # self.docks["DataPlot"].add_marker(name, color)
+
+    def remove_angle(self, name):
+        self.docks["Items"].remove_row(name, "angle")
+        # self.docks["DataPlot"].remove_marker(name)
 
     def save_data(self):
         if self.stream_worker is not None:
