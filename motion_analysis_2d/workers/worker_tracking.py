@@ -44,9 +44,10 @@ class TrackingWorker(QtCore.QObject):
         self.mutex.lock()
         for name, (_, offset, tracker_type) in self.trackers.items():
             bbox = self.tracking_data[name]["bbox"][self.frame_no]
-            tracker = self.create_tracker(tracker_type)
-            tracker.init(self.frame, bbox.astype(np.int32))
-            self.trackers[name] = (tracker, offset, tracker_type)
+            if (~np.isnan(bbox)).any():
+                tracker = self.create_tracker(tracker_type)
+                tracker.init(self.frame, bbox.astype(np.int32))
+                self.trackers[name] = (tracker, offset, tracker_type)
         self.mutex.unlock()
 
     def remove_tracker(self, name):

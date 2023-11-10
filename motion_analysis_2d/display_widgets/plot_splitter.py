@@ -8,7 +8,7 @@ class PlotSplitter(QtWidgets.QSplitter):
         super().__init__(QtCore.Qt.Vertical, parent=parent)
 
         self.save_heading = "Plot"
-        self.setChildrenCollapsible(False)
+        self.setChildrenCollapsible(True)
         pg.setConfigOptions(
             background=None,
             foreground=self.palette().color(self.foregroundRole()),

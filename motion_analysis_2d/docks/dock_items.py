@@ -23,13 +23,13 @@ class ItemsDock(BaseDock):
         self.rows = {}
         self.collapsibles = {}
 
-        self.add_item_type("marker")
+        self.add_item_type("tracker")
         self.add_item_type("angle")
         self.add_item_type("distance")
 
     def add_item_type(self, item_type):
         collapsible = QCollapsible(item_type.capitalize())
-        collapsible.expand(False)
+        collapsible.expand(animate=False)
         self.dock_layout.addWidget(collapsible)
         self.collapsibles[item_type] = collapsible
         self.rows[item_type] = {}
@@ -62,7 +62,7 @@ class ItemsDock(BaseDock):
 class ItemsRow(QtWidgets.QWidget):
     checkbox_toggled = Signal(str, object)
 
-    def __init__(self, name, color, item_type="marker", parent=None):
+    def __init__(self, name, color, item_type="tracker", parent=None):
         super().__init__(parent)
 
         self.name = name
@@ -75,7 +75,7 @@ class ItemsRow(QtWidgets.QWidget):
         self.checkbox = QtWidgets.QCheckBox(self)
         self.checkbox.setText(self.name)
         self.checkbox.setChecked(True)
-        if item_type == "marker":
+        if item_type == "tracker":
             self.checkbox.setIcon(
                 qta.icon("mdi6.square-outline", color=QtGui.QColor(*self.color))
             )
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     dock = ItemsDock()
     dock.add_row("test", (44, 160, 44), "distance")
     dock.add_row("test", (44, 160, 44), "angle")
-    dock.add_row("test", (44, 160, 44), "marker")
+    dock.add_row("test", (44, 160, 44), "tracker")
     dock.show()
 
     app.exec()

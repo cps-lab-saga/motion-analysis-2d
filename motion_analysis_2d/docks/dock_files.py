@@ -14,6 +14,11 @@ class FilesDock(BaseDock):
 
         self.setWindowTitle("Files")
 
+        self.setFeatures(
+            self.DockWidgetFeature.DockWidgetFloatable
+            | self.DockWidgetFeature.DockWidgetMovable
+        )
+
         icon_size = 18
         self.file_list_widget = FileListWidget(filetypes, self)
         self.file_list_widget.setToolTip("Quick files.\nDrop files here.")

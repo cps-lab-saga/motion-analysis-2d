@@ -269,7 +269,7 @@ class MainWidget(QtWidgets.QMainWindow):
                     self.tracking_worker.frame_no,
                     tracking_data["target"],
                 )
-                self.docks["DataPlot"].update_marker(
+                self.docks["DataPlot"].update_tracker(
                     name,
                     tracking_data["target"],
                 )
@@ -332,8 +332,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.add_tracker(
             name, bbox_pos, bbox_size, offset, tracker_type
         )
-        self.docks["Items"].add_row(name, color, "marker")
-        self.docks["DataPlot"].add_marker(name, color)
+        self.docks["Items"].add_row(name, color, "tracker")
+        self.docks["DataPlot"].add_tracker(name, color)
 
     def tracking_failed(self, name, frame_no):
         self.media_controls.pause()
@@ -342,13 +342,13 @@ class MainWidget(QtWidgets.QMainWindow):
         self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
 
     def add_tracker_failed(self, name, error):
-        self.docks["Items"].remove_row(name, "marker")
+        self.docks["Items"].remove_row(name, "tracker")
         self.error_dialog(f"Could not initialise tracker for ({name})!\n{error}")
 
     def remove_tracker(self, name):
         self.tracking_worker.remove_tracker(name)
-        self.docks["Items"].remove_row(name, "marker")
-        self.docks["DataPlot"].remove_marker(name)
+        self.docks["Items"].remove_row(name, "tracker")
+        self.docks["DataPlot"].remove_tracker(name)
 
     def reset_trackers(self):
         self.tracking_worker.reset_trackers()
@@ -379,7 +379,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def add_angle(self, name, start1, end1, start2, end2, color):
         self.docks["Items"].add_row(name, color, "angle")
-        # self.docks["DataPlot"].add_marker(name, color)
+        self.docks["DataPlot"].add_angle(name, color)
 
     def remove_angle(self, name):
         self.docks["Items"].remove_row(name, "angle")
