@@ -4,7 +4,7 @@ import json
 import numpy as np
 
 
-def save_json(path, tracker_properties, tracking_data, current_frame):
+def save_tracking_data(path, tracker_properties, tracking_data, current_frame):
     save_data = {"tracker_properties": {}, "tracking_data": {}}
     save_data["tracker_properties"].update(tracker_properties)
 
@@ -21,7 +21,7 @@ def save_json(path, tracker_properties, tracking_data, current_frame):
         json.dump(save_data, f, sort_keys=False, indent=4)
 
 
-def load_json(path):
+def load_tracking_data(path):
     with open(path, "r", encoding="utf-8") as f:
         save_data = json.load(f)
 

@@ -44,6 +44,20 @@ def settings_file() -> Path:
     f.parent.mkdir(exist_ok=True, parents=True)
     return f
 
+def shortcut_keys_file() -> Path:
+    p = project_root()
+    if "Temp" in p.parts:
+        f = (
+            p.parents[len(p.parts) - 2 - p.parts.index("Temp")]
+            / f"{project_name}"
+            / f"{project_name}.ini"
+        )
+    else:
+        f = project_root() / f"{project_name}.ini"
+
+    f.parent.mkdir(exist_ok=True, parents=True)
+    return f
+
 
 def log_file() -> Path:
     return Path.cwd() / f"{project_name}.log"

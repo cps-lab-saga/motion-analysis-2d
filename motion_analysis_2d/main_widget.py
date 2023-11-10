@@ -6,7 +6,7 @@ from time import sleep
 import numpy as np
 from PySide6 import QtGui
 
-from defs import QtCore, QtWidgets, log_file, settings_file, resource_dir
+from defs import QtCore, QtWidgets, project_root, log_file, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
 from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog
@@ -21,7 +21,12 @@ from motion_analysis_2d.docks import (
     ItemsDock,
     DataPlotDock,
 )
-from motion_analysis_2d.funcs import save_json, load_json, export_csv
+from motion_analysis_2d.funcs import (
+    save_tracking_data,
+    load_tracking_data,
+    export_csv,
+    load_shortcut_keys,
+)
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
 
@@ -122,6 +127,18 @@ class MainWidget(QtWidgets.QMainWindow):
         self.autosave_timer = QtCore.QTimer()
         self.autosave_timer.timeout.connect(self.save_data)
 
+        self.shortcut_keys = {
+            "\N{ESCAPE}": "set_normal_mode",
+            "F": "move_frame_forwards",
+            "S": "move_frame_backwards",
+        }
+        try:
+            self.shortcut_keys.update(
+                load_shortcut_keys(project_root() / "shortcut_keys.json")
+            )
+        except Exception as e:
+            self.error_dialog(f"Failed to read shortcut keys file!\n{e}")
+
         # load settings from previous session
         self.settings_file = settings_file()
         if self.settings_file.is_file():
@@ -208,6 +225,18 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.docks["DataPlot"].set_frame_line_draggable(True)
                 self.stream_worker.set_pause()
 
+    def toggle_play(self):
+        self.media_controls.play_button.toggle()
+
+    def toggle_track(self):
+        self.docks["Tracking"].track_button.toggle()
+
+    def toggle_autosave(self):
+        self.docks["Save"].autosave_button.toggle()
+
+    def click_export(self):
+        self.docks["Save"].export_button.click()
+
     def stream_finished(self):
         self.stream_thread.exit()
         self.stream_worker = None
@@ -255,14 +284,6 @@ class MainWidget(QtWidgets.QMainWindow):
         if self.stream_worker is not None:
             self.stream_worker.move_frame_backwards()
 
-    def track_forwards(self):
-        if self.stream_worker is not None:
-            self.stream_worker.move_frame_forwards(track=True)
-
-    def track_backwards(self):
-        if self.stream_worker is not None:
-            self.stream_worker.move_frame_backwards(track=True)
-
     def frame_shape_changed(self):
         if self.stream_worker is not None:
             self.stream_worker.read_current_frame()
@@ -272,6 +293,7 @@ class MainWidget(QtWidgets.QMainWindow):
     def seek_bar_moved(self, frame_no):
         if self.stream_worker is not None:
             self.stream_worker.move_frame_to(frame_no)
+            self.tracking_worker.reset_trackers()
 
     def edit_mode_changed(self, mode):
         self.media_controls.pause()
@@ -288,6 +310,9 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.remove_temp_tracker()
             self.frame_widget.remove_temp_angle()
             self.frame_widget.set_mouse_mode("normal")
+
+    def set_normal_mode(self):
+        self.edit_controls.set_normal_mode()
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
         dialog = TrackerDialog(default_color=next(tab10_rgb_cycle))
@@ -364,7 +389,7 @@ class MainWidget(QtWidgets.QMainWindow):
         if self.stream_worker is not None:
             video_path = self.stream_worker.path
             save_path = video_path.parent / f"{video_path.stem}.json"
-            save_json(
+            save_tracking_data(
                 save_path,
                 {
                     k: v
@@ -376,7 +401,7 @@ class MainWidget(QtWidgets.QMainWindow):
             )
 
     def load_data(self, path):
-        tracker_properties, tracking_data, current_frame = load_json(path)
+        tracker_properties, tracking_data, current_frame = load_tracking_data(path)
         self.media_controls.seek_bar.setValue(current_frame)
         self.tracking_worker.set_tracking_data(tracking_data)
         for name, offset, color, tracker_type in zip(
@@ -398,7 +423,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def load_markers(self, path):
         try:
-            tracker_properties, tracking_data, _ = load_json(path)
+            tracker_properties, tracking_data, _ = load_tracking_data(path)
             for name, offset, color, tracker_type in zip(
                 tracker_properties["name"],
                 tracker_properties["offset"],
@@ -460,16 +485,8 @@ class MainWidget(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.critical(self, "Error", error)
 
     def keyPressEvent(self, evt):
-        if evt.key() == QtCore.Qt.Key_Escape:
-            self.edit_controls.set_normal_mode()
-        elif evt.key() == QtCore.Qt.Key_F:
-            self.move_frame_forwards()
-        elif evt.key() == QtCore.Qt.Key_S:
-            self.move_frame_backwards()
-        elif evt.key() == QtCore.Qt.Key_L:
-            self.track_forwards()
-        elif evt.key() == QtCore.Qt.Key_H:
-            self.track_backwards()
+        if cmd := self.shortcut_keys.get(evt.text().upper()):
+            getattr(self, cmd)()
 
     @staticmethod
     def setup_logger():
