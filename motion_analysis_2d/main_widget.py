@@ -100,8 +100,6 @@ class MainWidget(QtWidgets.QMainWindow):
             self.media_controls.seek_bar.setValue
         )
 
-        self.processed_data = {}
-
         # thread for streaming input
         self.stream_thread = QtCore.QThread()
         self.stream_worker = None
@@ -166,7 +164,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.clear()
         with self.stream_queue.mutex:
             self.stream_queue.queue.clear()
-        self.tracking_worker.clear_trackers()
+        self.tracking_worker.clear_data()
 
         if path is not None:
             self.start_stream(path)
@@ -180,6 +178,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 QtCore.QCoreApplication.processEvents()
                 sleep(0.2)
 
+            self.frame_widget.auto_range()
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
                 logging.info("Data file exist!")
@@ -255,10 +254,6 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.tracking_worker.timestamp / 1000,
             )
             for name, tracking_data in self.tracking_worker.tracking_data.items():
-                if np.isnan(tracking_data["time"][i]):
-                    self.frame_widget.hide_tracker(name)
-                    continue
-
                 self.frame_widget.move_tracker(
                     name,
                     tracking_data["bbox"][i],
@@ -273,6 +268,12 @@ class MainWidget(QtWidgets.QMainWindow):
                     name,
                     tracking_data["target"],
                 )
+            for name, angle_data in self.tracking_worker.analysis_data["angle"].items():
+                self.docks["DataPlot"].update_angle(
+                    name,
+                    angle_data["angle"],
+                )
+
             self.media_controls.set_seek_bar_value(self.tracking_worker.frame_no)
             self.docks["DataPlot"].move_frame_line(self.tracking_worker.frame_no)
 
@@ -378,6 +379,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.remove_temp_angle()
 
     def add_angle(self, name, start1, end1, start2, end2, color):
+        self.tracking_worker.add_angle(name, start1, end1, start2, end2)
         self.docks["Items"].add_row(name, color, "angle")
         self.docks["DataPlot"].add_angle(name, color)
 

@@ -92,7 +92,7 @@ class DataPlotDock(BaseDock):
         self.plot_widgets["Angles"].remove_line("θ", name)
 
     def update_angle(self, name, angle):
-        self.plot_widgets["Angles"].update_line("θ", name, angle[:, 0])
+        self.plot_widgets["Angles"].update_line("θ", name, angle)
 
     def make_button(self, text):
         button = QtWidgets.QPushButton(text, self)

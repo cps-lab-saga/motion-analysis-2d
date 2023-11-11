@@ -5,7 +5,7 @@ import numpy as np
 
 from defs import QtCore, Signal
 from motion_analysis_2d.custom_components import StaticTracker
-from motion_analysis_2d.funcs import bbox_to_target
+from motion_analysis_2d.funcs import bbox_to_target, angle_vec
 
 
 class TrackingWorker(QtCore.QObject):
@@ -22,6 +22,7 @@ class TrackingWorker(QtCore.QObject):
 
         self.trackers = {}
         self.tracking_data = {}
+        self.analysis_data = {"angle": {}, "distance": {}}
 
         self.stream_queue = stream_queue
 
@@ -36,25 +37,10 @@ class TrackingWorker(QtCore.QObject):
     def set_props(self, no_of_frames):
         self.no_of_frames = no_of_frames
 
-    def clear_trackers(self):
+    def clear_data(self):
+        self.analysis_data = {"angle": {}, "distance": {}}
         self.tracking_data = {}
         self.trackers = {}
-
-    def reset_trackers(self):
-        self.mutex.lock()
-        for name, (_, offset, tracker_type) in self.trackers.items():
-            bbox = self.tracking_data[name]["bbox"][self.frame_no]
-            if (~np.isnan(bbox)).any():
-                tracker = self.create_tracker(tracker_type)
-                tracker.init(self.frame, bbox.astype(np.int32))
-                self.trackers[name] = (tracker, offset, tracker_type)
-        self.mutex.unlock()
-
-    def remove_tracker(self, name):
-        self.mutex.lock()
-        self.tracking_data.pop(name, None)
-        self.trackers.pop(name, None)
-        self.mutex.unlock()
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, tracker_type="Static"):
         self.mutex.lock()
@@ -84,6 +70,42 @@ class TrackingWorker(QtCore.QObject):
             self.trackers.pop(name, None)
             self.add_tracker_failed.emit(name, e)
 
+        self.mutex.unlock()
+
+    def add_angle(self, name, start1, end1, start2, end2):
+        self.mutex.lock()
+        angle_data = self.analysis_data["angle"]
+        if angle_data.get(name) is None:
+            angle_data[name] = {
+                "frame_no": np.arange(self.no_of_frames + 1),
+                "angle": np.full(self.no_of_frames + 1, np.nan, dtype=float),
+                "trackers": (start1, end1, start2, end2),
+            }
+
+        vec1_angle = angle_vec(
+            self.tracking_data[end1]["target"] - self.tracking_data[start1]["target"]
+        )
+        vec2_angle = angle_vec(
+            self.tracking_data[end2]["target"] - self.tracking_data[start2]["target"]
+        )
+
+        angle_data[name]["angle"] = vec2_angle - vec1_angle
+        self.mutex.unlock()
+
+    def reset_trackers(self):
+        self.mutex.lock()
+        for name, (_, offset, tracker_type) in self.trackers.items():
+            bbox = self.tracking_data[name]["bbox"][self.frame_no]
+            if (~np.isnan(bbox)).any():
+                tracker = self.create_tracker(tracker_type)
+                tracker.init(self.frame, bbox.astype(np.int32))
+                self.trackers[name] = (tracker, offset, tracker_type)
+        self.mutex.unlock()
+
+    def remove_tracker(self, name):
+        self.mutex.lock()
+        self.tracking_data.pop(name, None)
+        self.trackers.pop(name, None)
         self.mutex.unlock()
 
     def create_tracker(self, tracker_type):
@@ -142,12 +164,34 @@ class TrackingWorker(QtCore.QObject):
                 self.mutex.unlock()
             else:
                 self.tracking_failed.emit(name, frame_no)
+                break
+        else:
+            self.update_angle(frame_no)
 
         self.mutex.lock()
         self.frame_no = frame_no
         self.frame = frame
         self.timestamp = timestamp
         self.mutex.unlock()
+
+    def update_angle(self, frame_no):
+        angle_data = self.analysis_data["angle"]
+        for name, data in angle_data.items():
+            start1, end1, start2, end2 = data["trackers"]
+
+            vec1_angle = angle_vec(
+                [
+                    self.tracking_data[end1]["target"][frame_no]
+                    - self.tracking_data[start1]["target"][frame_no]
+                ]
+            )[0]
+            vec2_angle = angle_vec(
+                [
+                    self.tracking_data[end2]["target"][frame_no]
+                    - self.tracking_data[start2]["target"][frame_no]
+                ]
+            )[0]
+            angle_data[name]["angle"][frame_no] = vec2_angle - vec1_angle
 
     def set_stop(self):
         self.stop_flag = True

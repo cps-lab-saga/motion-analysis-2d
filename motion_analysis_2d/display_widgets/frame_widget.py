@@ -3,6 +3,7 @@ from enum import Enum
 from pathlib import Path
 
 import cv2 as cv
+import numpy as np
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
@@ -213,6 +214,9 @@ class FrameWidget(QtWidgets.QWidget):
     def range_changed(self):
         self.adjust_crosshairs()
         self.adjust_instruction_label()
+
+    def auto_range(self):
+        self.fig.autoRange()
 
     def set_image(self, img):
         if img is None:
@@ -667,8 +671,12 @@ class FrameWidget(QtWidgets.QWidget):
             pen=pen,
         )
         self.fig.addItem(vec2)
-        vec1_angle = angle_vec([vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y])
-        vec2_angle = angle_vec([vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y])
+        vec1_angle = angle_vec(
+            [[vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y]]
+        )[0]
+        vec2_angle = angle_vec(
+            [[vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y]]
+        )[0]
 
         chord = ChordItem(
             center=(vec1_start_x, vec1_start_y),
@@ -718,8 +726,12 @@ class FrameWidget(QtWidgets.QWidget):
         vec2_start_x, vec2_start_y = self.get_target_pos_from_tracker_name(start2)
         vec2_end_x, vec2_end_y = self.get_target_pos_from_tracker_name(end2)
 
-        vec1_angle = angle_vec([vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y])
-        vec2_angle = angle_vec([vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y])
+        vec1_angle = angle_vec(
+            [[vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y]]
+        )[0]
+        vec2_angle = angle_vec(
+            [[vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y]]
+        )[0]
 
         vec1.setData(
             [vec1_start_x, vec1_end_x],
@@ -825,39 +837,36 @@ class FrameWidget(QtWidgets.QWidget):
         i = self.trackers["name"].index(name)
         roi = self.trackers["roi"][i]
         target = self.trackers["target"][i]
+        offset = self.trackers["offset"][i]
         children = self.trackers["children"][i]
 
-        bbox_pos = bbox[:2]
-        bbox_size = bbox[2:]
-        roi.blockSignals(True)
-        roi.setPos(bbox_pos)
-        roi.setSize(bbox_size)
-        roi.blockSignals(False)
+        if np.isnan(bbox).any() or np.isnan(target_pos).any():
+            roi.blockSignals(True)
+            target.blockSignals(True)
+            roi.setPos((0, 0))
+            target.setPos((offset[0], offset[1]))
+            roi.blockSignals(False)
+            target.blockSignals(False)
+        else:
+            bbox_pos = bbox[:2]
+            bbox_size = bbox[2:]
+            roi.blockSignals(True)
+            roi.setPos(bbox_pos)
+            roi.setSize(bbox_size)
+            roi.blockSignals(False)
 
-        target.blockSignals(True)
-        target.setPos(target_pos)
-        target.blockSignals(False)
+            target.blockSignals(True)
+            target.setPos(target_pos)
+            target.blockSignals(False)
+
+            self.trackers["offset"][i] = [
+                round(a) for a in target.pos() - self.calc_centre_roi(roi)
+            ]
 
         if len(children) > 0:
             for child_name, child_type in children:
                 if child_type == "angle":
                     self.update_angle_item(child_name)
-
-        self.trackers["offset"][i] = [
-            round(a) for a in target.pos() - self.calc_centre_roi(roi)
-        ]
-
-    def hide_tracker(self, name):
-        i = self.trackers["name"].index(name)
-        roi = self.trackers["roi"][i]
-        target = self.trackers["target"][i]
-
-        roi.blockSignals(True)
-        target.blockSignals(True)
-        roi.setPos((0, 0))
-        target.setPos((0, 0))
-        roi.blockSignals(False)
-        target.blockSignals(False)
 
     def show_trajectory(self, name, frame_no, target):
         i = self.trackers["name"].index(name)
@@ -956,8 +965,6 @@ class MouseModes(Enum):
 
 
 if __name__ == "__main__":
-    import numpy as np
-
     black_img = np.zeros([100, 100, 3], dtype=np.uint8)
 
     app = QtWidgets.QApplication([])
@@ -965,8 +972,8 @@ if __name__ == "__main__":
     widget.set_image(black_img)
     # widget.set_mouse_mode("add_tracker")
 
-    widget.add_tracker("test1", (20, 30), (5, 5), (0, 0), "green", "")
-    widget.add_tracker("test2", (40, 20), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
     widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
     widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
 

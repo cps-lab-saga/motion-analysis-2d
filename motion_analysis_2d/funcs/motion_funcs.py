@@ -3,16 +3,14 @@ from scipy import signal
 
 
 def angle_vec(vec1):
-    mag1 = np.linalg.norm(vec1)
-    vec1_hat = vec1 / mag1
+    mag1 = np.linalg.norm(vec1, axis=1)
+    vec1_hat = vec1 / mag1.reshape(-1, 1)
     vec2_hat = np.array([1, 0])
     dot_product = np.dot(vec1_hat, vec2_hat)
     cross_product = np.cross(vec1_hat, vec2_hat)
     angle = np.degrees(np.arccos(dot_product))
-    if cross_product < 0:
-        return -angle
-    else:
-        return angle
+    angle[cross_product < 0] = -angle[cross_product < 0]
+    return angle
 
 
 def angle_between(vec1, vec2):
