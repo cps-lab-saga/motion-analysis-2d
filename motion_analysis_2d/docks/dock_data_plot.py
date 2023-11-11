@@ -82,6 +82,18 @@ class DataPlotDock(BaseDock):
         self.plot_widgets["Trackers"].update_line("x", name, target[:, 0])
         self.plot_widgets["Trackers"].update_line("y", name, target[:, 1])
 
+    def add_angle(self, name, color=None):
+        self.angles[name] = {
+            "θ": self.plot_widgets["Angles"].add_line("θ", name, color),
+        }
+
+    def remove_angle(self, name):
+        self.angles.pop(name, None)
+        self.plot_widgets["Angles"].remove_line("θ", name)
+
+    def update_angle(self, name, angle):
+        self.plot_widgets["Angles"].update_line("θ", name, angle[:, 0])
+
     def make_button(self, text):
         button = QtWidgets.QPushButton(text, self)
         button.setFlat(True)

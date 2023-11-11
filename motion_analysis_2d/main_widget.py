@@ -383,7 +383,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def remove_angle(self, name):
         self.docks["Items"].remove_row(name, "angle")
-        # self.docks["DataPlot"].remove_marker(name)
+        self.docks["DataPlot"].remove_angle(name)
 
     def save_data(self):
         if self.stream_worker is not None:

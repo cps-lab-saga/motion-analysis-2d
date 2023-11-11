@@ -187,6 +187,10 @@ class FrameWidget(QtWidgets.QWidget):
                     if isinstance(item, ChordItem):
                         self.remove_angle(item)
                         break
+                    elif isinstance(item, pg.PlotCurveItem):
+                        if item in self.angles["vec1"] or item in self.angles["vec2"]:
+                            self.remove_angle(item)
+                            break
 
         self.update_instructions()
 
@@ -651,16 +655,18 @@ class FrameWidget(QtWidgets.QWidget):
         vec2_start_x, vec2_start_y = self.get_target_pos_from_tracker_name(start2)
         vec2_end_x, vec2_end_y = self.get_target_pos_from_tracker_name(end2)
 
-        vec1 = self.fig.plot(
+        vec1 = pg.PlotCurveItem(
             [vec1_start_x, vec1_end_x],
             [vec1_start_y, vec1_end_y],
             pen=pen,
         )
-        vec2 = self.fig.plot(
+        self.fig.addItem(vec1)
+        vec2 = pg.PlotCurveItem(
             [vec2_start_x, vec2_end_x],
             [vec2_start_y, vec2_end_y],
             pen=pen,
         )
+        self.fig.addItem(vec2)
         vec1_angle = angle_vec([vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y])
         vec2_angle = angle_vec([vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y])
 
@@ -735,6 +741,13 @@ class FrameWidget(QtWidgets.QWidget):
     def remove_angle(self, item):
         if isinstance(item, ChordItem):
             i = self.angles["chord"].index(item)
+        elif isinstance(item, pg.PlotCurveItem):
+            if item in self.angles["vec1"]:
+                i = self.angles["vec1"].index(item)
+            elif item in self.angles["vec2"]:
+                i = self.angles["vec2"].index(item)
+            else:
+                return
         else:
             raise TypeError("Unrecognized item type")
 
