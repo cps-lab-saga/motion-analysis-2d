@@ -2,7 +2,7 @@ import pyqtgraph as pg
 from pyqtgraph import QtCore, QtGui
 
 
-class ChordItem(pg.GraphicsObject):
+class PieItem(pg.GraphicsObject):
     def __init__(
         self, center=(0, 0), radius=1, start_angle=0, span_angle=0, pen=None, brush=None
     ):
@@ -50,7 +50,7 @@ class ChordItem(pg.GraphicsObject):
 
 
 if __name__ == "__main__":
-    item = ChordItem((10, 10), 10, pen=pg.mkPen("w"), brush=pg.mkBrush("r"))
+    item = PieItem((10, 10), 10, pen=pg.mkPen("w"), brush=pg.mkBrush("r"))
     item.setData(100, 50)
     plt = pg.plot()
     plt.addItem(item)

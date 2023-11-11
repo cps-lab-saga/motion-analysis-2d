@@ -7,7 +7,7 @@ import numpy as np
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import ChordItem, tab10_rgb
+from motion_analysis_2d.custom_components import PieItem, tab10_rgb
 from motion_analysis_2d.funcs import is_json_file, prevent_name_collision, angle_vec
 
 
@@ -53,7 +53,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.remove_angle_instructions = "Select angle to remove."
 
         self.traj_len = 30
-        self.chord_radius = 30
+        self.pie_radius = 30
         self.frame_label_text_color = (255, 255, 255)
         self.frame_label_fill_color = (0, 0, 0, 150)
         self.roi_label_fill_color = (0, 0, 0, 150)
@@ -80,7 +80,7 @@ class FrameWidget(QtWidgets.QWidget):
             "name": [],
             "vec1": [],
             "vec2": [],
-            "chord": [],
+            "pie": [],
             "label": [],
             "start1": [],
             "end1": [],
@@ -185,7 +185,7 @@ class FrameWidget(QtWidgets.QWidget):
                 pos = evt.scenePos()
                 items = self.fig.scene().items(pos)
                 for item in items:
-                    if isinstance(item, ChordItem):
+                    if isinstance(item, PieItem):
                         self.remove_angle(item)
                         break
                     elif isinstance(item, pg.PlotCurveItem):
@@ -495,8 +495,8 @@ class FrameWidget(QtWidgets.QWidget):
             for child_name, child_type in children:
                 if child_type == "angle":
                     child_i = self.angles["name"].index(child_name)
-                    chord = self.angles["chord"][child_i]
-                    self.remove_angle(chord)
+                    pie = self.angles["pie"][child_i]
+                    self.remove_angle(pie)
 
         for item in self.trackers.values():
             item.pop(i)
@@ -678,15 +678,15 @@ class FrameWidget(QtWidgets.QWidget):
             [[vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y]]
         )[0]
 
-        chord = ChordItem(
+        pie = PieItem(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.chord_radius,
+            radius=self.pie_radius,
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
             pen=pen,
             brush=brush,
         )
-        self.fig.addItem(chord)
+        self.fig.addItem(pie)
 
         label = pg.TextItem(
             name,
@@ -694,13 +694,13 @@ class FrameWidget(QtWidgets.QWidget):
             color=pen.color(),
             fill=self.roi_label_fill_color,
         )
-        label.setPos(round(vec1_start_x) + self.chord_radius, round(vec1_start_y))
+        label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
         self.fig.addItem(label)
 
         self.angles["name"].append(name)
         self.angles["vec1"].append(vec1)
         self.angles["vec2"].append(vec2)
-        self.angles["chord"].append(chord)
+        self.angles["pie"].append(pie)
         self.angles["label"].append(label)
         self.angles["start1"].append(start1)
         self.angles["end1"].append(end1)
@@ -718,7 +718,7 @@ class FrameWidget(QtWidgets.QWidget):
         end2 = self.angles["end2"][i]
         vec1 = self.angles["vec1"][i]
         vec2 = self.angles["vec2"][i]
-        chord = self.angles["chord"][i]
+        pie = self.angles["pie"][i]
         label = self.angles["label"][i]
 
         vec1_start_x, vec1_start_y = self.get_target_pos_from_tracker_name(start1)
@@ -742,17 +742,17 @@ class FrameWidget(QtWidgets.QWidget):
             [vec2_start_y, vec2_end_y],
         )
 
-        chord.setData(
+        pie.setData(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.chord_radius,
+            radius=self.pie_radius,
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
         )
-        label.setPos(round(vec1_start_x) + self.chord_radius, round(vec1_start_y))
+        label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
 
     def remove_angle(self, item):
-        if isinstance(item, ChordItem):
-            i = self.angles["chord"].index(item)
+        if isinstance(item, PieItem):
+            i = self.angles["pie"].index(item)
         elif isinstance(item, pg.PlotCurveItem):
             if item in self.angles["vec1"]:
                 i = self.angles["vec1"].index(item)
@@ -770,7 +770,7 @@ class FrameWidget(QtWidgets.QWidget):
         end2 = self.angles["end2"][i]
         self.fig.removeItem(self.angles["vec1"][i])
         self.fig.removeItem(self.angles["vec2"][i])
-        self.fig.removeItem(self.angles["chord"][i])
+        self.fig.removeItem(self.angles["pie"][i])
         self.fig.removeItem(self.angles["label"][i])
 
         for n in [start1, end1, start2, end2]:
