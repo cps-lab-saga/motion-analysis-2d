@@ -20,7 +20,7 @@ from .intrinsic_calc import (
     undistort,
     get_undistort_funcs,
 )
-from .load_extrinsic import load_extrinsic
+from .load_extrinsic import load_extrinsic, save_warp_points
 from .load_intrinsic import load_intrinsic
 from .load_shortcut_keys import load_shortcut_keys
 from .motion_funcs import angle_vec

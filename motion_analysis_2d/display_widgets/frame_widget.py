@@ -8,6 +8,7 @@ import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import PieItem, ArrowItem, tab10_rgb
+from motion_analysis_2d.dialogs import PointDialog
 from motion_analysis_2d.funcs import is_json_file, prevent_name_collision, angle_vec
 
 
@@ -25,6 +26,7 @@ class FrameWidget(QtWidgets.QWidget):
     distance_moved = Signal(str, str, str, tuple)
     distance_removed = Signal(str)
     marker_file_dropped = Signal(object)
+    new_warp_points_selected = Signal(list, list)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -63,6 +65,11 @@ class FrameWidget(QtWidgets.QWidget):
         self.remove_angle_instructions = "Select angle to remove."
         self.remove_distance_instructions = "Select distance to remove."
 
+        self.select_warp_points_instructions = (
+            "Add calibration points to warp perspective: "
+        )
+        self.warp_points_steps_index = 0
+
         self.traj_len = 30
         self.pie_radius = 30
         self.frame_label_text_color = (255, 255, 255)
@@ -74,6 +81,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.new_item_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.trajectory_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.crosshair_pen = pg.mkPen(color=tab10_rgb["cyan"], width=1)
+        self.warp_point_brush = pg.mkBrush(color=tab10_rgb["blue"])
 
         self.trackers = {
             "name": [],
@@ -147,6 +155,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.temp_tracker = None
         self.temp_angle = None
         self.temp_distance = None
+        self.temp_warp_points = None
 
         self.plot_widget.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot_widget.scene().sigMouseMoved.connect(self.mouse_moved)
@@ -240,6 +249,13 @@ class FrameWidget(QtWidgets.QWidget):
                     if isinstance(item, ArrowItem):
                         self.remove_distance(item)
                         break
+
+        elif self.mouse_mode == MouseModes.SELECT_WARP_POINTS:
+            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
+                if self.warp_points_steps_index == 0:
+                    self.start_new_warp_points(evt.scenePos())
+                else:
+                    self.add_warp_point(evt.scenePos())
 
         self.update_instructions()
 
@@ -335,6 +351,10 @@ class FrameWidget(QtWidgets.QWidget):
             self.show_instruction(self.add_distance_steps[self.distance_steps_index])
         elif self.mouse_mode == MouseModes.REMOVE_DISTANCE:
             self.show_instruction(self.remove_distance_instructions)
+        elif self.mouse_mode == MouseModes.SELECT_WARP_POINTS:
+            self.show_instruction(
+                self.select_warp_points_instructions + f"{self.warp_points_steps_index}"
+            )
         else:
             self.hide_instruction()
 
@@ -351,6 +371,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.tracker_steps_index = 0
         self.angle_steps_index = 0
         self.distance_steps_index = 0
+        self.warp_points_steps_index = 0
 
         self.update_instructions()
 
@@ -479,7 +500,12 @@ class FrameWidget(QtWidgets.QWidget):
     def remove_temp_distance(self):
         if self.temp_distance is not None:
             self.fig.removeItem(self.temp_distance["arrow"])
-            self.temp_angle = None
+            self.temp_distance = None
+
+    def remove_warp_points(self):
+        if self.temp_warp_points is not None:
+            self.fig.removeItem(self.temp_warp_points["plot_points"])
+            self.temp_warp_points = None
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
@@ -1163,6 +1189,76 @@ class FrameWidget(QtWidgets.QWidget):
         else:
             traj.setData(target[:frame_no, 0], target[:frame_no, 1])
 
+    def start_new_warp_points(self, pos):
+        mouse_point = self.fig.vb.mapSceneToView(pos)
+        x = round(mouse_point.x())
+        y = round(mouse_point.y())
+        x, y = self.keep_point_in_frame(x, y)
+
+        img_point = (x, y)
+        plot_points = self.fig.plot(
+            np.array([img_point]),
+            pen=pg.mkPen(None),
+            symbolBrush=self.warp_point_brush,
+            symbol="d",
+        )
+        dialog = PointDialog(img_point, "Point 1")
+        dialog.exec()
+        if dialog.result():
+            obj_points, finish = dialog.get_result()
+            self.temp_warp_points = {
+                "plot_points": plot_points,
+                "img_points": [img_point],
+                "obj_points": [obj_points],
+            }
+            self.next_warp_point_step()
+            if finish:
+                self.emit_new_warp_points()
+        else:
+            self.fig.removeItem(plot_points)
+
+    def add_warp_point(self, pos):
+        mouse_point = self.fig.vb.mapSceneToView(pos)
+        x = round(mouse_point.x())
+        y = round(mouse_point.y())
+        x, y = self.keep_point_in_frame(x, y)
+
+        img_point = (x, y)
+        self.temp_warp_points["plot_points"].setData(
+            np.array(self.temp_warp_points["img_points"] + [img_point])
+        )
+
+        dialog = PointDialog(
+            img_point, f"Point {len(self.temp_warp_points['img_points']) + 1}"
+        )
+        dialog.exec()
+        if dialog.result():
+            obj_points, finish = dialog.get_result()
+            self.temp_warp_points["img_points"].append((x, y))
+            self.temp_warp_points["obj_points"].append(obj_points)
+            self.next_warp_point_step()
+            if finish:
+                self.emit_new_warp_points()
+        else:
+            self.temp_warp_points["plot_points"].setData(
+                np.array(self.temp_warp_points["img_points"])
+            )
+
+    def next_warp_point_step(self):
+        self.warp_points_steps_index += 1
+
+    def emit_new_warp_points(self):
+        if self.temp_warp_points is None:
+            return
+
+        self.warp_points_steps_index = 0
+        img_points = self.temp_warp_points["img_points"]
+        obj_points = self.temp_warp_points["obj_points"]
+        self.fig.removeItem(self.temp_warp_points["plot_points"])
+
+        self.temp_warp_points = None
+        self.new_warp_points_selected.emit(img_points, obj_points)
+
     def animate_crosshairs(self, pos):
         """
         animate crosshairs and display x and y values
@@ -1248,6 +1344,7 @@ class MouseModes(Enum):
     REMOVE_ANGLE = 4
     ADD_DISTANCE = 5
     REMOVE_DISTANCE = 6
+    SELECT_WARP_POINTS = 7
 
 
 if __name__ == "__main__":
@@ -1258,16 +1355,18 @@ if __name__ == "__main__":
     widget.set_image(black_img)
     # widget.set_mouse_mode("add_tracker")
 
-    widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
-    widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
-    widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
-    widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
+    # widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
+    # widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
+    # widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
+    # widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
 
     # widget.set_mouse_mode("add_angle")
     # widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
 
     # widget.set_mouse_mode("add_distance")
-    widget.add_distance("distance1", "test1", "test2", "green")
+    # widget.add_distance("distance1", "test1", "test2", "green")
+
+    widget.set_mouse_mode("select_warp_points")
 
     widget.show()
 

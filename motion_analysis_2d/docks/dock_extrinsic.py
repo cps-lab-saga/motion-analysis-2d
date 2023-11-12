@@ -12,14 +12,16 @@ from motion_analysis_2d.funcs import load_extrinsic
 
 class LoadExtrinsicDock(BaseDock):
     settings_updated = Signal()
+    select_points_started = Signal()
+    select_points_finished = Signal()
 
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Extrinsic Calibration")
+        self.setWindowTitle("Warp Perspective")
 
         self.cal_ok = False
-        self.M, self.mask, self.output_size = None, None, None
+        self.M, self.mask, self.output_size, self.scaling = None, None, None, None
 
         row = QtWidgets.QHBoxLayout()
         self.dock_layout.addLayout(row)
@@ -49,6 +51,15 @@ class LoadExtrinsicDock(BaseDock):
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
         row.insertWidget(0, self.cal_status_label)
 
+        self.select_points_button = QtWidgets.QPushButton(self)
+        # self.select_points_button.setText("Select Points")
+        self.select_points_button.setToolTip("Select calibration points from frame.")
+        self.select_points_button.setFlat(True)
+        self.select_points_button.setCheckable(True)
+        self.select_points_button.setIcon(qta.icon("mdi6.cursor-default-click"))
+        self.select_points_button.toggled.connect(self.select_points_button_toggled)
+        row.addWidget(self.select_points_button)
+
         self.dock_layout.addStretch()
 
     def set_dir(self):
@@ -66,12 +77,12 @@ class LoadExtrinsicDock(BaseDock):
         self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
 
-        self.M, self.mask, self.output_size = None, None, None
+        self.M, self.mask, self.output_size, self.scaling = None, None, None, None
 
     def update_extrinsic_cal(self):
         try:
             file_name = self.extrinsic_cal_file_edit.text()
-            self.M, self.mask, self.output_size = load_extrinsic(
+            self.M, self.mask, self.output_size, self.scaling = load_extrinsic(
                 Path(file_name).resolve()
             )
             self.set_cal_ok()
@@ -89,6 +100,18 @@ class LoadExtrinsicDock(BaseDock):
 
     def change_perspective(self, img):
         return cv.warpPerspective(img, self.M, self.output_size) if self.cal_ok else img
+
+    def select_points_button_toggled(self, checked):
+        if checked:
+            self.extrinsic_cal_file_edit.setText("")
+            self.select_points_started.emit()
+        else:
+            self.select_points_finished.emit()
+
+    def uncheck_select_points_button(self):
+        self.select_points_button.blockSignals(True)
+        self.select_points_button.setChecked(False)
+        self.select_points_button.blockSignals(False)
 
 
 if __name__ == "__main__":

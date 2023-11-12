@@ -16,7 +16,7 @@ class LoadIntrinsicDock(BaseDock):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Intrinsic Calibration")
+        self.setWindowTitle("Lens Distortion")
 
         self.cal_ok = False
         self.K = None

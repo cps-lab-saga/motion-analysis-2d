@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 from queue import Queue
 from time import sleep
 
@@ -26,6 +27,7 @@ from motion_analysis_2d.funcs import (
     load_tracking_data,
     export_csv,
     load_shortcut_keys,
+    save_warp_points,
 )
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
@@ -59,6 +61,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.distance_moved.connect(self.move_distance)
         self.frame_widget.distance_removed.connect(self.remove_distance)
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
+        self.frame_widget.new_warp_points_selected.connect(self.warp_points_selected)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.edit_controls = EditControls(self, "vertical")
@@ -94,6 +97,13 @@ class MainWidget(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.docks["Items"])
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.docks["DataPlot"])
         self.docks["Files"].video_file_changed.connect(self.video_file_changed)
+        self.docks["Intrinsic"].settings_updated.connect(self.frame_shape_changed)
+        self.docks["Extrinsic"].settings_updated.connect(self.frame_shape_changed)
+        self.docks["Extrinsic"].select_points_started.connect(self.start_select_points)
+        self.docks["Extrinsic"].select_points_finished.connect(
+            self.finish_select_points
+        )
+        self.docks["Extrinsic"].select_points_button.setDisabled(True)
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Tracking"].track_enabled.connect(self.track_enabled)
         self.docks["Tracking"].reset_trackers_button.clicked.connect(
@@ -160,6 +170,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.edit_controls.setDisabled(True)
         self.media_controls.set_seek_bar_value(0)
         self.media_controls.setDisabled(True)
+        self.docks["Extrinsic"].select_points_button.setDisabled(True)
         self.docks["Save"].autosave_button_toggled()
         self.docks["Items"].clear()
         self.docks["DataPlot"].clear()
@@ -177,6 +188,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.start_stream(path)
             self.edit_controls.setDisabled(False)
             self.media_controls.setDisabled(False)
+            self.docks["Extrinsic"].select_points_button.setDisabled(False)
             self.docks["Tracking"].track_button_toggled()
             self.docks["DataPlot"].set_frame_line_draggable(True)
             self.camera_frame_update_timer.start(30)
@@ -325,14 +337,18 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.set_mouse_mode("add_distance")
         elif mode == "remove_distance":
             self.frame_widget.set_mouse_mode("remove_distance")
+        elif mode == "select_warp_points":
+            self.frame_widget.set_mouse_mode("select_warp_points")
         else:
             self.frame_widget.remove_temp_tracker()
             self.frame_widget.remove_temp_angle()
             self.frame_widget.remove_temp_distance()
+            self.frame_widget.remove_warp_points()
             self.frame_widget.set_mouse_mode("normal")
 
     def set_normal_mode(self):
         self.edit_controls.set_normal_mode()
+        self.docks["Extrinsic"].uncheck_select_points_button()
 
     def show_item(self, item_type, name):
         if item_type == "tracker":
@@ -615,6 +631,29 @@ class MainWidget(QtWidgets.QMainWindow):
             self.autosave_timer.start(30000)  # every 30 s
         else:
             self.autosave_timer.stop()
+
+    def start_select_points(self):
+        if self.stream_worker is None:
+            return
+        self.edit_mode_changed("select_warp_points")
+
+    def finish_select_points(self):
+        if self.stream_worker is None:
+            return
+        self.frame_widget.emit_new_warp_points()
+        self.set_normal_mode()
+
+    def warp_points_selected(self, img_points, obj_points):
+        self.docks["Extrinsic"].uncheck_select_points_button()
+        path = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save points", "warp_points", "JSON (*.json)"
+        )
+        if path[1] == "JSON (*.json)":
+            save_path = Path(path[0]).resolve()
+            save_warp_points(img_points, obj_points, save_path)
+            self.docks["Extrinsic"].extrinsic_cal_file_edit.setText(
+                str(save_path.resolve())
+            )
 
     def gui_save(self, settings):
         for dock in self.docks.values():
