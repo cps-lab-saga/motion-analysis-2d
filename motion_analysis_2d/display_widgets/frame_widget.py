@@ -79,7 +79,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.instruction_label_fill_color = tab10_rgb["green"]
 
         self.new_item_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
-        self.trajectory_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.crosshair_pen = pg.mkPen(color=tab10_rgb["cyan"], width=1)
         self.warp_point_brush = pg.mkBrush(color=tab10_rgb["blue"])
 
@@ -1276,11 +1275,11 @@ class FrameWidget(QtWidgets.QWidget):
 
             xlim, ylim = self.fig.viewRange()
             self.v_crosshair_label.setText(str(x))
-            self.v_crosshair_label.setPos(x, ylim[1])
+            self.v_crosshair_label.setPos(x, ylim[0])
             self.h_crosshair_label.setText(str(y))
             self.h_crosshair_label.setPos(xlim[0], y)
             self.intensity_crosshair_label.setText(str(intensity))
-            self.intensity_crosshair_label.setPos(xlim[1], ylim[0])
+            self.intensity_crosshair_label.setPos(xlim[1], ylim[1])
 
     def toggle_crosshairs(self, evt):
         if self.show_crosshairs:
@@ -1366,7 +1365,7 @@ if __name__ == "__main__":
     # widget.set_mouse_mode("add_distance")
     # widget.add_distance("distance1", "test1", "test2", "green")
 
-    widget.set_mouse_mode("select_warp_points")
+    # widget.set_mouse_mode("select_warp_points")
 
     widget.show()
 
