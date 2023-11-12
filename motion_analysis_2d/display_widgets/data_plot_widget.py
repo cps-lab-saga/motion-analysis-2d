@@ -83,15 +83,32 @@ class DataPlotWidget(QtWidgets.QWidget):
             color = self.foreground_color
 
         line = plot_widget.plot(pen=color, name=label)
-        self.lines[param][label] = line
+        self.lines[param][label] = (line, True)
         return line
 
+    def show_line(self, param, label):
+        line, show = self.lines[param][label]
+        if show:
+            return
+        else:
+            self.plots[param].addItem(line)
+            self.lines[param][label] = (line, True)
+
+    def hide_line(self, param, label):
+        line, show = self.lines[param][label]
+        if not show:
+            return
+        else:
+            self.plots[param].removeItem(line)
+            self.lines[param][label] = (line, False)
+
     def remove_line(self, param, label):
-        line = self.lines[param].pop(label, None)
-        self.plots[param].removeItem(line)
+        line, show = self.lines[param].pop(label, None)
+        if show:
+            self.plots[param].removeItem(line)
 
     def update_line(self, param, label, data):
-        self.lines[param][label].setData(data)
+        self.lines[param][label][0].setData(data)
 
     def auto_range(self):
         plot_item = self.sender().parentItem()

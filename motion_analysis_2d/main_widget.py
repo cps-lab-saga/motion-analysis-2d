@@ -99,6 +99,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Tracking"].reset_trackers_button.clicked.connect(
             self.reset_trackers
         )
+        self.docks["Items"].show_item.connect(self.show_item)
+        self.docks["Items"].hide_item.connect(self.hide_item)
         self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
         self.docks["Save"].export_clicked.connect(self.export_data)
         self.docks["DataPlot"].frame_line_dragged.connect(
@@ -331,6 +333,28 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def set_normal_mode(self):
         self.edit_controls.set_normal_mode()
+
+    def show_item(self, item_type, name):
+        if item_type == "tracker":
+            self.frame_widget.show_tracker(name)
+            self.docks["DataPlot"].show_tracker(name)
+        elif item_type == "angle":
+            self.frame_widget.show_angle(name)
+            self.docks["DataPlot"].show_angle(name)
+        elif item_type == "distance":
+            self.frame_widget.show_distance(name)
+            self.docks["DataPlot"].show_distance(name)
+
+    def hide_item(self, item_type, name):
+        if item_type == "tracker":
+            self.frame_widget.hide_tracker(name)
+            self.docks["DataPlot"].hide_tracker(name)
+        elif item_type == "angle":
+            self.frame_widget.hide_angle(name)
+            self.docks["DataPlot"].hide_angle(name)
+        elif item_type == "distance":
+            self.frame_widget.hide_distance(name)
+            self.docks["DataPlot"].hide_distance(name)
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
         dialog = TrackerDialog(default_color=next(tab10_rgb_cycle))

@@ -73,6 +73,14 @@ class DataPlotDock(BaseDock):
             "y": self.plot_widgets["Trackers"].add_line("y", name, color),
         }
 
+    def show_tracker(self, name):
+        self.plot_widgets["Trackers"].show_line("x", name)
+        self.plot_widgets["Trackers"].show_line("y", name)
+
+    def hide_tracker(self, name):
+        self.plot_widgets["Trackers"].hide_line("x", name)
+        self.plot_widgets["Trackers"].hide_line("y", name)
+
     def remove_tracker(self, name):
         self.trackers.pop(name, None)
         self.plot_widgets["Trackers"].remove_line("x", name)
@@ -87,6 +95,12 @@ class DataPlotDock(BaseDock):
             "θ": self.plot_widgets["Angles"].add_line("θ", name, color),
         }
 
+    def show_angle(self, name):
+        self.plot_widgets["Angles"].show_line("θ", name)
+
+    def hide_angle(self, name):
+        self.plot_widgets["Angles"].hide_line("θ", name)
+
     def remove_angle(self, name):
         self.angles.pop(name, None)
         self.plot_widgets["Angles"].remove_line("θ", name)
@@ -99,6 +113,14 @@ class DataPlotDock(BaseDock):
             "x": self.plot_widgets["Distances"].add_line("x", name, color),
             "y": self.plot_widgets["Distances"].add_line("y", name, color),
         }
+
+    def show_distance(self, name):
+        self.plot_widgets["Distances"].show_line("x", name)
+        self.plot_widgets["Distances"].show_line("y", name)
+
+    def hide_distance(self, name):
+        self.plot_widgets["Distances"].hide_line("x", name)
+        self.plot_widgets["Distances"].hide_line("y", name)
 
     def remove_distance(self, name):
         self.distances.pop(name, None)

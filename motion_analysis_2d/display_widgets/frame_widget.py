@@ -85,6 +85,7 @@ class FrameWidget(QtWidgets.QWidget):
             "color": [],
             "tracker_type": [],
             "children": [],
+            "show": [],
         }
         self.angles = {
             "name": [],
@@ -97,6 +98,7 @@ class FrameWidget(QtWidgets.QWidget):
             "start2": [],
             "end2": [],
             "color": [],
+            "show": [],
         }
         self.distances = {
             "name": [],
@@ -105,6 +107,7 @@ class FrameWidget(QtWidgets.QWidget):
             "start": [],
             "end": [],
             "color": [],
+            "show": [],
         }
 
         self.plot_widget = pg.PlotWidget()
@@ -532,8 +535,29 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["color"].append(color)
         self.trackers["tracker_type"].append(tracker_type)
         self.trackers["children"].append([])
+        self.trackers["show"].append(True)
 
         self.tracker_added.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
+
+    def hide_tracker(self, name):
+        i = self.trackers["name"].index(name)
+        if not self.trackers["show"][i]:
+            return
+        else:
+            self.fig.removeItem(self.trackers["roi"][i])
+            self.fig.removeItem(self.trackers["target"][i])
+            self.fig.removeItem(self.trackers["traj"][i])
+            self.trackers["show"][i] = False
+
+    def show_tracker(self, name):
+        i = self.trackers["name"].index(name)
+        if self.trackers["show"][i]:
+            return
+        else:
+            self.fig.addItem(self.trackers["roi"][i])
+            self.fig.addItem(self.trackers["target"][i])
+            self.fig.addItem(self.trackers["traj"][i])
+            self.trackers["show"][i] = True
 
     def remove_tracker(self, item):
         if isinstance(item, pg.ROI):
@@ -545,9 +569,10 @@ class FrameWidget(QtWidgets.QWidget):
 
         name = self.trackers["name"][i]
         children = self.trackers["children"][i]
-        self.fig.removeItem(self.trackers["roi"][i])
-        self.fig.removeItem(self.trackers["target"][i])
-        self.fig.removeItem(self.trackers["traj"][i])
+        if self.trackers["show"][i]:
+            self.fig.removeItem(self.trackers["roi"][i])
+            self.fig.removeItem(self.trackers["target"][i])
+            self.fig.removeItem(self.trackers["traj"][i])
 
         if len(children) > 0:
             for child_name, child_type in children:
@@ -771,6 +796,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.angles["start2"].append(start2)
         self.angles["end2"].append(end2)
         self.angles["color"].append(color)
+        self.angles["show"].append(True)
 
         self.angle_added.emit(name, start1, end1, start2, end2, color)
 
@@ -818,6 +844,28 @@ class FrameWidget(QtWidgets.QWidget):
         if dragged:
             self.angle_moved.emit(name, start1, end1, start2, end2, color)
 
+    def hide_angle(self, name):
+        i = self.angles["name"].index(name)
+        if not self.angles["show"][i]:
+            return
+        else:
+            self.fig.removeItem(self.angles["vec1"][i])
+            self.fig.removeItem(self.angles["vec2"][i])
+            self.fig.removeItem(self.angles["pie"][i])
+            self.fig.removeItem(self.angles["label"][i])
+            self.angles["show"][i] = False
+
+    def show_angle(self, name):
+        i = self.angles["name"].index(name)
+        if self.angles["show"][i]:
+            return
+        else:
+            self.fig.addItem(self.angles["vec1"][i])
+            self.fig.addItem(self.angles["vec2"][i])
+            self.fig.addItem(self.angles["pie"][i])
+            self.fig.addItem(self.angles["label"][i])
+            self.angles["show"][i] = True
+
     def remove_angle(self, item):
         if isinstance(item, PieItem):
             i = self.angles["pie"].index(item)
@@ -836,10 +884,11 @@ class FrameWidget(QtWidgets.QWidget):
         end1 = self.angles["end1"][i]
         start2 = self.angles["start2"][i]
         end2 = self.angles["end2"][i]
-        self.fig.removeItem(self.angles["vec1"][i])
-        self.fig.removeItem(self.angles["vec2"][i])
-        self.fig.removeItem(self.angles["pie"][i])
-        self.fig.removeItem(self.angles["label"][i])
+        if self.angles["show"][i]:
+            self.fig.removeItem(self.angles["vec1"][i])
+            self.fig.removeItem(self.angles["vec2"][i])
+            self.fig.removeItem(self.angles["pie"][i])
+            self.fig.removeItem(self.angles["label"][i])
 
         for n in [start1, end1, start2, end2]:
             self.remove_children_from_tracker(n, name, "angle")
@@ -950,6 +999,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.distances["start"].append(start)
         self.distances["end"].append(end)
         self.distances["color"].append(color)
+        self.distances["show"].append(True)
 
         self.distance_added.emit(name, start, end, color)
 
@@ -969,6 +1019,24 @@ class FrameWidget(QtWidgets.QWidget):
 
         if dragged:
             self.distance_moved.emit(name, start, end, color)
+
+    def hide_distance(self, name):
+        i = self.distances["name"].index(name)
+        if not self.distances["show"][i]:
+            return
+        else:
+            self.fig.removeItem(self.distances["arrow"][i])
+            self.fig.removeItem(self.distances["label"][i])
+            self.distances["show"][i] = False
+
+    def show_distance(self, name):
+        i = self.distances["name"].index(name)
+        if self.distances["show"][i]:
+            return
+        else:
+            self.fig.addItem(self.distances["arrow"][i])
+            self.fig.addItem(self.distances["label"][i])
+            self.distances["show"][i] = True
 
     def remove_distance(self, item):
         if isinstance(item, ArrowItem):
