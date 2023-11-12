@@ -601,7 +601,11 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def export_data(self, path):
         try:
-            export_csv(path, self.tracking_worker.tracking_data)
+            export_csv(
+                path,
+                self.tracking_worker.tracking_data,
+                self.tracking_worker.analysis_data,
+            )
         except Exception as e:
             self.error_dialog(e)
 

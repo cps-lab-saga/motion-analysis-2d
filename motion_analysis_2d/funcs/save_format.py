@@ -60,16 +60,23 @@ def load_tracking_data(path):
     return tracker_properties, analysis_properties, tracking_data, current_frame
 
 
-def export_csv(path, tracking_data):
+def export_csv(path, tracking_data, analysis_data):
     header = ["frame_no", "time"]
     targets = []
+    angles = []
+    distances = []
     params = next(iter(tracking_data.values()))
     index = [np.expand_dims(params[x], axis=1) for x in header]
     for name, params in tracking_data.items():
         header.extend([f"{name}-x", f"{name}-y"])
         targets.append(params["target"])
-
-    data = np.concatenate(index + targets, axis=1)
+    for name, params in analysis_data["angle"].items():
+        header.extend([f"{name}-θ"])
+        angles.append(np.expand_dims(params["angle"], axis=1))
+    for name, params in analysis_data["distance"].items():
+        header.extend([f"{name}-x", f"{name}-y"])
+        distances.append(params["distance"])
+    data = np.concatenate(index + targets + angles + distances, axis=1)
 
     with open(path, mode="w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f, delimiter=",")
