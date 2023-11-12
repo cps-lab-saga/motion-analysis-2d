@@ -5,7 +5,7 @@ import numpy as np
 
 
 def save_tracking_data(
-    path, tracker_properties, analysis_properties, tracking_data, current_frame
+    path, tracker_properties, analysis_properties, tracking_data, current_frame, scaling
 ):
     save_data = {
         "tracker_properties": {},
@@ -23,6 +23,7 @@ def save_tracking_data(
         save_data["tracking_data"][tracker_name] = save_params
 
     save_data["current_frame"] = current_frame
+    save_data["scaling"] = scaling
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(save_data, f, sort_keys=False, indent=4)
@@ -60,7 +61,7 @@ def load_tracking_data(path):
     return tracker_properties, analysis_properties, tracking_data, current_frame
 
 
-def export_csv(path, tracking_data, analysis_data):
+def export_csv(path, tracking_data, analysis_data, scaling):
     header = ["frame_no", "time"]
     targets = []
     angles = []
@@ -69,13 +70,13 @@ def export_csv(path, tracking_data, analysis_data):
     index = [np.expand_dims(params[x], axis=1) for x in header]
     for name, params in tracking_data.items():
         header.extend([f"{name}-x", f"{name}-y"])
-        targets.append(params["target"])
+        targets.append(params["target"] / scaling)
     for name, params in analysis_data["angle"].items():
         header.extend([f"{name}-θ"])
         angles.append(np.expand_dims(params["angle"], axis=1))
     for name, params in analysis_data["distance"].items():
         header.extend([f"{name}-x", f"{name}-y"])
-        distances.append(params["distance"])
+        distances.append(params["distance"] / scaling)
     data = np.concatenate(index + targets + angles + distances, axis=1)
 
     with open(path, mode="w", encoding="utf-8", newline="") as f:

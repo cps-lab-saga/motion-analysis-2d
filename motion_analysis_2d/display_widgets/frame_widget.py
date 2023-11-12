@@ -40,6 +40,7 @@ class FrameWidget(QtWidgets.QWidget):
         )
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.scaling = 1
 
         self.show_crosshairs = False
         self.mouse_mode = MouseModes.NORMAL
@@ -312,6 +313,9 @@ class FrameWidget(QtWidgets.QWidget):
             self.frame_label.setText(
                 f"Frame: {frame_no}\n" f"Time: {time:.2f} s\n" f"FPS: {fps:.0f}\n"
             )
+
+    def update_scaling(self, scaling):
+        self.scaling = scaling
 
     def add_instruction_label(self):
         frame_label = pg.TextItem(
@@ -1273,12 +1277,17 @@ class FrameWidget(QtWidgets.QWidget):
             self.v_crosshair.setPos(x)
             self.h_crosshair.setPos(y)
 
+            x_real = x / self.scaling
+            y_real = y / self.scaling
+
             xlim, ylim = self.fig.viewRange()
-            self.v_crosshair_label.setText(str(x))
+            self.v_crosshair_label.setText(f"{x_real:.4g}")
             self.v_crosshair_label.setPos(x, ylim[0])
-            self.h_crosshair_label.setText(str(y))
+            self.h_crosshair_label.setText(f"{y_real:.4g}")
             self.h_crosshair_label.setPos(xlim[0], y)
-            self.intensity_crosshair_label.setText(str(intensity))
+            self.intensity_crosshair_label.setText(
+                "R: {}, G: {}, B: {}".format(*intensity)
+            )
             self.intensity_crosshair_label.setPos(xlim[1], ylim[1])
 
     def toggle_crosshairs(self, evt):

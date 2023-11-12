@@ -189,6 +189,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.edit_controls.setDisabled(False)
             self.media_controls.setDisabled(False)
             self.docks["Extrinsic"].select_points_button.setDisabled(False)
+            self.frame_widget.update_scaling(self.docks["Extrinsic"].scaling)
             self.docks["Tracking"].track_button_toggled()
             self.docks["DataPlot"].set_frame_line_draggable(True)
             self.camera_frame_update_timer.start(30)
@@ -285,7 +286,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 )
                 self.docks["DataPlot"].update_tracker(
                     name,
-                    tracking_data["target"],
+                    tracking_data["target"] / self.docks["Extrinsic"].scaling,
                 )
             for name, angle_data in self.tracking_worker.analysis_data["angle"].items():
                 self.docks["DataPlot"].update_angle(
@@ -297,7 +298,7 @@ class MainWidget(QtWidgets.QMainWindow):
             ].items():
                 self.docks["DataPlot"].update_distance(
                     name,
-                    distance_data["distance"],
+                    distance_data["distance"] / self.docks["Extrinsic"].scaling,
                 )
 
             self.media_controls.set_seek_bar_value(self.tracking_worker.frame_no)
@@ -313,6 +314,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def frame_shape_changed(self):
         if self.stream_worker is not None:
+            self.frame_widget.update_scaling(self.docks["Extrinsic"].scaling)
             self.stream_worker.read_current_frame()
             self.update_frame_view()
             self.frame_widget.frame_shape_changed()
@@ -503,6 +505,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 },
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.frame_no,
+                self.docks["Extrinsic"].scaling,
             )
 
     def load_data(self, path):
@@ -621,6 +624,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 path,
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.analysis_data,
+                self.docks["Extrinsic"].scaling,
             )
         except Exception as e:
             self.error_dialog(e)

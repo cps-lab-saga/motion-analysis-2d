@@ -24,12 +24,12 @@ class PointDialog(QtWidgets.QDialog):
 
         self.x_spinbox = QtWidgets.QDoubleSpinBox(self)
         self.x_spinbox.setRange(-(10**5), 10**5)
-        self.x_spinbox.setSuffix(" mm")
+        self.x_spinbox.setSuffix(" m")
         self.form_layout.addRow("Real X: ", self.x_spinbox)
 
         self.y_spinbox = QtWidgets.QDoubleSpinBox(self)
         self.y_spinbox.setRange(-(10**5), 10**5)
-        self.y_spinbox.setSuffix(" mm")
+        self.y_spinbox.setSuffix(" m")
         self.form_layout.addRow("Real Y: ", self.y_spinbox)
 
         self.main_layout.addStretch()

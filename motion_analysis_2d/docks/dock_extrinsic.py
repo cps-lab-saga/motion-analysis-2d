@@ -21,7 +21,7 @@ class LoadExtrinsicDock(BaseDock):
         self.setWindowTitle("Warp Perspective")
 
         self.cal_ok = False
-        self.M, self.mask, self.output_size, self.scaling = None, None, None, None
+        self.M, self.mask, self.output_size, self.scaling = None, None, None, 1
 
         row = QtWidgets.QHBoxLayout()
         self.dock_layout.addLayout(row)
@@ -77,7 +77,7 @@ class LoadExtrinsicDock(BaseDock):
         self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
 
-        self.M, self.mask, self.output_size, self.scaling = None, None, None, None
+        self.M, self.mask, self.output_size, self.scaling = None, None, None, 1
 
     def update_extrinsic_cal(self):
         try:
