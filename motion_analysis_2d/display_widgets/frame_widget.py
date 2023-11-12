@@ -126,7 +126,7 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.fig.addItem(self.im_item)
         self.fig.setAspectLocked()
-        self.fig.invertY(True)
+        # self.fig.invertY(True)
         self.fig.setMenuEnabled(False)
         self.fig.setLabel("left", "Pixels")
         self.fig.setLabel("bottom", "Pixels")

@@ -88,8 +88,8 @@ class StreamWorker(QtCore.QObject):
 
     def process_frame(self, frame):
         frame = self.intrinsic_cal.undistort_map(frame)
-        frame = self.extrinsic_cal.change_perspective(frame)
         frame = self.orient.orient_img(frame)
+        frame = self.extrinsic_cal.change_perspective(frame)
         return frame
 
     def move_frame_forwards(self, track=None):

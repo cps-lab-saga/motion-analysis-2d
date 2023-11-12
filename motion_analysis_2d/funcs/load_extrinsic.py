@@ -21,7 +21,7 @@ def save_warp_points(img_points, obj_points, file_path):
     save_data = {
         "corners_in": img_points,
         "corners_out": obj_points,
-        "output_size": np.flip(
+        "output_size": (
             np.array(obj_points).max(axis=0) - np.array(obj_points).min(axis=0)
         ).tolist(),
         "scaling": 1,
