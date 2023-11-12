@@ -53,5 +53,6 @@ if __name__ == "__main__":
     item = PieItem((10, 10), 10, pen=pg.mkPen("w"), brush=pg.mkBrush("r"))
     item.setData(100, 50)
     plt = pg.plot()
+    plt.setAspectLocked()
     plt.addItem(item)
     pg.exec()

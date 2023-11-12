@@ -60,7 +60,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.instruction_label_text_color = (255, 255, 255)
         self.instruction_label_fill_color = tab10_rgb["green"]
 
-        self.transparent_pen = pg.mkPen(color=(0, 0, 0, 0), width=0)
         self.new_item_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.trajectory_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
         self.crosshair_pen = pg.mkPen(color=tab10_rgb["cyan"], width=1)
@@ -319,8 +318,8 @@ class FrameWidget(QtWidgets.QWidget):
         target = pg.TargetItem(
             (target_x, target_y),
             size=10,
-            pen=self.transparent_pen,
-            brush=self.transparent_pen.color(),
+            pen=pg.mkPen(None),
+            brush=pg.mkBrush(None),
             movable=False,
         )
 
