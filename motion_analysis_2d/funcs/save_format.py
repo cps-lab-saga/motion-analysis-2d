@@ -4,9 +4,16 @@ import json
 import numpy as np
 
 
-def save_tracking_data(path, tracker_properties, tracking_data, current_frame):
-    save_data = {"tracker_properties": {}, "tracking_data": {}}
+def save_tracking_data(
+    path, tracker_properties, analysis_properties, tracking_data, current_frame
+):
+    save_data = {
+        "tracker_properties": {},
+        "analysis_properties": {},
+        "tracking_data": {},
+    }
     save_data["tracker_properties"].update(tracker_properties)
+    save_data["analysis_properties"].update(analysis_properties)
 
     for tracker_name, tracker_data in tracking_data.items():
         save_params = {}
@@ -26,6 +33,19 @@ def load_tracking_data(path):
         save_data = json.load(f)
 
     tracker_properties = save_data["tracker_properties"]
+    analysis_properties = save_data.get("analysis_properties")
+    if analysis_properties is None:
+        analysis_properties = {
+            "angle": {
+                "name": [],
+                "start1": [],
+                "end1": [],
+                "start2": [],
+                "end2": [],
+                "color": [],
+            },
+            "distance": {"name": [], "start": [], "end": [], "color": []},
+        }
 
     tracking_data = {}
     for tracker_name, tracker_data in save_data["tracking_data"].items():
@@ -37,7 +57,7 @@ def load_tracking_data(path):
 
     current_frame = save_data["current_frame"]
 
-    return tracker_properties, tracking_data, current_frame
+    return tracker_properties, analysis_properties, tracking_data, current_frame
 
 
 def export_csv(path, tracking_data):

@@ -18,9 +18,11 @@ class FrameWidget(QtWidgets.QWidget):
     tracker_removed = Signal(str)
     new_angle_suggested = Signal(str, str, str, str)
     angle_added = Signal(str, str, str, str, str, tuple)
+    angle_moved = Signal(str, str, str, str, str, tuple)
     angle_removed = Signal(str)
     new_distance_suggested = Signal(str, str)
     distance_added = Signal(str, str, str, tuple)
+    distance_moved = Signal(str, str, str, tuple)
     distance_removed = Signal(str)
     marker_file_dropped = Signal(object)
 
@@ -594,9 +596,9 @@ class FrameWidget(QtWidgets.QWidget):
         if len(children) > 0:
             for child_name, child_type in children:
                 if child_type == "angle":
-                    self.update_angle_item(child_name)
+                    self.update_angle_item(child_name, dragged=True)
                 elif child_type == "distance":
-                    self.update_distance_item(child_name)
+                    self.update_distance_item(child_name, dragged=True)
         target.blockSignals(False)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
@@ -618,9 +620,9 @@ class FrameWidget(QtWidgets.QWidget):
         if len(children) > 0:
             for child_name, child_type in children:
                 if child_type == "angle":
-                    self.update_angle_item(child_name)
+                    self.update_angle_item(child_name, dragged=True)
                 elif child_type == "distance":
-                    self.update_distance_item(child_name)
+                    self.update_distance_item(child_name, dragged=True)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
@@ -772,12 +774,13 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.angle_added.emit(name, start1, end1, start2, end2, color)
 
-    def update_angle_item(self, name):
+    def update_angle_item(self, name, dragged=False):
         i = self.angles["name"].index(name)
         start1 = self.angles["start1"][i]
         end1 = self.angles["end1"][i]
         start2 = self.angles["start2"][i]
         end2 = self.angles["end2"][i]
+        color = self.angles["color"][i]
         vec1 = self.angles["vec1"][i]
         vec2 = self.angles["vec2"][i]
         pie = self.angles["pie"][i]
@@ -811,6 +814,9 @@ class FrameWidget(QtWidgets.QWidget):
             span_angle=vec2_angle - vec1_angle,
         )
         label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
+
+        if dragged:
+            self.angle_moved.emit(name, start1, end1, start2, end2, color)
 
     def remove_angle(self, item):
         if isinstance(item, PieItem):
@@ -947,18 +953,22 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.distance_added.emit(name, start, end, color)
 
-    def update_distance_item(self, name):
+    def update_distance_item(self, name, dragged=False):
         i = self.distances["name"].index(name)
         start = self.distances["start"][i]
         end = self.distances["end"][i]
         arrow = self.distances["arrow"][i]
         label = self.distances["label"][i]
+        color = self.distances["color"][i]
 
         start_pos = self.get_target_pos_from_tracker_name(start)
         end_pos = self.get_target_pos_from_tracker_name(end)
 
         arrow.setData(start_pos, end_pos)
         label.setPos((start_pos + end_pos) / 2)
+
+        if dragged:
+            self.distance_moved.emit(name, start, end, color)
 
     def remove_distance(self, item):
         if isinstance(item, ArrowItem):
@@ -1042,8 +1052,13 @@ class FrameWidget(QtWidgets.QWidget):
         if np.isnan(bbox).any() or np.isnan(target_pos).any():
             roi.blockSignals(True)
             target.blockSignals(True)
-            roi.setPos((0, 0))
-            target.setPos((offset[0], offset[1]))
+            roi.setPos(
+                (
+                    self.im_item.pos()[0] + self.im_item.width(),
+                    i * roi.size()[1] * 2,
+                )
+            )
+            target.setPos((roi.pos()[0] + offset[0], roi.pos()[1] + offset[1]))
             roi.blockSignals(False)
             target.blockSignals(False)
         else:

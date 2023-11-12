@@ -52,9 +52,11 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.tracker_removed.connect(self.remove_tracker)
         self.frame_widget.new_angle_suggested.connect(self.angle_suggested)
         self.frame_widget.angle_added.connect(self.add_angle)
+        self.frame_widget.angle_moved.connect(self.move_angle)
         self.frame_widget.angle_removed.connect(self.remove_angle)
         self.frame_widget.new_distance_suggested.connect(self.distance_suggested)
         self.frame_widget.distance_added.connect(self.add_distance)
+        self.frame_widget.distance_moved.connect(self.move_distance)
         self.frame_widget.distance_removed.connect(self.remove_distance)
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
@@ -403,6 +405,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Items"].remove_row(name, "angle")
         self.docks["DataPlot"].remove_angle(name)
 
+    def move_angle(self, name, start1, end1, start2, end2, color):
+        self.tracking_worker.add_angle(name, start1, end1, start2, end2)
+
     def distance_suggested(self, start, end):
         dialog = DistanceDialog(default_color=next(tab10_rgb_cycle))
         dialog.exec()
@@ -430,6 +435,9 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Items"].remove_row(name, "distance")
         self.docks["DataPlot"].remove_distance(name)
 
+    def move_distance(self, name, start, end, color):
+        self.tracking_worker.add_distance(name, start, end)
+
     def save_data(self):
         if self.stream_worker is not None:
             video_path = self.stream_worker.path
@@ -441,12 +449,35 @@ class MainWidget(QtWidgets.QMainWindow):
                     for k, v in self.frame_widget.trackers.items()
                     if k in ["name", "offset", "color", "tracker_type"]
                 },
+                {
+                    "angle": {
+                        k: v
+                        for k, v in self.frame_widget.angles.items()
+                        if k in ["name", "start1", "end1", "start2", "end2", "color"]
+                    },
+                    "distance": {
+                        k: v
+                        for k, v in self.frame_widget.distances.items()
+                        if k in ["name", "start", "end", "color"]
+                    },
+                },
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.frame_no,
             )
 
     def load_data(self, path):
-        tracker_properties, tracking_data, current_frame = load_tracking_data(path)
+        (
+            tracker_properties,
+            analysis_properties,
+            tracking_data,
+            current_frame,
+        ) = load_tracking_data(path)
+
+        # move frame if current frame has no data
+        first_tracker = next(iter(tracking_data.values()))
+        if np.isnan(first_tracker["time"][current_frame]):
+            current_frame = np.argwhere(~np.isnan(first_tracker["time"])).max() - 1
+
         self.media_controls.seek_bar.setValue(current_frame)
         self.tracking_worker.set_tracking_data(tracking_data)
         for name, offset, color, tracker_type in zip(
@@ -455,38 +486,94 @@ class MainWidget(QtWidgets.QMainWindow):
             tracker_properties["color"],
             tracker_properties["tracker_type"],
         ):
-            bbox = tracking_data[name]["bbox"][current_frame].astype(np.int32)
+            bbox = tracking_data[name]["bbox"][current_frame]
+            if np.isnan(bbox).any():
+                i = np.argwhere(
+                    ~np.isnan(tracking_data[name]["bbox"]).any(axis=1)
+                ).min()
+                bbox = tracking_data[name]["bbox"][i]
 
             self.frame_widget.add_tracker(
                 name,
-                bbox[:2],
-                bbox[2:],
+                bbox[:2].astype(np.int_),
+                bbox[2:].astype(np.int_),
                 offset,
                 color,
                 tracker_type,
             )
 
-    def load_markers(self, path):
-        try:
-            tracker_properties, tracking_data, _ = load_tracking_data(path)
-            for name, offset, color, tracker_type in zip(
-                tracker_properties["name"],
-                tracker_properties["offset"],
-                tracker_properties["color"],
-                tracker_properties["tracker_type"],
-            ):
-                bbox = tracking_data[name]["bbox"][1].astype(np.int32)
+        angle_props = analysis_properties["angle"]
+        for args in zip(
+            angle_props["name"],
+            angle_props["start1"],
+            angle_props["end1"],
+            angle_props["start2"],
+            angle_props["end2"],
+            angle_props["color"],
+        ):
+            self.frame_widget.add_angle(*args)
 
-                self.frame_widget.add_tracker(
-                    name,
-                    bbox[:2],
-                    bbox[2:],
-                    offset,
-                    color,
-                    tracker_type,
-                )
-        except Exception as e:
-            self.error_dialog(f"Failed to load markers.\n{e}")
+        distance_props = analysis_properties["distance"]
+        for args in zip(
+            distance_props["name"],
+            distance_props["start"],
+            distance_props["end"],
+            distance_props["color"],
+        ):
+            self.frame_widget.add_distance(*args)
+
+    def load_markers(self, path):
+        if self.stream_worker is not None:
+            try:
+                (
+                    tracker_properties,
+                    analysis_properties,
+                    tracking_data,
+                    _,
+                ) = load_tracking_data(path)
+
+                for name, offset, color, tracker_type in zip(
+                    tracker_properties["name"],
+                    tracker_properties["offset"],
+                    tracker_properties["color"],
+                    tracker_properties["tracker_type"],
+                ):
+                    bbox = tracking_data[name]["bbox"][1]
+                    if np.isnan(bbox).any():
+                        i = np.argwhere(
+                            ~np.isnan(tracking_data[name]["bbox"]).any(axis=1)
+                        ).min()
+                        bbox = tracking_data[name]["bbox"][i]
+
+                    self.frame_widget.add_tracker(
+                        name,
+                        bbox[:2].astype(np.int_),
+                        bbox[2:].astype(np.int_),
+                        offset,
+                        color,
+                        tracker_type,
+                    )
+                angle_props = analysis_properties["angle"]
+                for args in zip(
+                    angle_props["name"],
+                    angle_props["start1"],
+                    angle_props["end1"],
+                    angle_props["start2"],
+                    angle_props["end2"],
+                    angle_props["color"],
+                ):
+                    self.frame_widget.add_angle(*args)
+
+                distance_props = analysis_properties["distance"]
+                for args in zip(
+                    distance_props["name"],
+                    distance_props["start"],
+                    distance_props["end"],
+                    distance_props["color"],
+                ):
+                    self.frame_widget.add_distance(*args)
+            except Exception as e:
+                self.error_dialog(f"Failed to load markers.\n{e}")
 
     def export_data(self, path):
         try:
