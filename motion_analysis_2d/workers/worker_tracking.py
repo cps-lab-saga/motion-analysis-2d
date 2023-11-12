@@ -92,6 +92,21 @@ class TrackingWorker(QtCore.QObject):
         angle_data[name]["angle"] = vec2_angle - vec1_angle
         self.mutex.unlock()
 
+    def add_distance(self, name, start, end):
+        self.mutex.lock()
+        distance_data = self.analysis_data["distance"]
+        if distance_data.get(name) is None:
+            distance_data[name] = {
+                "frame_no": np.arange(self.no_of_frames + 1),
+                "distance": np.full((self.no_of_frames + 1, 2), np.nan, dtype=float),
+                "trackers": (start, end),
+            }
+
+        distance_data[name]["distance"] = (
+            self.tracking_data[end]["target"] - self.tracking_data[start]["target"]
+        )
+        self.mutex.unlock()
+
     def reset_trackers(self):
         self.mutex.lock()
         for name, (_, offset, tracker_type) in self.trackers.items():
@@ -106,6 +121,16 @@ class TrackingWorker(QtCore.QObject):
         self.mutex.lock()
         self.tracking_data.pop(name, None)
         self.trackers.pop(name, None)
+        self.mutex.unlock()
+
+    def remove_angle(self, name):
+        self.mutex.lock()
+        self.analysis_data["angle"].pop(name, None)
+        self.mutex.unlock()
+
+    def remove_distance(self, name):
+        self.mutex.lock()
+        self.analysis_data["distance"].pop(name, None)
         self.mutex.unlock()
 
     def create_tracker(self, tracker_type):
@@ -167,6 +192,7 @@ class TrackingWorker(QtCore.QObject):
                 break
         else:
             self.update_angle(frame_no)
+            self.update_distance(frame_no)
 
         self.mutex.lock()
         self.frame_no = frame_no
@@ -192,6 +218,16 @@ class TrackingWorker(QtCore.QObject):
                 ]
             )[0]
             angle_data[name]["angle"][frame_no] = vec2_angle - vec1_angle
+
+    def update_distance(self, frame_no):
+        distance_data = self.analysis_data["distance"]
+        for name, data in distance_data.items():
+            start, end = data["trackers"]
+
+            distance_data[name]["distance"][frame_no] = (
+                self.tracking_data[end]["target"][frame_no]
+                - self.tracking_data[start]["target"][frame_no]
+            )
 
     def set_stop(self):
         self.stop_flag = True

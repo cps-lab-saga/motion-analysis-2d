@@ -7,7 +7,7 @@ import numpy as np
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import PieItem, tab10_rgb
+from motion_analysis_2d.custom_components import PieItem, ArrowItem, tab10_rgb
 from motion_analysis_2d.funcs import is_json_file, prevent_name_collision, angle_vec
 
 
@@ -19,6 +19,9 @@ class FrameWidget(QtWidgets.QWidget):
     new_angle_suggested = Signal(str, str, str, str)
     angle_added = Signal(str, str, str, str, str, tuple)
     angle_removed = Signal(str)
+    new_distance_suggested = Signal(str, str)
+    distance_added = Signal(str, str, str, tuple)
+    distance_removed = Signal(str)
     marker_file_dropped = Signal(object)
 
     def __init__(self, parent=None):
@@ -49,8 +52,14 @@ class FrameWidget(QtWidgets.QWidget):
             "Select tracker for end point of second vector.",
         )
         self.angle_steps_index = 0
+        self.add_distance_steps = (
+            "Select first tracker to measure distance.",
+            "Select second tracker to measure distance.",
+        )
+        self.distance_steps_index = 0
         self.remove_tracker_instructions = "Select tracker to remove."
         self.remove_angle_instructions = "Select angle to remove."
+        self.remove_distance_instructions = "Select distance to remove."
 
         self.traj_len = 30
         self.pie_radius = 30
@@ -85,6 +94,14 @@ class FrameWidget(QtWidgets.QWidget):
             "end1": [],
             "start2": [],
             "end2": [],
+            "color": [],
+        }
+        self.distances = {
+            "name": [],
+            "arrow": [],
+            "label": [],
+            "start": [],
+            "end": [],
             "color": [],
         }
 
@@ -124,6 +141,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.img = None
         self.temp_tracker = None
         self.temp_angle = None
+        self.temp_distance = None
 
         self.plot_widget.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot_widget.scene().sigMouseMoved.connect(self.mouse_moved)
@@ -192,6 +210,32 @@ class FrameWidget(QtWidgets.QWidget):
                             self.remove_angle(item)
                             break
 
+        elif self.mouse_mode == MouseModes.ADD_DISTANCE:
+            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
+                if self.distance_steps_index == 0:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.start_new_distance(item)
+                            break
+                elif self.distance_steps_index == 1:
+                    pos = evt.scenePos()
+                    items = self.fig.scene().items(pos)
+                    for item in items:
+                        if isinstance(item, pg.TargetItem):
+                            self.select_distance_tracker_end(item)
+                            break
+
+        elif self.mouse_mode == MouseModes.REMOVE_DISTANCE:
+            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
+                pos = evt.scenePos()
+                items = self.fig.scene().items(pos)
+                for item in items:
+                    if isinstance(item, ArrowItem):
+                        self.remove_distance(item)
+                        break
+
         self.update_instructions()
 
         # Double right click to toggle crosshairs
@@ -207,6 +251,9 @@ class FrameWidget(QtWidgets.QWidget):
                 self.shape_new_angle(pos, 1)
             elif self.angle_steps_index == 3:
                 self.shape_new_angle(pos, 2)
+        elif self.mouse_mode == MouseModes.ADD_DISTANCE:
+            if self.distance_steps_index == 1:
+                self.shape_new_distance(pos)
 
         self.animate_crosshairs(pos)
 
@@ -279,6 +326,10 @@ class FrameWidget(QtWidgets.QWidget):
             self.show_instruction(self.add_angle_steps[self.angle_steps_index])
         elif self.mouse_mode == MouseModes.REMOVE_ANGLE:
             self.show_instruction(self.remove_angle_instructions)
+        elif self.mouse_mode == MouseModes.ADD_DISTANCE:
+            self.show_instruction(self.add_distance_steps[self.distance_steps_index])
+        elif self.mouse_mode == MouseModes.REMOVE_DISTANCE:
+            self.show_instruction(self.remove_distance_instructions)
         else:
             self.hide_instruction()
 
@@ -294,6 +345,7 @@ class FrameWidget(QtWidgets.QWidget):
         # Reset steps
         self.tracker_steps_index = 0
         self.angle_steps_index = 0
+        self.distance_steps_index = 0
 
         self.update_instructions()
 
@@ -419,6 +471,11 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.temp_angle["vec2"])
             self.temp_angle = None
 
+    def remove_temp_distance(self):
+        if self.temp_distance is not None:
+            self.fig.removeItem(self.temp_distance["arrow"])
+            self.temp_angle = None
+
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
         pen = pg.mkPen(color=color, width=2)
@@ -507,6 +564,8 @@ class FrameWidget(QtWidgets.QWidget):
             return prevent_name_collision(name, self.trackers["name"])
         elif item_type == "angle":
             return prevent_name_collision(name, self.angles["name"])
+        elif item_type == "distance":
+            return prevent_name_collision(name, self.distances["name"])
 
     def frame_shape_changed(self):
         for roi in self.trackers["roi"]:
@@ -536,6 +595,8 @@ class FrameWidget(QtWidgets.QWidget):
             for child_name, child_type in children:
                 if child_type == "angle":
                     self.update_angle_item(child_name)
+                elif child_type == "distance":
+                    self.update_distance_item(child_name)
         target.blockSignals(False)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
@@ -558,6 +619,8 @@ class FrameWidget(QtWidgets.QWidget):
             for child_name, child_type in children:
                 if child_type == "angle":
                     self.update_angle_item(child_name)
+                elif child_type == "distance":
+                    self.update_distance_item(child_name)
 
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
@@ -780,6 +843,143 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.angle_removed.emit(name)
 
+    def start_new_distance(self, target_item):
+        x, y = target_item.pos()
+        i = self.trackers["target"].index(target_item)
+        start_name = self.trackers["name"][i]
+
+        arrow = ArrowItem(
+            start_pos=(x, y),
+            end_pos=(x, y),
+            arrow_width=42,
+            arrow_height=42,
+            stem_pen=self.new_item_pen,
+            arrow_pen=pg.mkPen(None),
+            arrow_brush=pg.mkBrush(color=self.new_item_pen.color()),
+        )
+        self.fig.addItem(arrow)
+
+        self.temp_distance = {
+            "arrow": arrow,
+            "start": start_name,
+            "end": None,
+        }
+
+        self.next_add_distance_step()
+
+    def select_distance_tracker_end(self, target_item):
+        i = self.trackers["target"].index(target_item)
+        name = self.trackers["name"][i]
+        self.temp_distance[f"end"] = name
+
+        start_name = self.temp_distance[f"start"]
+        start_pos = self.get_target_pos_from_tracker_name(start_name)
+
+        end_name = self.temp_distance[f"end"]
+        end_pos = self.get_target_pos_from_tracker_name(end_name)
+
+        self.temp_distance[f"arrow"].setData(start_pos, end_pos)
+        self.next_add_distance_step()
+
+    def shape_new_distance(self, pos):
+        start_name = self.temp_distance[f"start"]
+        arrow = self.temp_distance[f"arrow"]
+
+        start_pos = self.get_target_pos_from_tracker_name(start_name)
+
+        mouse_point = self.fig.vb.mapSceneToView(pos)
+        arrow.setData(start_pos.toTuple(), mouse_point.toTuple())
+        self.fig.update()
+
+    def next_add_distance_step(self):
+        if self.distance_steps_index >= len(self.add_distance_steps) - 1:
+            self.emit_new_distance_suggestion()
+            self.distance_steps_index = 0
+        else:
+            self.distance_steps_index += 1
+
+    def emit_new_distance_suggestion(self):
+        if self.temp_distance is None:
+            return
+
+        self.new_distance_suggested.emit(
+            self.temp_distance["start"],
+            self.temp_distance["end"],
+        )
+
+    def add_distance(self, name, start, end, color):
+        name = self.prevent_name_collision(name, item_type="distance")
+        pen = pg.mkPen(color=color, width=3)
+        brush = pg.mkBrush(color=color)
+
+        for n in [start, end]:
+            self.add_children_to_tracker(n, name, "distance")
+
+        start_pos = self.get_target_pos_from_tracker_name(start)
+        end_pos = self.get_target_pos_from_tracker_name(end)
+
+        arrow = ArrowItem(
+            start_pos=start_pos,
+            end_pos=end_pos,
+            arrow_width=42,
+            arrow_height=42,
+            stem_pen=pen,
+            arrow_pen=pg.mkPen(None),
+            arrow_brush=brush,
+        )
+        self.fig.addItem(arrow)
+
+        label = pg.TextItem(
+            name,
+            anchor=(0, 0.5),
+            color=pen.color(),
+            fill=self.roi_label_fill_color,
+        )
+        label.setPos((start_pos + end_pos) / 2)
+        self.fig.addItem(label)
+
+        self.distances["name"].append(name)
+        self.distances["arrow"].append(arrow)
+        self.distances["label"].append(label)
+        self.distances["start"].append(start)
+        self.distances["end"].append(end)
+        self.distances["color"].append(color)
+
+        self.distance_added.emit(name, start, end, color)
+
+    def update_distance_item(self, name):
+        i = self.distances["name"].index(name)
+        start = self.distances["start"][i]
+        end = self.distances["end"][i]
+        arrow = self.distances["arrow"][i]
+        label = self.distances["label"][i]
+
+        start_pos = self.get_target_pos_from_tracker_name(start)
+        end_pos = self.get_target_pos_from_tracker_name(end)
+
+        arrow.setData(start_pos, end_pos)
+        label.setPos((start_pos + end_pos) / 2)
+
+    def remove_distance(self, item):
+        if isinstance(item, ArrowItem):
+            i = self.distances["arrow"].index(item)
+        else:
+            raise TypeError("Unrecognized item type")
+
+        name = self.distances["name"][i]
+        start = self.distances["start"][i]
+        end = self.distances["end"][i]
+        self.fig.removeItem(self.distances["arrow"][i])
+        self.fig.removeItem(self.distances["label"][i])
+
+        for n in [start, end]:
+            self.remove_children_from_tracker(n, name, "distance")
+
+        for item in self.distances.values():
+            item.pop(i)
+
+        self.distance_removed.emit(name)
+
     def clear(self):
         for l in self.trackers.values():
             l.clear()
@@ -866,6 +1066,8 @@ class FrameWidget(QtWidgets.QWidget):
             for child_name, child_type in children:
                 if child_type == "angle":
                     self.update_angle_item(child_name)
+                elif child_type == "distance":
+                    self.update_distance_item(child_name)
 
     def show_trajectory(self, name, frame_no, target):
         i = self.trackers["name"].index(name)
@@ -961,6 +1163,8 @@ class MouseModes(Enum):
     REMOVE_TRACKER = 2
     ADD_ANGLE = 3
     REMOVE_ANGLE = 4
+    ADD_DISTANCE = 5
+    REMOVE_DISTANCE = 6
 
 
 if __name__ == "__main__":
@@ -977,7 +1181,11 @@ if __name__ == "__main__":
     widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
 
     # widget.set_mouse_mode("add_angle")
-    widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
+    # widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
+
+    # widget.set_mouse_mode("add_distance")
+    widget.add_distance("distance1", "test1", "test2", "green")
+
     widget.show()
 
     app.exec()

@@ -1,3 +1,4 @@
+from .arrow_item import ArrowItem
 from .badge_button import BadgeButton
 from .color_button import ColorButton
 from .dock_base import BaseDock

@@ -94,6 +94,21 @@ class DataPlotDock(BaseDock):
     def update_angle(self, name, angle):
         self.plot_widgets["Angles"].update_line("θ", name, angle)
 
+    def add_distance(self, name, color=None):
+        self.distances[name] = {
+            "x": self.plot_widgets["Distances"].add_line("x", name, color),
+            "y": self.plot_widgets["Distances"].add_line("y", name, color),
+        }
+
+    def remove_distance(self, name):
+        self.distances.pop(name, None)
+        self.plot_widgets["Distances"].remove_line("x", name)
+        self.plot_widgets["Distances"].remove_line("y", name)
+
+    def update_distance(self, name, distance):
+        self.plot_widgets["Distances"].update_line("x", name, distance[:, 0])
+        self.plot_widgets["Distances"].update_line("y", name, distance[:, 1])
+
     def make_button(self, text):
         button = QtWidgets.QPushButton(text, self)
         button.setFlat(True)

@@ -31,6 +31,7 @@ class PieItem(pg.GraphicsObject):
         p.setPen(self.pen)
         p.setBrush(self.brush)
         p.drawPie(self.rect, self.start_angle, self.span_angle)
+        p.end()
 
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)

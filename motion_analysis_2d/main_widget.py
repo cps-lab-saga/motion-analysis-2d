@@ -9,7 +9,7 @@ from PySide6 import QtGui
 from defs import QtCore, QtWidgets, project_root, log_file, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
-from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog
+from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog, DistanceDialog
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
     FilesDock,
@@ -50,10 +50,13 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.tracker_added.connect(self.add_tracker)
         self.frame_widget.tracker_moved.connect(self.move_tracker)
         self.frame_widget.tracker_removed.connect(self.remove_tracker)
-        self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.frame_widget.new_angle_suggested.connect(self.angle_suggested)
         self.frame_widget.angle_added.connect(self.add_angle)
         self.frame_widget.angle_removed.connect(self.remove_angle)
+        self.frame_widget.new_distance_suggested.connect(self.distance_suggested)
+        self.frame_widget.distance_added.connect(self.add_distance)
+        self.frame_widget.distance_removed.connect(self.remove_distance)
+        self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.edit_controls = EditControls(self, "vertical")
@@ -273,6 +276,13 @@ class MainWidget(QtWidgets.QMainWindow):
                     name,
                     angle_data["angle"],
                 )
+            for name, distance_data in self.tracking_worker.analysis_data[
+                "distance"
+            ].items():
+                self.docks["DataPlot"].update_distance(
+                    name,
+                    distance_data["distance"],
+                )
 
             self.media_controls.set_seek_bar_value(self.tracking_worker.frame_no)
             self.docks["DataPlot"].move_frame_line(self.tracking_worker.frame_no)
@@ -307,9 +317,14 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.set_mouse_mode("add_angle")
         elif mode == "remove_angle":
             self.frame_widget.set_mouse_mode("remove_angle")
+        elif mode == "add_distance":
+            self.frame_widget.set_mouse_mode("add_distance")
+        elif mode == "remove_distance":
+            self.frame_widget.set_mouse_mode("remove_distance")
         else:
             self.frame_widget.remove_temp_tracker()
             self.frame_widget.remove_temp_angle()
+            self.frame_widget.remove_temp_distance()
             self.frame_widget.set_mouse_mode("normal")
 
     def set_normal_mode(self):
@@ -384,8 +399,36 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["DataPlot"].add_angle(name, color)
 
     def remove_angle(self, name):
+        self.tracking_worker.remove_angle(name)
         self.docks["Items"].remove_row(name, "angle")
         self.docks["DataPlot"].remove_angle(name)
+
+    def distance_suggested(self, start, end):
+        dialog = DistanceDialog(default_color=next(tab10_rgb_cycle))
+        dialog.exec()
+        if dialog.result():
+            name, color = dialog.get_inputs()
+            self.frame_widget.remove_temp_distance()
+
+            self.frame_widget.add_distance(
+                name,
+                start,
+                end,
+                color,
+            )
+
+        else:
+            self.frame_widget.remove_temp_distance()
+
+    def add_distance(self, name, start, end, color):
+        self.tracking_worker.add_distance(name, start, end)
+        self.docks["Items"].add_row(name, color, "distance")
+        self.docks["DataPlot"].add_distance(name, color)
+
+    def remove_distance(self, name):
+        self.tracking_worker.remove_distance(name)
+        self.docks["Items"].remove_row(name, "distance")
+        self.docks["DataPlot"].remove_distance(name)
 
     def save_data(self):
         if self.stream_worker is not None:

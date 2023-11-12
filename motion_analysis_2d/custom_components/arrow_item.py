@@ -78,6 +78,8 @@ class ArrowItem(pg.GraphicsObject):
             ],
         )
 
+        p.end()
+
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)
 
