@@ -556,7 +556,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
         # move frame if current frame has no data
         first_tracker = next(iter(tracking_data.values()))
-        if np.isnan(first_tracker["time"][current_frame]):
+        if np.isnan(first_tracker["time"][current_frame - 1]):
             current_frame = np.argwhere(~np.isnan(first_tracker["time"])).max() - 1
 
         self.media_controls.seek_bar.setValue(current_frame)
@@ -567,7 +567,7 @@ class MainWidget(QtWidgets.QMainWindow):
             tracker_properties["color"],
             tracker_properties["tracker_type"],
         ):
-            bbox = tracking_data[name]["bbox"][current_frame]
+            bbox = tracking_data[name]["bbox"][current_frame - 1]
             if np.isnan(bbox).any():
                 i = np.argwhere(
                     ~np.isnan(tracking_data[name]["bbox"]).any(axis=1)
