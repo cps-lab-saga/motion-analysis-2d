@@ -107,8 +107,11 @@ class DataPlotWidget(QtWidgets.QWidget):
         if show:
             self.plots[param].removeItem(line)
 
-    def update_line(self, param, label, data):
-        self.lines[param][label][0].setData(data)
+    def update_line(self, param, label, y, x=None):
+        if x is None:
+            self.lines[param][label][0].setData(y)
+        else:
+            self.lines[param][label][0].setData(x, y)
 
     def auto_range(self):
         plot_item = self.sender().parentItem()

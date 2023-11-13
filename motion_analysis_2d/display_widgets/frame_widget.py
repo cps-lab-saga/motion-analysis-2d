@@ -1188,16 +1188,18 @@ class FrameWidget(QtWidgets.QWidget):
                 elif child_type == "distance":
                     self.update_distance_item(child_name)
 
-    def show_trajectory(self, name, frame_no, target):
+    def show_trajectory(self, name, current_frame_index, target):
         i = self.trackers["name"].index(name)
         traj = self.trackers["traj"][i]
-        if frame_no > self.traj_len:
+        if current_frame_index > self.traj_len:
             traj.setData(
-                target[frame_no - self.traj_len : frame_no, 0],
-                target[frame_no - self.traj_len : frame_no, 1],
+                target[current_frame_index - self.traj_len : current_frame_index, 0],
+                target[current_frame_index - self.traj_len : current_frame_index, 1],
             )
         else:
-            traj.setData(target[:frame_no, 0], target[:frame_no, 1])
+            traj.setData(
+                target[:current_frame_index, 0], target[:current_frame_index, 1]
+            )
 
     def start_new_warp_points(self, pos):
         mouse_point = self.fig.vb.mapSceneToView(pos)

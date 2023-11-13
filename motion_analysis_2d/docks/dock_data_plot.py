@@ -86,9 +86,9 @@ class DataPlotDock(BaseDock):
         self.plot_widgets["Trackers"].remove_line("x", name)
         self.plot_widgets["Trackers"].remove_line("y", name)
 
-    def update_tracker(self, name, target):
-        self.plot_widgets["Trackers"].update_line("x", name, target[:, 0])
-        self.plot_widgets["Trackers"].update_line("y", name, target[:, 1])
+    def update_tracker(self, name, target, frames=None):
+        self.plot_widgets["Trackers"].update_line("x", name, target[:, 0], frames)
+        self.plot_widgets["Trackers"].update_line("y", name, target[:, 1], frames)
 
     def add_angle(self, name, color=None):
         self.angles[name] = {
@@ -105,8 +105,8 @@ class DataPlotDock(BaseDock):
         self.angles.pop(name, None)
         self.plot_widgets["Angles"].remove_line("θ", name)
 
-    def update_angle(self, name, angle):
-        self.plot_widgets["Angles"].update_line("θ", name, angle)
+    def update_angle(self, name, angle, frames=None):
+        self.plot_widgets["Angles"].update_line("θ", name, angle, frames)
 
     def add_distance(self, name, color=None):
         self.distances[name] = {
@@ -127,9 +127,9 @@ class DataPlotDock(BaseDock):
         self.plot_widgets["Distances"].remove_line("x", name)
         self.plot_widgets["Distances"].remove_line("y", name)
 
-    def update_distance(self, name, distance):
-        self.plot_widgets["Distances"].update_line("x", name, distance[:, 0])
-        self.plot_widgets["Distances"].update_line("y", name, distance[:, 1])
+    def update_distance(self, name, distance, frames=None):
+        self.plot_widgets["Distances"].update_line("x", name, distance[:, 0], frames)
+        self.plot_widgets["Distances"].update_line("y", name, distance[:, 1], frames)
 
     def make_button(self, text):
         button = QtWidgets.QPushButton(text, self)

@@ -131,6 +131,7 @@ class MainWidget(QtWidgets.QMainWindow):
         )
         self.tracking_worker.moveToThread(self.tracking_thread)
         self.tracking_worker.add_tracker_failed.connect(self.add_tracker_failed)
+        self.tracking_worker.reached_end.connect(self.reached_end)
         self.tracking_worker.tracking_failed.connect(self.tracking_failed)
         self.tracking_thread.started.connect(self.tracking_worker.run)
         self.tracking_thread.start()
@@ -212,6 +213,9 @@ class MainWidget(QtWidgets.QMainWindow):
                 sleep(0.1)
                 QtCore.QCoreApplication.processEvents()
 
+    def reached_end(self):
+        print("end")
+
     def start_stream(self, path):
         self.stream_worker = StreamWorker(
             path,
@@ -268,7 +272,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def update_frame_view(self):
         if self.stream_worker is not None:
-            i = self.tracking_worker.frame_no
+            i = self.tracking_worker.frame_no - 1
             self.frame_widget.update_frame(
                 self.tracking_worker.frame,
                 self.tracking_worker.frame_no,
@@ -282,17 +286,19 @@ class MainWidget(QtWidgets.QMainWindow):
                 )
                 self.frame_widget.show_trajectory(
                     name,
-                    self.tracking_worker.frame_no,
+                    i,
                     tracking_data["target"],
                 )
                 self.docks["DataPlot"].update_tracker(
                     name,
                     tracking_data["target"] / self.docks["Extrinsic"].scaling,
+                    frames=tracking_data["frame_no"],
                 )
             for name, angle_data in self.tracking_worker.analysis_data["angle"].items():
                 self.docks["DataPlot"].update_angle(
                     name,
                     angle_data["angle"],
+                    frames=angle_data["frame_no"],
                 )
             for name, distance_data in self.tracking_worker.analysis_data[
                 "distance"
@@ -300,6 +306,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.docks["DataPlot"].update_distance(
                     name,
                     distance_data["distance"] / self.docks["Extrinsic"].scaling,
+                    frames=distance_data["frame_no"],
                 )
 
             self.media_controls.set_seek_bar_value(self.tracking_worker.frame_no)

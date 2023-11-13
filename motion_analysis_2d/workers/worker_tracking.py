@@ -10,8 +10,8 @@ from motion_analysis_2d.funcs import bbox_to_target, angle_vec
 
 class TrackingWorker(QtCore.QObject):
     finished = Signal()
-    progress = Signal()
     tracking_failed = Signal(str, int)
+    reached_end = Signal()
     add_tracker_failed = Signal(str, object)
 
     def __init__(
@@ -46,17 +46,17 @@ class TrackingWorker(QtCore.QObject):
         self.mutex.lock()
         if self.tracking_data.get(name) is None:
             self.tracking_data[name] = {
-                "frame_no": np.arange(self.no_of_frames + 1),
-                "time": np.full(self.no_of_frames + 1, np.nan, dtype=float),
-                "bbox": np.full((self.no_of_frames + 1, 4), np.nan, dtype=float),
-                "target": np.full((self.no_of_frames + 1, 2), np.nan, dtype=float),
+                "frame_no": np.arange(self.no_of_frames) + 1,
+                "time": np.full(self.no_of_frames, np.nan, dtype=float),
+                "bbox": np.full((self.no_of_frames, 4), np.nan, dtype=float),
+                "target": np.full((self.no_of_frames, 2), np.nan, dtype=float),
             }
 
         bbox = (*bbox_pos, *bbox_size)
         target = bbox_to_target(*bbox, *offset)
-        self.tracking_data[name]["time"][self.frame_no] = self.timestamp
-        self.tracking_data[name]["bbox"][self.frame_no] = bbox
-        self.tracking_data[name]["target"][self.frame_no] = target
+        self.tracking_data[name]["time"][self.frame_no - 1] = self.timestamp
+        self.tracking_data[name]["bbox"][self.frame_no - 1] = bbox
+        self.tracking_data[name]["target"][self.frame_no - 1] = target
 
         try:
             if tracker := self.tracking_data.get(name) is not None:
@@ -77,8 +77,8 @@ class TrackingWorker(QtCore.QObject):
         angle_data = self.analysis_data["angle"]
         if angle_data.get(name) is None:
             angle_data[name] = {
-                "frame_no": np.arange(self.no_of_frames + 1),
-                "angle": np.full(self.no_of_frames + 1, np.nan, dtype=float),
+                "frame_no": np.arange(self.no_of_frames) + 1,
+                "angle": np.full(self.no_of_frames, np.nan, dtype=float),
                 "trackers": (start1, end1, start2, end2),
             }
 
@@ -97,8 +97,8 @@ class TrackingWorker(QtCore.QObject):
         distance_data = self.analysis_data["distance"]
         if distance_data.get(name) is None:
             distance_data[name] = {
-                "frame_no": np.arange(self.no_of_frames + 1),
-                "distance": np.full((self.no_of_frames + 1, 2), np.nan, dtype=float),
+                "frame_no": np.arange(self.no_of_frames) + 1,
+                "distance": np.full((self.no_of_frames, 2), np.nan, dtype=float),
                 "trackers": (start, end),
             }
 
@@ -110,7 +110,7 @@ class TrackingWorker(QtCore.QObject):
     def reset_trackers(self):
         self.mutex.lock()
         for name, (_, offset, tracker_type) in self.trackers.items():
-            bbox = self.tracking_data[name]["bbox"][self.frame_no]
+            bbox = self.tracking_data[name]["bbox"][self.frame_no - 1]
             if (~np.isnan(bbox)).any():
                 tracker = self.create_tracker(tracker_type)
                 tracker.init(self.frame, bbox.astype(np.int32))
@@ -167,6 +167,8 @@ class TrackingWorker(QtCore.QObject):
                         timestamp,
                         frame,
                     )
+                if frame_no >= self.no_of_frames:
+                    self.reached_end.emit()
 
             except Empty:
                 pass
@@ -183,9 +185,9 @@ class TrackingWorker(QtCore.QObject):
                 target = bbox_to_target(*bbox, *offset)
 
                 self.mutex.lock()
-                self.tracking_data[name]["time"][frame_no] = timestamp
-                self.tracking_data[name]["bbox"][frame_no] = bbox
-                self.tracking_data[name]["target"][frame_no] = target
+                self.tracking_data[name]["time"][frame_no - 1] = timestamp
+                self.tracking_data[name]["bbox"][frame_no - 1] = bbox
+                self.tracking_data[name]["target"][frame_no - 1] = target
                 self.mutex.unlock()
             else:
                 self.tracking_failed.emit(name, frame_no)
@@ -207,26 +209,26 @@ class TrackingWorker(QtCore.QObject):
 
             vec1_angle = angle_vec(
                 [
-                    self.tracking_data[end1]["target"][frame_no]
-                    - self.tracking_data[start1]["target"][frame_no]
+                    self.tracking_data[end1]["target"][frame_no - 1]
+                    - self.tracking_data[start1]["target"][frame_no - 1]
                 ]
             )[0]
             vec2_angle = angle_vec(
                 [
-                    self.tracking_data[end2]["target"][frame_no]
-                    - self.tracking_data[start2]["target"][frame_no]
+                    self.tracking_data[end2]["target"][frame_no - 1]
+                    - self.tracking_data[start2]["target"][frame_no - 1]
                 ]
             )[0]
-            angle_data[name]["angle"][frame_no] = vec2_angle - vec1_angle
+            angle_data[name]["angle"][frame_no - 1] = vec2_angle - vec1_angle
 
     def update_distance(self, frame_no):
         distance_data = self.analysis_data["distance"]
         for name, data in distance_data.items():
             start, end = data["trackers"]
 
-            distance_data[name]["distance"][frame_no] = (
-                self.tracking_data[end]["target"][frame_no]
-                - self.tracking_data[start]["target"][frame_no]
+            distance_data[name]["distance"][frame_no - 1] = (
+                self.tracking_data[end]["target"][frame_no - 1]
+                - self.tracking_data[start]["target"][frame_no - 1]
             )
 
     def set_stop(self):
