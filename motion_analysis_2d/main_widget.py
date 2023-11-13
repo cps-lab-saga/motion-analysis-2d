@@ -29,12 +29,16 @@ from motion_analysis_2d.funcs import (
     load_shortcut_keys,
     save_warp_points,
 )
+from motion_analysis_2d.splashscreen import SplashScreen
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
 
 
 class MainWidget(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+
+        self.splashscreen = SplashScreen()
+        self.splashscreen.show()
 
         self.setWindowTitle("2D Motion Analysis")
         self.setWindowIcon(QtGui.QIcon(str(resource_dir() / "motion_analysis_2d.svg")))
@@ -63,6 +67,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.frame_widget.new_warp_points_selected.connect(self.warp_points_selected)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
+
+        self.splashscreen.set_progress(20)
 
         self.edit_controls = EditControls(self, "vertical")
         self.edit_controls.mode_changed.connect(self.edit_mode_changed)
@@ -118,6 +124,8 @@ class MainWidget(QtWidgets.QMainWindow):
             self.media_controls.seek_bar.setValue
         )
 
+        self.splashscreen.set_progress(50)
+
         # thread for streaming input
         self.stream_thread = QtCore.QThread()
         self.stream_worker = None
@@ -135,6 +143,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.tracking_failed.connect(self.tracking_failed)
         self.tracking_thread.started.connect(self.tracking_worker.run)
         self.tracking_thread.start()
+
+        self.splashscreen.set_progress(70)
 
         # periodically update display widgets
         self.camera_frame_update_timer = QtCore.QTimer()
@@ -156,6 +166,8 @@ class MainWidget(QtWidgets.QMainWindow):
         except Exception as e:
             self.error_dialog(f"Failed to read shortcut keys file!\n{e}")
 
+        self.splashscreen.set_progress(90)
+
         # load settings from previous session
         self.settings_file = settings_file()
         if self.settings_file.is_file():
@@ -163,6 +175,8 @@ class MainWidget(QtWidgets.QMainWindow):
                 str(self.settings_file), QtCore.QSettings.IniFormat
             )
             self.gui_restore(settings)
+
+        self.splashscreen.finish(self)
 
     def video_file_changed(self, path):
         self.media_controls.pause()
