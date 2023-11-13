@@ -72,6 +72,19 @@ class FilesDock(BaseDock):
         self.file_list_widget.itemSelectionChanged.connect(self.item_selection_changed)
         self.file_list_widget.itemDoubleClicked.connect(self.item_selection_changed)
 
+    def next_file(self):
+        row = self.file_list_widget.currentRow()
+        row += 1
+        max_row = self.file_list_widget.count()
+        if row < max_row:
+            self.file_list_widget.setCurrentRow(row)
+
+    def previous_file(self):
+        row = self.file_list_widget.currentRow()
+        row -= 1
+        if row >= 0:
+            self.file_list_widget.setCurrentRow(row)
+
     def item_selection_changed(self):
         item = self.file_list_widget.currentItem()
         if item is not None:

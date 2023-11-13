@@ -6,6 +6,8 @@
   "T": "toggle_track",
   "R": "reset_trackers",
   "A": "toggle_autosave",
-  "E": "click_export"
+  "V": "click_export",
+  "D": "next_video",
+  "E": "previous_video"
 }
 

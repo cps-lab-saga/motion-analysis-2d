@@ -206,6 +206,9 @@ class MainWidget(QtWidgets.QMainWindow):
                 logging.info("Data file exist!")
                 self.load_data(track_file)
 
+            if self.docks["Tracking"].continue_button.isChecked():
+                self.play_video(True)
+
     def close_video(self):
         if self.streaming:
             self.stream_worker.set_stop()
@@ -213,8 +216,17 @@ class MainWidget(QtWidgets.QMainWindow):
                 sleep(0.1)
                 QtCore.QCoreApplication.processEvents()
 
+    def next_video(self):
+        logging.info("Go to next video")
+        self.docks["Files"].next_file()
+
+    def previous_video(self):
+        logging.info("Go to previous video")
+        self.docks["Files"].previous_file()
+
     def reached_end(self):
-        print("end")
+        if self.docks["Tracking"].continue_button.isChecked():
+            self.next_video()
 
     def start_stream(self, path):
         self.stream_worker = StreamWorker(
@@ -239,6 +251,10 @@ class MainWidget(QtWidgets.QMainWindow):
     def play_video(self, play):
         if self.stream_worker is not None:
             if play:
+                self.media_controls.blockSignals(True)
+                self.media_controls.play_button.setChecked(True)
+                self.media_controls.blockSignals(True)
+
                 self.stream_worker.set_play()
                 self.docks["DataPlot"].set_frame_line_draggable(False)
                 self.edit_controls.blockSignals(True)
@@ -503,7 +519,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.add_distance(name, start, end)
 
     def save_data(self):
-        if self.stream_worker is not None:
+        if self.frame_widget.trackers["name"] and self.stream_worker is not None:
             video_path = self.stream_worker.path
             save_path = video_path.parent / f"{video_path.stem}.json"
             save_tracking_data(

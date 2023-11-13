@@ -167,7 +167,7 @@ class TrackingWorker(QtCore.QObject):
                         timestamp,
                         frame,
                     )
-                if frame_no >= self.no_of_frames:
+                if frame_no >= self.no_of_frames != 0:
                     self.reached_end.emit()
 
             except Empty:

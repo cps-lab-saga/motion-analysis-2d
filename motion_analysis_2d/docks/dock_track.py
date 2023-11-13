@@ -16,14 +16,14 @@ class TrackingDock(BaseDock):
         self.dock_layout.addLayout(grid_layout)
 
         icon_size = 18
-        self.skip_button = QtWidgets.QPushButton(self)
-        self.skip_button.setIcon(qta.icon("mdi.debug-step-over"))
-        self.skip_button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        self.skip_button.setCheckable(True)
-        self.skip_button.setFlat(True)
-        self.skip_button.setText("Skip Tracked")
-        self.skip_button.setToolTip("Skip ahead to untracked data.")
-        grid_layout.addWidget(self.skip_button, 0, 0)
+        # self.skip_button = QtWidgets.QPushButton(self)
+        # self.skip_button.setIcon(qta.icon("mdi.debug-step-over"))
+        # self.skip_button.setIconSize(QtCore.QSize(icon_size, icon_size))
+        # self.skip_button.setCheckable(True)
+        # self.skip_button.setFlat(True)
+        # self.skip_button.setText("Skip Tracked")
+        # self.skip_button.setToolTip("Skip ahead to untracked data.")
+        # grid_layout.addWidget(self.skip_button, 0, 0)
 
         self.track_button = QtWidgets.QPushButton(self)
         self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
@@ -38,7 +38,7 @@ class TrackingDock(BaseDock):
         self.track_button.setText("Tracking Active")
         self.track_button.setToolTip("Activate marker trackers.")
         self.track_button.toggled.connect(self.track_button_toggled)
-        grid_layout.addWidget(self.track_button, 0, 1)
+        grid_layout.addWidget(self.track_button, 0, 0, 1, 2)
 
         row_layout = QtWidgets.QHBoxLayout()
         self.dock_layout.addLayout(row_layout)
