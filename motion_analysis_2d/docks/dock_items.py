@@ -3,14 +3,13 @@ from functools import partial
 import qtawesome as qta
 from superqt import QCollapsible
 
-from defs import QtWidgets, QtGui, Signal
+from defs import QtCore, QtWidgets, QtGui, Signal
 from motion_analysis_2d.custom_components import BaseDock
 
 
 class ItemsDock(BaseDock):
-    item_added = Signal(str, object, str)
-    item_modified = Signal(str, object, str)
-    item_removed = Signal(str, str)
+    edit_item = Signal(str, str)
+    remove_item = Signal(str, str)
 
     show_item = Signal(str, str)
     hide_item = Signal(str, str)
@@ -37,6 +36,8 @@ class ItemsDock(BaseDock):
     def add_row(self, name, color, item_type):
         row = ItemsRow(name, color, item_type, parent=self)
         row.checkbox_toggled.connect(partial(self.checkbox_toggled, item_type))
+        row.edit_item.connect(self.edit_item.emit)
+        row.remove_item.connect(self.remove_item.emit)
         self.rows[item_type][name] = row
         self.collapsibles[item_type].addWidget(row)
 
@@ -61,6 +62,8 @@ class ItemsDock(BaseDock):
 
 class ItemsRow(QtWidgets.QWidget):
     checkbox_toggled = Signal(str, object)
+    edit_item = Signal(str, object)
+    remove_item = Signal(str, object)
 
     def __init__(self, name, color, item_type="tracker", parent=None):
         super().__init__(parent)
@@ -68,6 +71,17 @@ class ItemsRow(QtWidgets.QWidget):
         self.name = name
         self.color = color
         self.item_type = item_type
+
+        self.context_menu = QtWidgets.QMenu(self)
+        # edit_action = self.context_menu.addAction("Edit")
+        # edit_action.setIcon(qta.icon("mdi6.pencil"))
+        # edit_action.triggered.connect(self.emit_edit_item)
+        delete_action = self.context_menu.addAction("Remove")
+        delete_action.setIcon(qta.icon("mdi6.close", color="red"))
+        delete_action.triggered.connect(self.emit_remove_item)
+
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.context_menu_requested)
 
         self.main_layout = QtWidgets.QHBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 11, 0)
@@ -92,13 +106,22 @@ class ItemsRow(QtWidgets.QWidget):
 
         self.main_layout.addStretch()
 
+    def context_menu_requested(self, pos):
+        self.context_menu.exec(QtGui.QCursor.pos())
+
+    def emit_edit_item(self):
+        self.edit_item.emit(self.item_type, self.name)
+
+    def emit_remove_item(self):
+        self.remove_item.emit(self.item_type, self.name)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     dock = ItemsDock()
-    dock.add_row("test", (44, 160, 44), "distance")
-    dock.add_row("test", (44, 160, 44), "angle")
-    dock.add_row("test", (44, 160, 44), "tracker")
+    dock.add_row("test_distance", (44, 160, 44), "distance")
+    dock.add_row("test_angle", (44, 160, 44), "angle")
+    dock.add_row("test_tracker", (44, 160, 44), "tracker")
     dock.show()
 
     app.exec()

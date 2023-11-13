@@ -111,6 +111,7 @@ class MainWidget(QtWidgets.QMainWindow):
         )
         self.docks["Items"].show_item.connect(self.show_item)
         self.docks["Items"].hide_item.connect(self.hide_item)
+        self.docks["Items"].remove_item.connect(self.remove_item)
         self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
         self.docks["Save"].export_clicked.connect(self.export_data)
         self.docks["DataPlot"].frame_line_dragged.connect(
@@ -326,6 +327,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def edit_mode_changed(self, mode):
         self.media_controls.pause()
+        while not self.stream_queue.empty():
+            sleep(0.1)
 
         if mode == "add_tracker":
             self.frame_widget.set_mouse_mode("add_tracker")
@@ -373,6 +376,18 @@ class MainWidget(QtWidgets.QMainWindow):
         elif item_type == "distance":
             self.frame_widget.hide_distance(name)
             self.docks["DataPlot"].hide_distance(name)
+
+    def remove_item(self, item_type, name):
+        self.media_controls.pause()
+        while not self.stream_queue.empty():
+            sleep(0.1)
+
+        if item_type == "tracker":
+            self.frame_widget.remove_tracker(name)
+        elif item_type == "angle":
+            self.frame_widget.remove_angle(name)
+        elif item_type == "distance":
+            self.frame_widget.remove_distance(name)
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
         dialog = TrackerDialog(default_color=next(tab10_rgb_cycle))

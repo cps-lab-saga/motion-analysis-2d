@@ -593,6 +593,8 @@ class FrameWidget(QtWidgets.QWidget):
             i = self.trackers["roi"].index(item)
         elif isinstance(item, pg.TargetItem):
             i = self.trackers["target"].index(item)
+        elif isinstance(item, str):
+            i = self.trackers["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
 
@@ -604,11 +606,12 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.trackers["traj"][i])
 
         if len(children) > 0:
-            for child_name, child_type in children:
+            all_children = children.copy()
+            for child_name, child_type in all_children:
                 if child_type == "angle":
-                    child_i = self.angles["name"].index(child_name)
-                    pie = self.angles["pie"][child_i]
-                    self.remove_angle(pie)
+                    self.remove_angle(child_name)
+                elif child_type == "distance":
+                    self.remove_distance(child_name)
 
         for item in self.trackers.values():
             item.pop(i)
@@ -905,6 +908,8 @@ class FrameWidget(QtWidgets.QWidget):
                 i = self.angles["vec2"].index(item)
             else:
                 return
+        elif isinstance(item, str):
+            i = self.angles["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
 
@@ -1070,6 +1075,8 @@ class FrameWidget(QtWidgets.QWidget):
     def remove_distance(self, item):
         if isinstance(item, ArrowItem):
             i = self.distances["arrow"].index(item)
+        elif isinstance(item, str):
+            i = self.distances["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
 
