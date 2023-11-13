@@ -90,9 +90,9 @@ class MainWidget(QtWidgets.QMainWindow):
 
         self.docks = {
             "Files": FilesDock(["video"]),
+            "Orient": OrientDock(),
             "Intrinsic": LoadIntrinsicDock(),
             "Extrinsic": LoadExtrinsicDock(),
-            "Orient": OrientDock(),
             "Tracking": TrackingDock(),
             "Save": SaveDock(),
             "Items": ItemsDock(),
