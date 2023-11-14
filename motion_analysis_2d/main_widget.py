@@ -689,15 +689,18 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.error_dialog(f"Failed to load markers.\n{e}")
 
     def export_data(self, path):
-        try:
-            export_csv(
-                path,
-                self.tracking_worker.tracking_data,
-                self.tracking_worker.analysis_data,
-                self.docks["Extrinsic"].scaling,
-            )
-        except Exception as e:
-            self.error_dialog(e)
+        if self.frame_widget.trackers["name"] and self.stream_worker is not None:
+            try:
+                export_csv(
+                    path,
+                    self.tracking_worker.tracking_data,
+                    self.tracking_worker.analysis_data,
+                    self.docks["Extrinsic"].scaling,
+                )
+            except Exception as e:
+                self.error_dialog(str(e))
+        else:
+            self.error_dialog("No data available for export!")
 
     def autosave_toggled(self, autosave):
         if autosave:
