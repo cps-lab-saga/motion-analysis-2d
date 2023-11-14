@@ -1428,7 +1428,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.removeItem(self.temp_warp_points["plot_points"])
 
         self.temp_warp_points = None
-
+        self.set_mouse_mode(MouseModes.NORMAL)
         logging.debug(
             f"Drawn and labeled point finished with {img_points}, {obj_points}."
         )

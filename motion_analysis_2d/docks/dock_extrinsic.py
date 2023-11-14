@@ -113,6 +113,10 @@ class LoadExtrinsicDock(BaseDock):
         self.select_points_button.setChecked(False)
         self.select_points_button.blockSignals(False)
 
+    def gui_save(self, settings):
+        self.uncheck_select_points_button()
+        super().gui_save(settings)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

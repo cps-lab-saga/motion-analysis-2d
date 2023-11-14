@@ -771,7 +771,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
 
 def main():
-    setup_logger()
+    setup_logger(logging.INFO)
 
     app = QtWidgets.QApplication([])
     win = MainWidget()
