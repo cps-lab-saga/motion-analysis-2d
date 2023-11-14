@@ -5,4 +5,3 @@ from .dock_intrinsic import LoadIntrinsicDock
 from .dock_items import ItemsDock
 from .dock_orient import OrientDock
 from .dock_save import SaveDock
-from .dock_track import TrackingDock

@@ -90,12 +90,12 @@ class ArrowItem(pg.GraphicsObject):
         self,
         start_pos,
         end_pos,
-        stem_width=None,
+        stem_pen=None,
         arrow_width=None,
         arrow_height=None,
     ):
-        if stem_width is not None:
-            self.stem_width = stem_width
+        if stem_pen is not None:
+            self.stem_pen = stem_pen
         if arrow_width is not None:
             self.arrow_width = arrow_width
         if arrow_height is not None:

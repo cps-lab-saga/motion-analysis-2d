@@ -1,4 +1,5 @@
 import contextlib
+import logging
 from enum import Enum
 from pathlib import Path
 
@@ -9,7 +10,12 @@ import pyqtgraph as pg
 from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import PieItem, ArrowItem, tab10_rgb
 from motion_analysis_2d.dialogs import PointDialog
-from motion_analysis_2d.funcs import is_json_file, prevent_name_collision, angle_vec
+from motion_analysis_2d.funcs import (
+    setup_logger,
+    is_json_file,
+    prevent_name_collision,
+    angle_vec,
+)
 
 
 class FrameWidget(QtWidgets.QWidget):
@@ -281,9 +287,11 @@ class FrameWidget(QtWidgets.QWidget):
     def range_changed(self):
         self.adjust_crosshairs()
         self.adjust_instruction_label()
+        logging.trace(f"Frame range changed.")
 
     def auto_range(self):
         self.fig.autoRange()
+        logging.debug(f"Auto range frame.")
 
     def set_image(self, img):
         if img is None:
@@ -291,10 +299,12 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         self.im_item.setImage(self.img)
+        logging.trace(f"Set image.")
 
     def update_frame(self, img, frame_no, t_sec):
         self.set_image(img)
         self.update_frame_label(frame_no, t_sec)
+        logging.trace(f"Frame updated.")
 
     def add_frame_label(self):
         frame_label = pg.TextItem(
@@ -313,9 +323,11 @@ class FrameWidget(QtWidgets.QWidget):
             self.frame_label.setText(
                 f"Frame: {frame_no}\n" f"Time: {time:.2f} s\n" f"FPS: {fps:.0f}\n"
             )
+        logging.trace(f"Frame label updated: {frame_no}.")
 
     def update_scaling(self, scaling):
         self.scaling = scaling
+        logging.debug(f"Frame scaling updated to {scaling}.")
 
     def add_instruction_label(self):
         frame_label = pg.TextItem(
@@ -336,10 +348,12 @@ class FrameWidget(QtWidgets.QWidget):
     def show_instruction(self, text):
         self.instruction_label.setText(text)
         self.instruction_label.setParentItem(self.fig.getViewBox())
+        logging.debug(f"Instruction {text} shown.")
 
     def hide_instruction(self):
         self.instruction_label.setText("")
         self.fig.getViewBox().removeItem(self.instruction_label)
+        logging.debug(f"Instruction hidden.")
 
     def update_instructions(self):
         if self.mouse_mode == MouseModes.ADD_TRACKER:
@@ -369,6 +383,8 @@ class FrameWidget(QtWidgets.QWidget):
         else:
             self.plot_widget.setCursor(QtCore.Qt.CrossCursor)
         self.mouse_mode = mode
+
+        logging.debug(f"Mouse mode set to {mode}.")
 
         # Reset steps
         self.tracker_steps_index = 0
@@ -408,6 +424,8 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.addItem(self.temp_tracker["roi"])
         self.fig.addItem(self.temp_tracker["target"])
 
+        logging.debug(f"New tracker bbox started at {mouse_point}.")
+
         self.next_add_tracker_step()
 
     def shape_new_tracker(self, pos):
@@ -424,8 +442,11 @@ class FrameWidget(QtWidgets.QWidget):
             round(a) for a in self.calc_centre_roi(self.temp_tracker["roi"])
         ]
         self.temp_tracker["target"].setPos((target_x, target_y))
+        return mouse_point
 
     def finish_new_tracker(self, pos):
+        mouse_point = self.shape_new_tracker(pos)
+
         x, y = self.temp_tracker["roi"].pos()
         w, h = self.temp_tracker["roi"].size()
 
@@ -445,6 +466,8 @@ class FrameWidget(QtWidgets.QWidget):
         ]
         self.temp_tracker["target"].setPos((target_x, target_y))
 
+        logging.debug(f"New tracker bbox completed at {mouse_point}.")
+
         self.next_add_tracker_step()
 
     def select_tracker_target(self, pos):
@@ -453,6 +476,8 @@ class FrameWidget(QtWidgets.QWidget):
         y = round(mouse_point.y())
         self.temp_tracker["target"].setPos((x, y))
         self.temp_tracker["target"].setPen(self.new_item_pen)
+
+        logging.debug(f"New tracker target selected at {mouse_point}.")
 
         self.next_add_tracker_step()
 
@@ -478,6 +503,10 @@ class FrameWidget(QtWidgets.QWidget):
             )
         ]  # from centre of roi
 
+        logging.debug(
+            f"Drawn tracker with bbox_pos {(x, y)}, bbox_size {(w, h)}, offset {(offset_x, offset_y)}."
+        )
+
         self.new_tracker_suggested.emit(
             (x, y),
             (w, h),
@@ -493,22 +522,26 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.temp_tracker["roi"])
             self.fig.removeItem(self.temp_tracker["target"])
             self.temp_tracker = None
+            logging.debug("Removed incomplete tracker from frame.")
 
     def remove_temp_angle(self):
         if self.temp_angle is not None:
             self.fig.removeItem(self.temp_angle["vec1"])
             self.fig.removeItem(self.temp_angle["vec2"])
             self.temp_angle = None
+            logging.debug("Removed incomplete angle from frame.")
 
     def remove_temp_distance(self):
         if self.temp_distance is not None:
             self.fig.removeItem(self.temp_distance["arrow"])
             self.temp_distance = None
+            logging.debug("Removed incomplete distance from frame.")
 
     def remove_warp_points(self):
         if self.temp_warp_points is not None:
             self.fig.removeItem(self.temp_warp_points["plot_points"])
             self.temp_warp_points = None
+            logging.debug("Removed drawn warp points from frame.")
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
@@ -544,6 +577,7 @@ class FrameWidget(QtWidgets.QWidget):
         target.setZValue(1)
         self.fig.addItem(target)
 
+        # noinspection PyTypeChecker
         label = pg.TargetLabel(
             target,
             name,
@@ -563,9 +597,10 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["offset"].append(offset)
         self.trackers["color"].append(color)
         self.trackers["tracker_type"].append(tracker_type)
-        self.trackers["children"].append([])
+        self.trackers["children"].append(set())
         self.trackers["show"].append(True)
 
+        logging.debug(f"Tracker {name} added to frame display.")
         self.tracker_added.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
     def hide_tracker(self, name):
@@ -577,6 +612,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.trackers["target"][i])
             self.fig.removeItem(self.trackers["traj"][i])
             self.trackers["show"][i] = False
+            logging.debug(f"Tracker {name} hidden in frame display.")
 
     def show_tracker(self, name):
         i = self.trackers["name"].index(name)
@@ -587,6 +623,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.addItem(self.trackers["target"][i])
             self.fig.addItem(self.trackers["traj"][i])
             self.trackers["show"][i] = True
+            logging.debug(f"Tracker {name} shown in frame display.")
 
     def remove_tracker(self, item):
         if isinstance(item, pg.ROI):
@@ -616,6 +653,7 @@ class FrameWidget(QtWidgets.QWidget):
         for item in self.trackers.values():
             item.pop(i)
 
+        logging.debug(f"Tracker {name} removed from frame display.")
         self.tracker_removed.emit(name)
 
     def prevent_name_collision(self, name, item_type="tracker"):
@@ -658,6 +696,7 @@ class FrameWidget(QtWidgets.QWidget):
                     self.update_distance_item(child_name, dragged=True)
         target.blockSignals(False)
 
+        logging.debug(f"Tracker {name} roi moved in frame display.")
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
     def target_moved(self):
@@ -681,6 +720,7 @@ class FrameWidget(QtWidgets.QWidget):
                 elif child_type == "distance":
                     self.update_distance_item(child_name, dragged=True)
 
+        logging.debug(f"Tracker {name} target moved in frame display.")
         self.tracker_moved.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
     def start_new_angle(self, target_item):
@@ -700,6 +740,7 @@ class FrameWidget(QtWidgets.QWidget):
             "end2": None,
         }
 
+        logging.debug(f"New angle 1st vector started at Tracker {start_name}.")
         self.next_add_angle_step()
 
     def select_angle_tracker_end(self, target_item, vec_no):
@@ -714,19 +755,26 @@ class FrameWidget(QtWidgets.QWidget):
         end_x, end_y = self.get_target_pos_from_tracker_name(end_name)
 
         self.temp_angle[f"vec{vec_no}"].setData([start_x, end_x], [start_y, end_y])
-        self.next_add_angle_step()
+        return end_name
 
     def select_angle_tracker_end1(self, target_item):
-        self.select_angle_tracker_end(target_item, 1)
+        end_name = self.select_angle_tracker_end(target_item, 1)
+        logging.debug(f"New angle 1st vector ended at Tracker {end_name}.")
+        self.next_add_angle_step()
 
     def select_angle_tracker_start2(self, target_item):
         i = self.trackers["target"].index(target_item)
         name = self.trackers["name"][i]
         self.temp_angle[f"start2"] = name
+
+        logging.debug(f"New angle 2nd vector started at Tracker {name}.")
         self.next_add_angle_step()
 
     def select_angle_tracker_end2(self, target_item):
-        self.select_angle_tracker_end(target_item, 2)
+        end_name = self.select_angle_tracker_end(target_item, 2)
+
+        logging.debug(f"New angle 2nd vector ended at Tracker {end_name}.")
+        self.next_add_angle_step()
 
     def shape_new_angle(self, pos, vec_no):
         start_name = self.temp_angle[f"start{vec_no}"]
@@ -743,11 +791,18 @@ class FrameWidget(QtWidgets.QWidget):
 
     def add_children_to_tracker(self, tracker_name, child_name, child_type):
         i = self.trackers["name"].index(tracker_name)
-        self.trackers["children"][i].append((child_name, child_type))
+        if (child_name, child_type) not in self.trackers["children"][i]:
+            self.trackers["children"][i].add((child_name, child_type))
+        logging.debug(
+            f"Child {(child_name, child_type)} added to Tracker {tracker_name}."
+        )
 
     def remove_children_from_tracker(self, tracker_name, child_name, child_type):
         i = self.trackers["name"].index(tracker_name)
-        self.trackers["children"][i].remove((child_name, child_type))
+        self.trackers["children"][i].discard((child_name, child_type))
+        logging.debug(
+            f"Child {(child_name, child_type)} removed from Tracker {tracker_name}."
+        )
 
     def next_add_angle_step(self):
         if self.angle_steps_index >= len(self.add_angle_steps) - 1:
@@ -760,6 +815,10 @@ class FrameWidget(QtWidgets.QWidget):
         if self.temp_angle is None:
             return
 
+        logging.debug(
+            f"Drawn angle with 1st vector from {self.temp_angle['start1']} to {self.temp_angle['end1']}, "
+            f"2nd vector from {self.temp_angle['start2']} to {self.temp_angle['end2']}."
+        )
         self.new_angle_suggested.emit(
             self.temp_angle["start1"],
             self.temp_angle["end1"],
@@ -830,6 +889,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.angles["color"].append(color)
         self.angles["show"].append(True)
 
+        logging.debug(f"Angle {name} added to frame display.")
         self.angle_added.emit(name, start1, end1, start2, end2, color)
 
     def update_angle_item(self, name, dragged=False):
@@ -874,6 +934,7 @@ class FrameWidget(QtWidgets.QWidget):
         label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
 
         if dragged:
+            logging.debug(f"Angle {name} manually moved in frame display.")
             self.angle_moved.emit(name, start1, end1, start2, end2, color)
 
     def hide_angle(self, name):
@@ -886,6 +947,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.angles["pie"][i])
             self.fig.removeItem(self.angles["label"][i])
             self.angles["show"][i] = False
+            logging.debug(f"Angle {name} hidden in frame display.")
 
     def show_angle(self, name):
         i = self.angles["name"].index(name)
@@ -897,6 +959,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.addItem(self.angles["pie"][i])
             self.fig.addItem(self.angles["label"][i])
             self.angles["show"][i] = True
+            logging.debug(f"Angle {name} shown in frame display.")
 
     def remove_angle(self, item):
         if isinstance(item, PieItem):
@@ -930,6 +993,7 @@ class FrameWidget(QtWidgets.QWidget):
         for item in self.angles.values():
             item.pop(i)
 
+        logging.debug(f"Angle {name} removed from frame display.")
         self.angle_removed.emit(name)
 
     def start_new_distance(self, target_item):
@@ -954,6 +1018,7 @@ class FrameWidget(QtWidgets.QWidget):
             "end": None,
         }
 
+        logging.debug(f"New distance started at Tracker {start_name}.")
         self.next_add_distance_step()
 
     def select_distance_tracker_end(self, target_item):
@@ -968,6 +1033,8 @@ class FrameWidget(QtWidgets.QWidget):
         end_pos = self.get_target_pos_from_tracker_name(end_name)
 
         self.temp_distance[f"arrow"].setData(start_pos, end_pos)
+
+        logging.debug(f"New distance ended at Tracker {end_name}.")
         self.next_add_distance_step()
 
     def shape_new_distance(self, pos):
@@ -991,6 +1058,9 @@ class FrameWidget(QtWidgets.QWidget):
         if self.temp_distance is None:
             return
 
+        logging.debug(
+            f"Drawn distance from {self.temp_distance['start']} to {self.temp_distance['end']}."
+        )
         self.new_distance_suggested.emit(
             self.temp_distance["start"],
             self.temp_distance["end"],
@@ -1035,6 +1105,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.distances["color"].append(color)
         self.distances["show"].append(True)
 
+        logging.debug(f"Distance {name} added to frame display.")
         self.distance_added.emit(name, start, end, color)
 
     def update_distance_item(self, name, dragged=False):
@@ -1052,6 +1123,7 @@ class FrameWidget(QtWidgets.QWidget):
         label.setPos((start_pos + end_pos) / 2)
 
         if dragged:
+            logging.debug(f"Distance {name} manually moved in frame display.")
             self.distance_moved.emit(name, start, end, color)
 
     def hide_distance(self, name):
@@ -1062,6 +1134,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.distances["arrow"][i])
             self.fig.removeItem(self.distances["label"][i])
             self.distances["show"][i] = False
+            logging.debug(f"Distance {name} hidden in frame display.")
 
     def show_distance(self, name):
         i = self.distances["name"].index(name)
@@ -1071,6 +1144,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.addItem(self.distances["arrow"][i])
             self.fig.addItem(self.distances["label"][i])
             self.distances["show"][i] = True
+            logging.debug(f"Distance {name} shown in frame display.")
 
     def remove_distance(self, item):
         if isinstance(item, ArrowItem):
@@ -1092,15 +1166,21 @@ class FrameWidget(QtWidgets.QWidget):
         for item in self.distances.values():
             item.pop(i)
 
+        logging.debug(f"Distance {name} removed from frame display.")
         self.distance_removed.emit(name)
 
     def clear(self):
         for l in self.trackers.values():
             l.clear()
+        for l in self.angles.values():
+            l.clear()
+        for l in self.distances.values():
+            l.clear()
 
         self.fig.clear()
         self.im_item = pg.ImageItem(axisOrder="row-major")
         self.fig.addItem(self.im_item)
+        logging.debug(f"Frame display cleared.")
 
     def keep_roi_in_frame(self, roi):
         roi_x, roi_y = roi.pos()
@@ -1165,6 +1245,7 @@ class FrameWidget(QtWidgets.QWidget):
             target.setPos((roi.pos()[0] + offset[0], roi.pos()[1] + offset[1]))
             roi.blockSignals(False)
             target.blockSignals(False)
+            logging.trace(f"Tracker move pos are not available.")
         else:
             bbox_pos = bbox[:2]
             bbox_size = bbox[2:]
@@ -1180,6 +1261,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.trackers["offset"][i] = [
                 round(a) for a in target.pos() - self.calc_centre_roi(roi)
             ]
+            logging.trace(f"Tracker {name} moved.")
 
         if len(children) > 0:
             for child_name, child_type in children:
@@ -1200,6 +1282,7 @@ class FrameWidget(QtWidgets.QWidget):
             traj.setData(
                 target[:current_frame_index, 0], target[:current_frame_index, 1]
             )
+        logging.trace(f"Tracker trajectory updated.")
 
     def start_new_warp_points(self, pos):
         mouse_point = self.fig.vb.mapSceneToView(pos)
@@ -1223,6 +1306,9 @@ class FrameWidget(QtWidgets.QWidget):
                 "img_points": [img_point],
                 "obj_points": [obj_points],
             }
+            logging.debug(
+                f"Perspective warp point started at {img_point}, labeled as {obj_points}."
+            )
             self.next_warp_point_step()
             if finish:
                 self.emit_new_warp_points()
@@ -1248,6 +1334,9 @@ class FrameWidget(QtWidgets.QWidget):
             obj_points, finish = dialog.get_result()
             self.temp_warp_points["img_points"].append((x, y))
             self.temp_warp_points["obj_points"].append(obj_points)
+            logging.debug(
+                f"Perspective warp point added at {img_point}, labeled as {obj_points}."
+            )
             self.next_warp_point_step()
             if finish:
                 self.emit_new_warp_points()
@@ -1269,6 +1358,10 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.removeItem(self.temp_warp_points["plot_points"])
 
         self.temp_warp_points = None
+
+        logging.debug(
+            f"Drawn and labeled point finished with {img_points}, {obj_points}."
+        )
         self.new_warp_points_selected.emit(img_points, obj_points)
 
     def animate_crosshairs(self, pos):
@@ -1307,6 +1400,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.h_crosshair)
             self.fig.removeItem(self.h_crosshair_label)
             self.fig.removeItem(self.intensity_crosshair_label)
+            logging.debug("Show crosshairs.")
         else:
             self.show_crosshairs = True
             self.fig.addItem(self.v_crosshair, ignoreBounds=True)
@@ -1315,6 +1409,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.addItem(self.h_crosshair_label, ignoreBounds=True)
             self.fig.addItem(self.intensity_crosshair_label, ignoreBounds=True)
             self.mouse_moved(evt.scenePos())
+            logging.debug("Hide crosshairs.")
 
     def adjust_crosshairs(self):
         """
@@ -1348,6 +1443,8 @@ class FrameWidget(QtWidgets.QWidget):
             path = Path(e.mimeData().urls()[0].toLocalFile())
             if is_json_file(path):
                 e.accept()
+
+                logging.debug("Marker file dropped.")
                 self.marker_file_dropped.emit(path)
         else:
             super().dropEvent(e)
@@ -1365,6 +1462,7 @@ class MouseModes(Enum):
 
 
 if __name__ == "__main__":
+    setup_logger(5)
     black_img = np.zeros([100, 100, 3], dtype=np.uint8)
 
     app = QtWidgets.QApplication([])
@@ -1372,7 +1470,7 @@ if __name__ == "__main__":
     widget.set_image(black_img)
     # widget.set_mouse_mode("add_tracker")
 
-    # widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
     # widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
     # widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
     # widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")

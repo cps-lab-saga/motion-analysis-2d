@@ -1,5 +1,4 @@
 import logging
-import sys
 from pathlib import Path
 from queue import Queue
 from time import sleep
@@ -7,7 +6,7 @@ from time import sleep
 import numpy as np
 from PySide6 import QtGui
 
-from defs import QtCore, QtWidgets, project_root, log_file, settings_file, resource_dir
+from defs import QtCore, QtWidgets, project_root, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
 from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog, DistanceDialog
@@ -17,12 +16,12 @@ from motion_analysis_2d.docks import (
     LoadIntrinsicDock,
     LoadExtrinsicDock,
     OrientDock,
-    TrackingDock,
     SaveDock,
     ItemsDock,
     DataPlotDock,
 )
 from motion_analysis_2d.funcs import (
+    setup_logger,
     save_tracking_data,
     load_tracking_data,
     export_csv,
@@ -44,7 +43,6 @@ class MainWidget(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(str(resource_dir() / "motion_analysis_2d.svg")))
         self.resize(800, 600)
 
-        self.setup_logger()
         self.log_new_session()
 
         self.main_widget = QtWidgets.QWidget(parent=self)
@@ -80,6 +78,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.media_controls.next_frame.connect(self.move_frame_forwards)
         self.media_controls.previous_frame.connect(self.move_frame_backwards)
         self.media_controls.seek_bar_moved.connect(self.seek_bar_moved)
+        self.media_controls.track_enabled.connect(self.track_enabled)
         self.media_controls.setDisabled(True)
         self.main_layout.addWidget(self.media_controls, 1, 0, 1, 2)
 
@@ -93,7 +92,6 @@ class MainWidget(QtWidgets.QMainWindow):
             "Orient": OrientDock(),
             "Intrinsic": LoadIntrinsicDock(),
             "Extrinsic": LoadExtrinsicDock(),
-            "Tracking": TrackingDock(),
             "Save": SaveDock(),
             "Items": ItemsDock(),
             "DataPlot": DataPlotDock(),
@@ -111,10 +109,6 @@ class MainWidget(QtWidgets.QMainWindow):
         )
         self.docks["Extrinsic"].select_points_button.setDisabled(True)
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
-        self.docks["Tracking"].track_enabled.connect(self.track_enabled)
-        self.docks["Tracking"].reset_trackers_button.clicked.connect(
-            self.reset_trackers
-        )
         self.docks["Items"].show_item.connect(self.show_item)
         self.docks["Items"].hide_item.connect(self.hide_item)
         self.docks["Items"].remove_item.connect(self.remove_item)
@@ -179,7 +173,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.splashscreen.finish(self)
 
     def video_file_changed(self, path):
-        self.media_controls.pause()
+        self.play_video(False)
 
         self.camera_frame_update_timer.stop()
         self.edit_controls.set_normal_mode()
@@ -204,9 +198,9 @@ class MainWidget(QtWidgets.QMainWindow):
             self.start_stream(path)
             self.edit_controls.setDisabled(False)
             self.media_controls.setDisabled(False)
+            self.media_controls.track_button_toggled()
             self.docks["Extrinsic"].select_points_button.setDisabled(False)
             self.frame_widget.update_scaling(self.docks["Extrinsic"].scaling)
-            self.docks["Tracking"].track_button_toggled()
             self.docks["DataPlot"].set_frame_line_draggable(True)
             self.camera_frame_update_timer.start(30)
 
@@ -220,7 +214,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 logging.info("Data file exist!")
                 self.load_data(track_file)
 
-            if self.docks["Tracking"].continue_button.isChecked():
+            if self.docks["Files"].continue_button.isChecked():
                 self.play_video(True)
 
     def close_video(self):
@@ -239,7 +233,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Files"].previous_file()
 
     def reached_end(self):
-        if self.docks["Tracking"].continue_button.isChecked():
+        if self.docks["Files"].continue_button.isChecked():
+            self.play_video(False)
             self.next_video()
 
     def start_stream(self, path):
@@ -275,15 +270,26 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.edit_controls.set_normal_mode()
                 self.frame_widget.set_mouse_mode("normal")
                 self.edit_controls.blockSignals(False)
+
+                if self.media_controls.track_button.isChecked():
+                    self.media_controls.set_tracking(True)
+                else:
+                    self.media_controls.set_tracking(False)
+
             else:
+                self.media_controls.blockSignals(True)
+                self.media_controls.play_button.setChecked(False)
+                self.media_controls.blockSignals(True)
+
                 self.docks["DataPlot"].set_frame_line_draggable(True)
                 self.stream_worker.set_pause()
+                self.media_controls.set_tracking(False)
 
     def toggle_play(self):
         self.media_controls.play_button.toggle()
 
     def toggle_track(self):
-        self.docks["Tracking"].track_button.toggle()
+        self.media_controls.track_button.toggle()
 
     def toggle_autosave(self):
         self.docks["Save"].autosave_button.toggle()
@@ -297,6 +303,13 @@ class MainWidget(QtWidgets.QMainWindow):
         self.streaming = False
 
     def track_enabled(self, track):
+        if track:
+            if self.media_controls.play_button.isChecked():
+                self.media_controls.set_tracking(True)
+                self.tracking_worker.reset_trackers()
+        else:
+            self.media_controls.set_tracking(False)
+
         if self.stream_worker is not None:
             self.stream_worker.set_tracking(track)
 
@@ -363,7 +376,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.tracking_worker.reset_trackers()
 
     def edit_mode_changed(self, mode):
-        self.media_controls.pause()
+        self.play_video(False)
         while not self.stream_queue.empty():
             sleep(0.1)
 
@@ -415,7 +428,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.docks["DataPlot"].hide_distance(name)
 
     def remove_item(self, item_type, name):
-        self.media_controls.pause()
+        self.play_video(False)
         while not self.stream_queue.empty():
             sleep(0.1)
 
@@ -448,7 +461,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["DataPlot"].add_tracker(name, color)
 
     def tracking_failed(self, name, frame_no):
-        self.media_controls.pause()
+        self.play_video(False)
         with self.stream_queue.mutex:
             self.stream_queue.queue.clear()
         self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
@@ -744,21 +757,6 @@ class MainWidget(QtWidgets.QMainWindow):
             getattr(self, cmd)()
 
     @staticmethod
-    def setup_logger():
-        formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
-
-        log_handler_stdout = logging.StreamHandler(sys.stdout)
-        log_handler_stdout.setFormatter(formatter)
-
-        log_handler_file = logging.FileHandler(log_file())
-        log_handler_file.setFormatter(formatter)
-
-        log = logging.getLogger()
-        log.setLevel(logging.DEBUG)
-        log.addHandler(log_handler_stdout)
-        log.addHandler(log_handler_file)
-
-    @staticmethod
     def log_new_session():
         banner = "-" * 20 + " New Session " + "-" * 20
         logging.info("")
@@ -768,6 +766,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
 
 def main():
+    setup_logger()
+
     app = QtWidgets.QApplication([])
     win = MainWidget()
     win.show()

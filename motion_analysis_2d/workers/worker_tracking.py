@@ -1,3 +1,4 @@
+import logging
 from queue import Empty
 
 import cv2 as cv
@@ -36,11 +37,13 @@ class TrackingWorker(QtCore.QObject):
 
     def set_props(self, no_of_frames):
         self.no_of_frames = no_of_frames
+        logging.debug(f"No of frames set to {no_of_frames} in tracking worker.")
 
     def clear_data(self):
         self.analysis_data = {"angle": {}, "distance": {}}
         self.tracking_data = {}
         self.trackers = {}
+        logging.debug("Tracking data cleared.")
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, tracker_type="Static"):
         self.mutex.lock()
@@ -51,6 +54,7 @@ class TrackingWorker(QtCore.QObject):
                 "bbox": np.full((self.no_of_frames, 4), np.nan, dtype=float),
                 "target": np.full((self.no_of_frames, 2), np.nan, dtype=float),
             }
+            logging.debug(f"New tracking data for {name} added.")
 
         bbox = (*bbox_pos, *bbox_size)
         target = bbox_to_target(*bbox, *offset)
@@ -65,11 +69,13 @@ class TrackingWorker(QtCore.QObject):
             tracker = self.create_tracker(tracker_type)
             tracker.init(self.frame, bbox)
             self.trackers[name] = (tracker, offset, tracker_type)
+            logging.debug(f"Tracker for {name} created.")
+
         except Exception as e:
             self.tracking_data.pop(name, None)
             self.trackers.pop(name, None)
             self.add_tracker_failed.emit(name, e)
-
+            logging.warning(f"Create tracker failed for {name}.")
         self.mutex.unlock()
 
     def add_angle(self, name, start1, end1, start2, end2):
@@ -81,6 +87,7 @@ class TrackingWorker(QtCore.QObject):
                 "angle": np.full(self.no_of_frames, np.nan, dtype=float),
                 "trackers": (start1, end1, start2, end2),
             }
+            logging.debug(f"New angle data for {name} added.")
 
         vec1_angle = angle_vec(
             self.tracking_data[end1]["target"] - self.tracking_data[start1]["target"]
@@ -90,6 +97,7 @@ class TrackingWorker(QtCore.QObject):
         )
 
         angle_data[name]["angle"] = vec2_angle - vec1_angle
+        logging.debug(f"Angle data for {name} updated.")
         self.mutex.unlock()
 
     def add_distance(self, name, start, end):
@@ -101,10 +109,12 @@ class TrackingWorker(QtCore.QObject):
                 "distance": np.full((self.no_of_frames, 2), np.nan, dtype=float),
                 "trackers": (start, end),
             }
+            logging.debug(f"New distance data for {name} added.")
 
         distance_data[name]["distance"] = (
             self.tracking_data[end]["target"] - self.tracking_data[start]["target"]
         )
+        logging.debug(f"Distance data for {name} updated.")
         self.mutex.unlock()
 
     def reset_trackers(self):
@@ -122,16 +132,19 @@ class TrackingWorker(QtCore.QObject):
         self.tracking_data.pop(name, None)
         self.trackers.pop(name, None)
         self.mutex.unlock()
+        logging.debug(f"Tracker {name} remove from tracking worker.")
 
     def remove_angle(self, name):
         self.mutex.lock()
         self.analysis_data["angle"].pop(name, None)
         self.mutex.unlock()
+        logging.debug(f"Angle {name} remove from tracking worker.")
 
     def remove_distance(self, name):
         self.mutex.lock()
         self.analysis_data["distance"].pop(name, None)
         self.mutex.unlock()
+        logging.debug(f"Distance {name} remove from tracking worker.")
 
     def create_tracker(self, tracker_type):
         if tracker_type == "CSRT":

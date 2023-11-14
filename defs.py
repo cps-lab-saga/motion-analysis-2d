@@ -44,6 +44,7 @@ def settings_file() -> Path:
     f.parent.mkdir(exist_ok=True, parents=True)
     return f
 
+
 def shortcut_keys_file() -> Path:
     p = project_root()
     if "Temp" in p.parts:

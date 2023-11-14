@@ -20,6 +20,18 @@ class FilesDock(BaseDock):
         )
 
         icon_size = 18
+        self.continue_button = QtWidgets.QPushButton(self)
+        self.continue_icon = qta.icon("mdi.playlist-play")
+        self.continue_button.setIcon(self.continue_icon)
+        self.continue_button.setIconSize(QtCore.QSize(icon_size, icon_size))
+        self.continue_button.setCheckable(True)
+        self.continue_button.setFlat(True)
+        self.continue_button.setText("Batch Processing")
+        self.continue_button.setToolTip(
+            "Automatically continue to next video in queue and start playing."
+        )
+        self.dock_layout.addWidget(self.continue_button)
+
         self.file_list_widget = FileListWidget(filetypes, self)
         self.file_list_widget.setToolTip("Quick files.\nDrop files here.")
         self.dock_layout.addWidget(self.file_list_widget)

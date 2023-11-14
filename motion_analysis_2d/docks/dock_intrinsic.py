@@ -55,7 +55,7 @@ class LoadIntrinsicDock(BaseDock):
         self.dock_layout.addStretch()
 
     def set_dir(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName()
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self)
         if file_name:
             self.intrinsic_cal_file_edit.setText(file_name)
 

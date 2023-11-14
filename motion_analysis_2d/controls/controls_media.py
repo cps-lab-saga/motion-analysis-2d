@@ -10,6 +10,7 @@ class MediaControls(QtWidgets.QFrame):
     previous_frame = Signal()
     next_frame = Signal()
     seek_bar_moved = Signal(int)
+    track_enabled = Signal(bool)
 
     def __init__(self, parent=None, orientation="horizontal"):
         super().__init__(parent=parent)
@@ -27,6 +28,20 @@ class MediaControls(QtWidgets.QFrame):
             )
 
         icon_size = 24
+        self.track_button = QtWidgets.QPushButton(self)
+        self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
+        self.tracking_icon = qta.icon(
+            "fa.spinner", animation=qta.Spin(self.track_button, interval=10, step=10)
+        )
+        self.tracking_not_icon = qta.icon("fa.spinner")
+        self.track_button.setIcon(self.tracking_not_icon)
+        self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
+        self.track_button.setCheckable(True)
+        self.track_button.setFlat(True)
+        self.track_button.setToolTip("Activate tracking.")
+        self.track_button.toggled.connect(self.track_button_toggled)
+        self.main_layout.addWidget(self.track_button)
+
         self.play_button = QtWidgets.QPushButton(self)
         self.play_button.setToolTip("Play")
         self.play_icon = qta.icon("mdi6.play")
@@ -71,6 +86,15 @@ class MediaControls(QtWidgets.QFrame):
             self.play_button.setIcon(self.play_icon)
             self.seek_bar.setDisabled(False)
             self.play.emit(False)
+
+    def set_tracking(self, track):
+        if track:
+            self.track_button.setIcon(self.tracking_icon)
+        else:
+            self.track_button.setIcon(self.tracking_not_icon)
+
+    def track_button_toggled(self):
+        self.track_enabled.emit(self.track_button.isChecked())
 
     def pause(self):
         self.blockSignals(True)
