@@ -25,7 +25,7 @@ from motion_analysis_2d.funcs import (
     save_tracking_data,
     load_tracking_data,
     export_csv,
-    load_shortcut_keys,
+    load_application_settings,
     save_warp_points,
 )
 from motion_analysis_2d.splashscreen import SplashScreen
@@ -45,11 +45,28 @@ class MainWidget(QtWidgets.QMainWindow):
 
         self.log_new_session()
 
+        self.shortcut_keys = {
+            "\N{ESCAPE}": "set_normal_mode",
+            "F": "move_frame_forwards",
+            "S": "move_frame_backwards",
+        }
+        self.visual_settings = {}
+        try:
+            self.application_settings = load_application_settings(
+                project_root() / "application_settings.json"
+            )
+            self.shortcut_keys.update(self.application_settings["shortcut_keys"])
+            self.visual_settings.update(self.application_settings["visual_settings"])
+        except Exception as e:
+            self.error_dialog(f"Could not read application settings file!\n{e}")
+
+        self.splashscreen.set_progress(10)
+
         self.main_widget = QtWidgets.QWidget(parent=self)
         self.main_layout = QtWidgets.QGridLayout(self.main_widget)
         self.setCentralWidget(self.main_widget)
 
-        self.frame_widget = FrameWidget(self)
+        self.frame_widget = FrameWidget(self.visual_settings, self)
         self.frame_widget.new_tracker_suggested.connect(self.tracker_suggested)
         self.frame_widget.tracker_added.connect(self.add_tracker)
         self.frame_widget.tracker_moved.connect(self.move_tracker)
@@ -66,7 +83,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.new_warp_points_selected.connect(self.warp_points_selected)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
-        self.splashscreen.set_progress(20)
+        self.splashscreen.set_progress(30)
 
         self.edit_controls = EditControls(self, "vertical")
         self.edit_controls.mode_changed.connect(self.edit_mode_changed)
@@ -147,18 +164,6 @@ class MainWidget(QtWidgets.QMainWindow):
         # periodically autosave data if enabled
         self.autosave_timer = QtCore.QTimer()
         self.autosave_timer.timeout.connect(self.save_data)
-
-        self.shortcut_keys = {
-            "\N{ESCAPE}": "set_normal_mode",
-            "F": "move_frame_forwards",
-            "S": "move_frame_backwards",
-        }
-        try:
-            self.shortcut_keys.update(
-                load_shortcut_keys(project_root() / "shortcut_keys.json")
-            )
-        except Exception as e:
-            self.error_dialog(f"Failed to read shortcut keys file!\n{e}")
 
         self.splashscreen.set_progress(90)
 

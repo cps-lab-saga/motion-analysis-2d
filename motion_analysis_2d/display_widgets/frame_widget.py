@@ -34,8 +34,11 @@ class FrameWidget(QtWidgets.QWidget):
     marker_file_dropped = Signal(object)
     new_warp_points_selected = Signal(list, list)
 
-    def __init__(self, parent=None):
+    def __init__(self, visual_settings=None, parent=None):
         super().__init__(parent=parent)
+
+        if visual_settings is None:
+            visual_settings = {}
 
         self.setAcceptDrops(True)
 
@@ -77,17 +80,46 @@ class FrameWidget(QtWidgets.QWidget):
         )
         self.warp_points_steps_index = 0
 
-        self.traj_len = 30
-        self.pie_radius = 30
-        self.frame_label_text_color = (255, 255, 255)
-        self.frame_label_fill_color = (0, 0, 0, 150)
-        self.roi_label_fill_color = (0, 0, 0, 150)
-        self.instruction_label_text_color = (255, 255, 255)
-        self.instruction_label_fill_color = tab10_rgb["green"]
+        self.visual_settings = {
+            "new_item_pen_color": tab10_rgb["green"],
+            "new_item_pen_width": 3,
+            "crosshair_pen_color": tab10_rgb["cyan"],
+            "crosshair_pen_width": 1,
+            "trajectory_length": 30,
+            "trajectory_width": 2,
+            "frame_label_text_color": [255, 255, 255],
+            "frame_label_fill_color": [0, 0, 0, 150],
+            "instruction_label_text_color": [255, 255, 255],
+            "instruction_label_fill_color": tab10_rgb["green"],
+            "item_name_label_fill_color": [0, 0, 0, 150],
+            "tracker_bbox_pen_width": 2,
+            "tracker_bbox_hover_pen_width": 4,
+            "tracker_target_size": 10,
+            "tracker_target_pen_width": 2,
+            "tracker_target_hover_pen_width": 4,
+            "angle_sector_radius": 4,
+            "angle_sector_pen_width": 1,
+            "angle_sector_fill_transparency": 150,
+            "angle_vector_pen_width": 1,
+            "distance_arrow_stem_width": 3,
+            "distance_arrow_head_width": 42,
+            "distance_arrow_head_height": 42,
+            "warp_point_symbol": "d",
+            "warp_point_color": tab10_rgb["blue"],
+        }
+        self.visual_settings.update(visual_settings)
 
-        self.new_item_pen = pg.mkPen(color=tab10_rgb["green"], width=3)
-        self.crosshair_pen = pg.mkPen(color=tab10_rgb["cyan"], width=1)
-        self.warp_point_brush = pg.mkBrush(color=tab10_rgb["blue"])
+        self.new_item_pen = pg.mkPen(
+            color=self.visual_settings["new_item_pen_color"],
+            width=self.visual_settings["new_item_pen_width"],
+        )
+        self.crosshair_pen = pg.mkPen(
+            color=self.visual_settings["crosshair_pen_color"],
+            width=self.visual_settings["crosshair_pen_width"],
+        )
+        self.warp_point_brush = pg.mkBrush(
+            color=self.visual_settings["warp_point_color"]
+        )
 
         self.trackers = {
             "name": [],
@@ -310,8 +342,8 @@ class FrameWidget(QtWidgets.QWidget):
         frame_label = pg.TextItem(
             "Frame: {}\nTime: {:.2f} s".format(0, 0),
             anchor=(0, 0),
-            color=self.frame_label_text_color,
-            fill=self.frame_label_fill_color,
+            color=self.visual_settings["frame_label_text_color"],
+            fill=self.visual_settings["frame_label_fill_color"],
         )
         frame_label.setParentItem(self.fig.getViewBox())
         return frame_label
@@ -333,8 +365,8 @@ class FrameWidget(QtWidgets.QWidget):
         frame_label = pg.TextItem(
             "",
             anchor=(0.5, 1),
-            color=self.instruction_label_text_color,
-            fill=self.instruction_label_fill_color,
+            color=self.visual_settings["instruction_label_text_color"],
+            fill=self.visual_settings["instruction_label_fill_color"],
         )
         view_box = self.fig.getViewBox()
         frame_label.setPos(view_box.width() / 2, view_box.height())
@@ -414,7 +446,7 @@ class FrameWidget(QtWidgets.QWidget):
         target_x, target_y = [round(a) for a in self.calc_centre_roi(new_roi)]
         target = pg.TargetItem(
             (target_x, target_y),
-            size=10,
+            size=self.visual_settings["tracker_target_size"],
             pen=pg.mkPen(None),
             brush=pg.mkBrush(None),
             movable=False,
@@ -545,21 +577,34 @@ class FrameWidget(QtWidgets.QWidget):
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         name = self.prevent_name_collision(name)
-        pen = pg.mkPen(color=color, width=2)
-        hover_pen = pg.mkPen(color=color, width=4)
+        bbox_pen = pg.mkPen(
+            color=color, width=self.visual_settings["tracker_bbox_pen_width"]
+        )
+        bbox_hover_pen = pg.mkPen(
+            color=color, width=self.visual_settings["tracker_bbox_hover_pen_width"]
+        )
+        target_pen = pg.mkPen(
+            color=color, width=self.visual_settings["tracker_target_pen_width"]
+        )
+        target_hover_pen = pg.mkPen(
+            color=color, width=self.visual_settings["tracker_bbox_hover_pen_width"]
+        )
+        trajectory_pen = pg.mkPen(
+            color=color, width=self.visual_settings["trajectory_width"]
+        )
 
         roi = pg.ROI(
             bbox_pos,
             size=bbox_size,
-            pen=pen,
-            hoverPen=hover_pen,
+            pen=bbox_pen,
+            hoverPen=bbox_hover_pen,
             movable=True,
             resizable=True,
             rotatable=False,
             rotateSnap=False,
             scaleSnap=False,
         )
-        roi.addScaleHandle([0, 0], [0.5, 0.5])
+        roi.addScaleHandle([0, 1], [0.5, 0.5])
         roi.sigRegionChanged.connect(self.bbox_moved)
         roi.setZValue(0)
         self.fig.addItem(roi)
@@ -568,26 +613,25 @@ class FrameWidget(QtWidgets.QWidget):
         target_pos = cx + offset[0], cy + offset[1]
         target = pg.TargetItem(
             target_pos,
-            size=10,
-            pen=pen,
-            hoverPen=hover_pen,
+            size=self.visual_settings["tracker_target_size"],
+            pen=target_pen,
+            hoverPen=target_hover_pen,
             movable=True,
         )
         target.sigPositionChanged.connect(self.target_moved)
         target.setZValue(1)
         self.fig.addItem(target)
 
-        # noinspection PyTypeChecker
         label = pg.TargetLabel(
             target,
             name,
             offset=(-20, 0),
             anchor=(0, 1),
-            color=pen.color(),
-            fill=self.roi_label_fill_color,
+            color=target_pen.color(),
+            fill=self.visual_settings["item_name_label_fill_color"],
         )
 
-        traj = self.fig.plot(pen=pen)
+        traj = self.fig.plot(pen=trajectory_pen)
 
         self.trackers["name"].append(name)
         self.trackers["roi"].append(roi)
@@ -828,8 +872,18 @@ class FrameWidget(QtWidgets.QWidget):
 
     def add_angle(self, name, start1, end1, start2, end2, color):
         name = self.prevent_name_collision(name, item_type="angle")
-        pen = pg.mkPen(color=color, width=1)
-        brush = pg.mkBrush(color=(*pen.color().toTuple()[:3], 150))
+        sector_pen = pg.mkPen(
+            color=color, width=self.visual_settings["angle_sector_pen_width"]
+        )
+        sector_brush = pg.mkBrush(
+            color=(
+                *sector_pen.color().toTuple()[:3],
+                self.visual_settings["angle_sector_fill_transparency"],
+            )
+        )
+        vector_pen = pg.mkPen(
+            color=color, width=self.visual_settings["angle_vector_pen_width"]
+        )
 
         for n in [start1, end1, start2, end2]:
             self.add_children_to_tracker(n, name, "angle")
@@ -842,13 +896,13 @@ class FrameWidget(QtWidgets.QWidget):
         vec1 = pg.PlotCurveItem(
             [vec1_start_x, vec1_end_x],
             [vec1_start_y, vec1_end_y],
-            pen=pen,
+            pen=vector_pen,
         )
         self.fig.addItem(vec1)
         vec2 = pg.PlotCurveItem(
             [vec2_start_x, vec2_end_x],
             [vec2_start_y, vec2_end_y],
-            pen=pen,
+            pen=vector_pen,
         )
         self.fig.addItem(vec2)
         vec1_angle = angle_vec(
@@ -860,21 +914,24 @@ class FrameWidget(QtWidgets.QWidget):
 
         pie = PieItem(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.pie_radius,
+            radius=self.visual_settings["angle_sector_radius"],
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
-            pen=pen,
-            brush=brush,
+            pen=sector_pen,
+            brush=sector_brush,
         )
         self.fig.addItem(pie)
 
         label = pg.TextItem(
             name,
             anchor=(0, 0.5),
-            color=pen.color(),
-            fill=self.roi_label_fill_color,
+            color=sector_pen.color(),
+            fill=self.visual_settings["item_name_label_fill_color"],
         )
-        label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
+        label.setPos(
+            round(vec1_start_x) + self.visual_settings["angle_sector_radius"],
+            round(vec1_start_y),
+        )
         self.fig.addItem(label)
 
         self.angles["name"].append(name)
@@ -927,11 +984,14 @@ class FrameWidget(QtWidgets.QWidget):
 
         pie.setData(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.pie_radius,
+            radius=self.visual_settings["angle_sector_radius"],
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
         )
-        label.setPos(round(vec1_start_x) + self.pie_radius, round(vec1_start_y))
+        label.setPos(
+            round(vec1_start_x) + self.visual_settings["angle_sector_radius"],
+            round(vec1_start_y),
+        )
 
         if dragged:
             logging.debug(f"Angle {name} manually moved in frame display.")
@@ -1004,8 +1064,8 @@ class FrameWidget(QtWidgets.QWidget):
         arrow = ArrowItem(
             start_pos=(x, y),
             end_pos=(x, y),
-            arrow_width=42,
-            arrow_height=42,
+            arrow_width=self.visual_settings["distance_arrow_head_width"],
+            arrow_height=self.visual_settings["distance_arrow_head_height"],
             stem_pen=self.new_item_pen,
             arrow_pen=pg.mkPen(None),
             arrow_brush=pg.mkBrush(color=self.new_item_pen.color()),
@@ -1068,7 +1128,9 @@ class FrameWidget(QtWidgets.QWidget):
 
     def add_distance(self, name, start, end, color):
         name = self.prevent_name_collision(name, item_type="distance")
-        pen = pg.mkPen(color=color, width=3)
+        pen = pg.mkPen(
+            color=color, width=self.visual_settings["distance_arrow_stem_width"]
+        )
         brush = pg.mkBrush(color=color)
 
         for n in [start, end]:
@@ -1080,8 +1142,8 @@ class FrameWidget(QtWidgets.QWidget):
         arrow = ArrowItem(
             start_pos=start_pos,
             end_pos=end_pos,
-            arrow_width=42,
-            arrow_height=42,
+            arrow_width=self.visual_settings["distance_arrow_head_width"],
+            arrow_height=self.visual_settings["distance_arrow_head_height"],
             stem_pen=pen,
             arrow_pen=pg.mkPen(None),
             arrow_brush=brush,
@@ -1092,7 +1154,7 @@ class FrameWidget(QtWidgets.QWidget):
             name,
             anchor=(0, 0.5),
             color=pen.color(),
-            fill=self.roi_label_fill_color,
+            fill=self.visual_settings["item_name_label_fill_color"],
         )
         label.setPos((start_pos + end_pos) / 2)
         self.fig.addItem(label)
@@ -1273,10 +1335,18 @@ class FrameWidget(QtWidgets.QWidget):
     def show_trajectory(self, name, current_frame_index, target):
         i = self.trackers["name"].index(name)
         traj = self.trackers["traj"][i]
-        if current_frame_index > self.traj_len:
+        if current_frame_index > self.visual_settings["trajectory_length"]:
             traj.setData(
-                target[current_frame_index - self.traj_len : current_frame_index, 0],
-                target[current_frame_index - self.traj_len : current_frame_index, 1],
+                target[
+                    current_frame_index
+                    - self.visual_settings["trajectory_length"] : current_frame_index,
+                    0,
+                ],
+                target[
+                    current_frame_index
+                    - self.visual_settings["trajectory_length"] : current_frame_index,
+                    1,
+                ],
             )
         else:
             traj.setData(
@@ -1295,7 +1365,7 @@ class FrameWidget(QtWidgets.QWidget):
             np.array([img_point]),
             pen=pg.mkPen(None),
             symbolBrush=self.warp_point_brush,
-            symbol="d",
+            symbol=self.visual_settings["warp_point_symbol"],
         )
         dialog = PointDialog(img_point, "Point 1")
         dialog.exec()
