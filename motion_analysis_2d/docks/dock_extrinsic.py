@@ -87,11 +87,13 @@ class LoadExtrinsicDock(BaseDock):
             )
             self.set_cal_ok()
             logging.info(f"Extrinsic calibration load successful. File: {file_name}")
-            logging_repr = (
-                lambda x: np.array_repr(x).replace(" ", "").replace("\n", " ")
-            )
-            logging.info(f"M: {logging_repr(self.M)}")
-            logging.info(f"output_size: {logging_repr(self.output_size)}")
+            if self.M is not None:
+                logging_repr = (
+                    lambda x: np.array_repr(x).replace(" ", "").replace("\n", " ")
+                )
+                logging.info(f"M: {logging_repr(self.M)}")
+                logging.info(f"output_size: {logging_repr(self.output_size)}")
+            logging.info(f"scaling: {self.scaling}")
 
         except Exception as e:
             self.set_cal_bad()
@@ -99,7 +101,14 @@ class LoadExtrinsicDock(BaseDock):
         self.settings_updated.emit()
 
     def change_perspective(self, img):
-        return cv.warpPerspective(img, self.M, self.output_size) if self.cal_ok else img
+        if self.M is not None:
+            return (
+                cv.warpPerspective(img, self.M, self.output_size)
+                if self.cal_ok
+                else img
+            )
+        else:
+            return img
 
     def select_points_button_toggled(self, checked):
         if checked:
