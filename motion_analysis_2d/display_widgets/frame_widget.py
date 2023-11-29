@@ -715,14 +715,14 @@ class FrameWidget(QtWidgets.QWidget):
     def bbox_moved(self, roi=None):
         if roi is None:
             roi = self.sender()
-        self.keep_roi_in_frame(roi)
+        roi_x, roi_y, roi_w, roi_h = self.keep_roi_in_frame(roi)
 
         i = self.trackers["roi"].index(roi)
         name = self.trackers["name"][i]
         target = self.trackers["target"][i]
         offset = self.trackers["offset"][i]
-        bbox_pos = [round(a) for a in roi.pos()]
-        bbox_size = [round(a) for a in roi.size()]
+        bbox_pos = [round(a) for a in (roi_x, roi_y)]
+        bbox_size = [round(a) for a in (roi_w, roi_h)]
         tracker_type = self.trackers["tracker_type"][i]
         color = self.trackers["color"][i]
         children = self.trackers["children"][i]
@@ -1250,28 +1250,34 @@ class FrameWidget(QtWidgets.QWidget):
         im_x, im_y = self.im_item.pos()
         im_w, im_h = self.im_item.width(), self.im_item.height()
 
-        if roi_w > im_w:
+        if roi_w >= im_w:
             roi_w = im_w
-        if roi_h > im_h:
+        if roi_h >= im_h:
             roi_h = im_h
-        if roi_w <= 0:
-            roi_w = 1
-        if roi_h <= 0:
-            roi_h = 1
+        if roi_w < 2:
+            roi_w = 2
+        if roi_h < 2:
+            roi_h = 2
+        if roi_w / roi_h > 20:
+            roi_h = roi_w / 20
+        elif roi_h / roi_w > 20:
+            roi_w = roi_h / 20
 
         if roi_x < im_x:
             roi_x = im_x
-        elif roi_x + roi_w > im_x + im_w:
+        if roi_x + roi_w > im_x + im_w:
             roi_x = im_x + im_w - roi_w
         if roi_y < im_y:
             roi_y = im_y
-        elif roi_y + roi_h > im_y + im_h:
+        if roi_y + roi_h > im_y + im_h:
             roi_y = im_y + im_h - roi_h
 
         roi.blockSignals(True)
         roi.setPos((roi_x, roi_y))
         roi.setSize((roi_w, roi_h))
         roi.blockSignals(False)
+
+        return roi_x, roi_y, roi_w, roi_h
 
     def keep_point_in_frame(self, x, y):
         im_x, im_y = self.im_item.pos()

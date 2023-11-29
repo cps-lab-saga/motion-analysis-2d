@@ -472,8 +472,12 @@ class MainWidget(QtWidgets.QMainWindow):
         self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
 
     def add_tracker_failed(self, name, error):
-        self.docks["Items"].remove_row(name, "tracker")
         self.error_dialog(f"Could not initialise tracker for ({name})!\n{error}")
+        self.docks["Items"].remove_row(name, "tracker")
+        self.frame_widget.blockSignals(True)
+        self.frame_widget.remove_tracker(name)
+        self.frame_widget.blockSignals(False)
+        self.docks["DataPlot"].remove_tracker(name)
 
     def remove_tracker(self, name):
         self.tracking_worker.remove_tracker(name)
@@ -774,7 +778,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
 
 def main():
-    setup_logger(logging.INFO)
+    setup_logger(logging.DEBUG)
 
     app = QtWidgets.QApplication([])
     win = MainWidget()
