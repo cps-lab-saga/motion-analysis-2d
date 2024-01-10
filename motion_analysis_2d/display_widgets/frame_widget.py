@@ -13,24 +13,20 @@ from motion_analysis_2d.dialogs import PointDialog
 from motion_analysis_2d.funcs import (
     setup_logger,
     is_json_file,
-    prevent_name_collision,
     angle_vec,
 )
 
 
 class FrameWidget(QtWidgets.QWidget):
     new_tracker_suggested = Signal(tuple, tuple, tuple)
-    tracker_added = Signal(str, tuple, tuple, tuple, tuple, str)
     tracker_moved = Signal(str, tuple, tuple, tuple, tuple, str)
-    tracker_removed = Signal(str)
+    tracker_removal_suggested = Signal(str)
     new_angle_suggested = Signal(str, str, str, str)
-    angle_added = Signal(str, str, str, str, str, tuple)
     angle_moved = Signal(str, str, str, str, str, tuple)
-    angle_removed = Signal(str)
+    angle_removal_suggested = Signal(str)
     new_distance_suggested = Signal(str, str)
-    distance_added = Signal(str, str, str, tuple)
     distance_moved = Signal(str, str, str, tuple)
-    distance_removed = Signal(str)
+    distance_removal_suggested = Signal(str)
     marker_file_dropped = Signal(object)
     new_warp_points_selected = Signal(list, list)
 
@@ -215,7 +211,7 @@ class FrameWidget(QtWidgets.QWidget):
                 items = self.fig.scene().items(pos)
                 for item in items:
                     if isinstance(item, (pg.ROI, pg.TargetItem)):
-                        self.remove_tracker(item)
+                        self.remove_tracker_suggested(item)
                         break
 
         elif self.mouse_mode == MouseModes.ADD_ANGLE:
@@ -255,11 +251,11 @@ class FrameWidget(QtWidgets.QWidget):
                 items = self.fig.scene().items(pos)
                 for item in items:
                     if isinstance(item, PieItem):
-                        self.remove_angle(item)
+                        self.remove_angle_suggested(item)
                         break
                     elif isinstance(item, pg.PlotCurveItem):
                         if item in self.angles["vec1"] or item in self.angles["vec2"]:
-                            self.remove_angle(item)
+                            self.remove_angle_suggested(item)
                             break
 
         elif self.mouse_mode == MouseModes.ADD_DISTANCE:
@@ -285,7 +281,7 @@ class FrameWidget(QtWidgets.QWidget):
                 items = self.fig.scene().items(pos)
                 for item in items:
                     if isinstance(item, ArrowItem):
-                        self.remove_distance(item)
+                        self.remove_distance_suggested(item)
                         break
 
         elif self.mouse_mode == MouseModes.SELECT_WARP_POINTS:
@@ -576,7 +572,6 @@ class FrameWidget(QtWidgets.QWidget):
             logging.debug("Removed drawn warp points from frame.")
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
-        name = self.prevent_name_collision(name)
         bbox_pen = pg.mkPen(
             color=color, width=self.visual_settings["tracker_bbox_pen_width"]
         )
@@ -645,7 +640,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["show"].append(True)
 
         logging.debug(f"Tracker {name} added to frame display.")
-        self.tracker_added.emit(name, bbox_pos, bbox_size, offset, color, tracker_type)
 
     def hide_tracker(self, name):
         i = self.trackers["name"].index(name)
@@ -669,17 +663,19 @@ class FrameWidget(QtWidgets.QWidget):
             self.trackers["show"][i] = True
             logging.debug(f"Tracker {name} shown in frame display.")
 
-    def remove_tracker(self, item):
+    def remove_tracker_suggested(self, item):
         if isinstance(item, pg.ROI):
             i = self.trackers["roi"].index(item)
         elif isinstance(item, pg.TargetItem):
             i = self.trackers["target"].index(item)
-        elif isinstance(item, str):
-            i = self.trackers["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
-
         name = self.trackers["name"][i]
+        self.tracker_removal_suggested.emit(name)
+
+    def remove_tracker(self, name):
+        i = self.trackers["name"].index(name)
+
         children = self.trackers["children"][i]
         if self.trackers["show"][i]:
             self.fig.removeItem(self.trackers["roi"][i])
@@ -690,23 +686,14 @@ class FrameWidget(QtWidgets.QWidget):
             all_children = children.copy()
             for child_name, child_type in all_children:
                 if child_type == "angle":
-                    self.remove_angle(child_name)
+                    self.angle_removal_suggested.emit(child_name)
                 elif child_type == "distance":
-                    self.remove_distance(child_name)
+                    self.distance_removal_suggested.emit(child_name)
 
         for item in self.trackers.values():
             item.pop(i)
 
         logging.debug(f"Tracker {name} removed from frame display.")
-        self.tracker_removed.emit(name)
-
-    def prevent_name_collision(self, name, item_type="tracker"):
-        if item_type == "tracker":
-            return prevent_name_collision(name, self.trackers["name"])
-        elif item_type == "angle":
-            return prevent_name_collision(name, self.angles["name"])
-        elif item_type == "distance":
-            return prevent_name_collision(name, self.distances["name"])
 
     def frame_shape_changed(self):
         for roi in self.trackers["roi"]:
@@ -871,7 +858,6 @@ class FrameWidget(QtWidgets.QWidget):
         )
 
     def add_angle(self, name, start1, end1, start2, end2, color):
-        name = self.prevent_name_collision(name, item_type="angle")
         sector_pen = pg.mkPen(
             color=color, width=self.visual_settings["angle_sector_pen_width"]
         )
@@ -947,7 +933,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.angles["show"].append(True)
 
         logging.debug(f"Angle {name} added to frame display.")
-        self.angle_added.emit(name, start1, end1, start2, end2, color)
 
     def update_angle_item(self, name, dragged=False):
         i = self.angles["name"].index(name)
@@ -1021,7 +1006,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.angles["show"][i] = True
             logging.debug(f"Angle {name} shown in frame display.")
 
-    def remove_angle(self, item):
+    def remove_angle_suggested(self, item):
         if isinstance(item, PieItem):
             i = self.angles["pie"].index(item)
         elif isinstance(item, pg.PlotCurveItem):
@@ -1031,12 +1016,14 @@ class FrameWidget(QtWidgets.QWidget):
                 i = self.angles["vec2"].index(item)
             else:
                 return
-        elif isinstance(item, str):
-            i = self.angles["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
-
         name = self.angles["name"][i]
+        self.angle_removal_suggested.emit(name)
+
+    def remove_angle(self, name):
+        i = self.angles["name"].index(name)
+
         start1 = self.angles["start1"][i]
         end1 = self.angles["end1"][i]
         start2 = self.angles["start2"][i]
@@ -1054,7 +1041,6 @@ class FrameWidget(QtWidgets.QWidget):
             item.pop(i)
 
         logging.debug(f"Angle {name} removed from frame display.")
-        self.angle_removed.emit(name)
 
     def start_new_distance(self, target_item):
         x, y = target_item.pos()
@@ -1127,7 +1113,6 @@ class FrameWidget(QtWidgets.QWidget):
         )
 
     def add_distance(self, name, start, end, color):
-        name = self.prevent_name_collision(name, item_type="distance")
         pen = pg.mkPen(
             color=color, width=self.visual_settings["distance_arrow_stem_width"]
         )
@@ -1168,7 +1153,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.distances["show"].append(True)
 
         logging.debug(f"Distance {name} added to frame display.")
-        self.distance_added.emit(name, start, end, color)
 
     def update_distance_item(self, name, dragged=False):
         i = self.distances["name"].index(name)
@@ -1208,15 +1192,17 @@ class FrameWidget(QtWidgets.QWidget):
             self.distances["show"][i] = True
             logging.debug(f"Distance {name} shown in frame display.")
 
-    def remove_distance(self, item):
+    def remove_distance_suggested(self, item):
         if isinstance(item, ArrowItem):
             i = self.distances["arrow"].index(item)
-        elif isinstance(item, str):
-            i = self.distances["name"].index(item)
         else:
             raise TypeError("Unrecognized item type")
-
         name = self.distances["name"][i]
+        self.distance_removal_suggested.emit(name)
+
+    def remove_distance(self, name):
+        i = self.distances["name"].index(name)
+
         start = self.distances["start"][i]
         end = self.distances["end"][i]
         self.fig.removeItem(self.distances["arrow"][i])
@@ -1229,7 +1215,6 @@ class FrameWidget(QtWidgets.QWidget):
             item.pop(i)
 
         logging.debug(f"Distance {name} removed from frame display.")
-        self.distance_removed.emit(name)
 
     def clear(self):
         for l in self.trackers.values():

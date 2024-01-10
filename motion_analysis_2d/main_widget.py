@@ -22,6 +22,7 @@ from motion_analysis_2d.docks import (
 )
 from motion_analysis_2d.funcs import (
     setup_logger,
+    prevent_name_collision,
     save_tracking_data,
     load_tracking_data,
     export_csv,
@@ -68,17 +69,14 @@ class MainWidget(QtWidgets.QMainWindow):
 
         self.frame_widget = FrameWidget(self.visual_settings, self)
         self.frame_widget.new_tracker_suggested.connect(self.tracker_suggested)
-        self.frame_widget.tracker_added.connect(self.add_tracker)
         self.frame_widget.tracker_moved.connect(self.move_tracker)
-        self.frame_widget.tracker_removed.connect(self.remove_tracker)
+        self.frame_widget.tracker_removal_suggested.connect(self.remove_tracker)
         self.frame_widget.new_angle_suggested.connect(self.angle_suggested)
-        self.frame_widget.angle_added.connect(self.add_angle)
         self.frame_widget.angle_moved.connect(self.move_angle)
-        self.frame_widget.angle_removed.connect(self.remove_angle)
+        self.frame_widget.angle_removal_suggested.connect(self.remove_angle)
         self.frame_widget.new_distance_suggested.connect(self.distance_suggested)
-        self.frame_widget.distance_added.connect(self.add_distance)
         self.frame_widget.distance_moved.connect(self.move_distance)
-        self.frame_widget.distance_removed.connect(self.remove_distance)
+        self.frame_widget.distance_removal_suggested.connect(self.remove_distance)
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
         self.frame_widget.new_warp_points_selected.connect(self.warp_points_selected)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
@@ -128,7 +126,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Items"].show_item.connect(self.show_item)
         self.docks["Items"].hide_item.connect(self.hide_item)
-        self.docks["Items"].remove_item.connect(self.remove_item)
+        self.docks["Items"].remove_item_suggested.connect(self.remove_item)
         self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
         self.docks["Save"].export_clicked.connect(self.export_data)
         self.docks["DataPlot"].frame_line_dragged.connect(
@@ -438,32 +436,38 @@ class MainWidget(QtWidgets.QMainWindow):
             sleep(0.1)
 
         if item_type == "tracker":
-            self.frame_widget.remove_tracker(name)
+            self.remove_tracker(name)
         elif item_type == "angle":
-            self.frame_widget.remove_angle(name)
+            self.remove_angle(name)
         elif item_type == "distance":
-            self.frame_widget.remove_distance(name)
+            self.remove_distance(name)
 
     def tracker_suggested(self, bbox_pos, bbox_size, offset):
         dialog = TrackerDialog(default_color=next(tab10_rgb_cycle))
         dialog.exec()
         if dialog.result():
             name, color, tracker_type = dialog.get_inputs()
-            self.frame_widget.remove_temp_tracker()
-
-            self.frame_widget.add_tracker(
-                name, bbox_pos, bbox_size, offset, color, tracker_type
-            )
-
-        else:
-            self.frame_widget.remove_temp_tracker()
+            self.add_tracker(name, bbox_pos, bbox_size, offset, color, tracker_type)
+        self.frame_widget.remove_temp_tracker()
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
+        name = self.prevent_name_collision(name, item_type="tracker")
         self.tracking_worker.add_tracker(
             name, bbox_pos, bbox_size, offset, tracker_type
         )
+        self.frame_widget.add_tracker(
+            name, bbox_pos, bbox_size, offset, color, tracker_type
+        )
         self.docks["Items"].add_row(name, color, "tracker")
         self.docks["DataPlot"].add_tracker(name, color)
+
+    def prevent_name_collision(self, name, item_type="tracker"):
+        if item_type == "tracker":
+            return prevent_name_collision(name, self.frame_widget.trackers["name"])
+        elif item_type == "angle":
+            return prevent_name_collision(name, self.frame_widget.angles["name"])
+        elif item_type == "distance":
+            return prevent_name_collision(name, self.frame_widget.distances["name"])
 
     def tracking_failed(self, name, frame_no):
         self.play_video(False)
@@ -473,14 +477,13 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def add_tracker_failed(self, name, error):
         self.error_dialog(f"Could not initialise tracker for ({name})!\n{error}")
-        self.docks["Items"].remove_row(name, "tracker")
-        self.frame_widget.blockSignals(True)
         self.frame_widget.remove_tracker(name)
-        self.frame_widget.blockSignals(False)
+        self.docks["Items"].remove_row(name, "tracker")
         self.docks["DataPlot"].remove_tracker(name)
 
     def remove_tracker(self, name):
         self.tracking_worker.remove_tracker(name)
+        self.frame_widget.remove_tracker(name)
         self.docks["Items"].remove_row(name, "tracker")
         self.docks["DataPlot"].remove_tracker(name)
 
@@ -497,27 +500,26 @@ class MainWidget(QtWidgets.QMainWindow):
         dialog.exec()
         if dialog.result():
             name, color = dialog.get_inputs()
-            self.frame_widget.remove_temp_angle()
-
-            self.frame_widget.add_angle(
-                name,
-                start1,
-                end1,
-                start2,
-                end2,
-                color,
-            )
-
-        else:
-            self.frame_widget.remove_temp_angle()
+            self.add_angle(name, start1, end1, start2, end2, color)
+        self.frame_widget.remove_temp_angle()
 
     def add_angle(self, name, start1, end1, start2, end2, color):
+        name = self.prevent_name_collision(name, item_type="angle")
+        self.frame_widget.add_angle(
+            name,
+            start1,
+            end1,
+            start2,
+            end2,
+            color,
+        )
         self.tracking_worker.add_angle(name, start1, end1, start2, end2)
         self.docks["Items"].add_row(name, color, "angle")
         self.docks["DataPlot"].add_angle(name, color)
 
     def remove_angle(self, name):
         self.tracking_worker.remove_angle(name)
+        self.frame_widget.remove_angle(name)
         self.docks["Items"].remove_row(name, "angle")
         self.docks["DataPlot"].remove_angle(name)
 
@@ -529,25 +531,25 @@ class MainWidget(QtWidgets.QMainWindow):
         dialog.exec()
         if dialog.result():
             name, color = dialog.get_inputs()
-            self.frame_widget.remove_temp_distance()
+            self.add_distance(name, start, end, color)
 
-            self.frame_widget.add_distance(
-                name,
-                start,
-                end,
-                color,
-            )
-
-        else:
-            self.frame_widget.remove_temp_distance()
+        self.frame_widget.remove_temp_distance()
 
     def add_distance(self, name, start, end, color):
+        name = self.prevent_name_collision(name, item_type="distance")
+        self.frame_widget.add_distance(
+            name,
+            start,
+            end,
+            color,
+        )
         self.tracking_worker.add_distance(name, start, end)
         self.docks["Items"].add_row(name, color, "distance")
         self.docks["DataPlot"].add_distance(name, color)
 
     def remove_distance(self, name):
         self.tracking_worker.remove_distance(name)
+        self.frame_widget.remove_distance(name)
         self.docks["Items"].remove_row(name, "distance")
         self.docks["DataPlot"].remove_distance(name)
 
@@ -610,7 +612,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 ).min()
                 bbox = tracking_data[name]["bbox"][i]
 
-            self.frame_widget.add_tracker(
+            self.add_tracker(
                 name,
                 bbox[:2].astype(np.int_),
                 bbox[2:].astype(np.int_),
@@ -628,7 +630,7 @@ class MainWidget(QtWidgets.QMainWindow):
             angle_props["end2"],
             angle_props["color"],
         ):
-            self.frame_widget.add_angle(*args)
+            self.add_angle(*args)
 
         distance_props = analysis_properties["distance"]
         for args in zip(
@@ -637,7 +639,7 @@ class MainWidget(QtWidgets.QMainWindow):
             distance_props["end"],
             distance_props["color"],
         ):
-            self.frame_widget.add_distance(*args)
+            self.add_distance(*args)
 
     def load_markers(self, path):
         if self.stream_worker is not None:

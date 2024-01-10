@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 
 import qtawesome as qta
@@ -8,8 +9,8 @@ from motion_analysis_2d.custom_components import BaseDock
 
 
 class ItemsDock(BaseDock):
-    edit_item = Signal(str, str)
-    remove_item = Signal(str, str)
+    edit_item_suggested = Signal(str, str)
+    remove_item_suggested = Signal(str, str)
 
     show_item = Signal(str, str)
     hide_item = Signal(str, str)
@@ -36,15 +37,17 @@ class ItemsDock(BaseDock):
     def add_row(self, name, color, item_type):
         row = ItemsRow(name, color, item_type, parent=self)
         row.checkbox_toggled.connect(partial(self.checkbox_toggled, item_type))
-        row.edit_item.connect(self.edit_item.emit)
-        row.remove_item.connect(self.remove_item.emit)
+        row.edit_item_suggested.connect(self.edit_item_suggested.emit)
+        row.remove_item_suggested.connect(self.remove_item_suggested.emit)
         self.rows[item_type][name] = row
         self.collapsibles[item_type].addWidget(row)
+        logging.debug(f"{item_type.capitalize()} {name} added to items dock.")
 
     def remove_row(self, name, item_type):
         row = self.rows[item_type].pop(name)
         self.collapsibles[item_type].removeWidget(row)
         row.deleteLater()
+        logging.debug(f"{item_type.capitalize()} {name} removed from items dock.")
 
     def checkbox_toggled(self, item_type, name, show):
         if show:
@@ -62,8 +65,8 @@ class ItemsDock(BaseDock):
 
 class ItemsRow(QtWidgets.QWidget):
     checkbox_toggled = Signal(str, object)
-    edit_item = Signal(str, object)
-    remove_item = Signal(str, object)
+    edit_item_suggested = Signal(str, object)
+    remove_item_suggested = Signal(str, object)
 
     def __init__(self, name, color, item_type="tracker", parent=None):
         super().__init__(parent)
@@ -110,10 +113,10 @@ class ItemsRow(QtWidgets.QWidget):
         self.context_menu.exec(QtGui.QCursor.pos())
 
     def emit_edit_item(self):
-        self.edit_item.emit(self.item_type, self.name)
+        self.edit_item_suggested.emit(self.item_type, self.name)
 
     def emit_remove_item(self):
-        self.remove_item.emit(self.item_type, self.name)
+        self.remove_item_suggested.emit(self.item_type, self.name)
 
 
 if __name__ == "__main__":
