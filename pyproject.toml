@@ -17,6 +17,7 @@ superqt = "^0.6.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
+pytest-qt = "^4.3.1"
 pyinstaller = "^6.1.0"
 
 [build-system]

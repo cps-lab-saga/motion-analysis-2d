@@ -1232,6 +1232,28 @@ class FrameWidget(QtWidgets.QWidget):
 
         logging.debug(f"Distance {name} added to frame display.")
 
+    def edit_distance(self, name, new_name, new_color):
+        i = self.distances["name"].index(name)
+        self.distances["name"][i] = new_name
+        self.distances["color"][i] = new_color
+
+        pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["distance_arrow_stem_width"]
+        )
+        brush = pg.mkBrush(color=new_color)
+
+        self.distances["arrow"][i].setStemPen(pen)
+        self.distances["arrow"][i].setArrowBrush(brush)
+
+        self.distances["label"][i].setColor(pen.color())
+        self.distances["label"][i].setText(new_name)
+
+        if new_name != name:
+            for children in self.trackers["children"]:
+                if (name, "distance") in children:
+                    children.remove((name, "distance"))
+                    children.add((new_name, "distance"))
+
     def update_distance_parent_name(self, name, parent_name, new_parent_name):
         i = self.distances["name"].index(name)
         for x in ["start", "end"]:

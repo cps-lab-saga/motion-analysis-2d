@@ -590,6 +590,23 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Items"].add_row(name, color, "distance")
         self.docks["DataPlot"].add_distance(name, color)
 
+    def edit_distance(self, name):
+        i = self.frame_widget.distances["name"].index(name)
+        color = self.frame_widget.distances["color"][i]
+
+        dialog = DistanceDialog(default_name=name, default_color=color)
+        dialog.exec()
+        if dialog.result():
+            new_name, new_color = dialog.get_inputs()
+            if new_name != name:
+                new_name = self.prevent_name_collision(new_name, item_type="distance")
+            self.frame_widget.edit_distance(name, new_name, new_color)
+            self.docks["Items"].edit_row(
+                name, new_name, new_color, item_type="distance"
+            )
+            self.docks["DataPlot"].edit_distance(name, new_name, new_color)
+            self.tracking_worker.edit_distance(name, new_name)
+
     def remove_distance(self, name):
         self.tracking_worker.remove_distance(name)
         self.frame_widget.remove_distance(name)

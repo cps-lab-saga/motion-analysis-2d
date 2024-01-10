@@ -104,6 +104,15 @@ class ArrowItem(pg.GraphicsObject):
         self.end_pos = end_pos
         self.generatePicture()
 
+    def setStemPen(self, pen):
+        self.stem_pen = pen
+
+    def setArrowPen(self, pen):
+        self.arrow_pen = pen
+
+    def setArrowBrush(self, brush):
+        self.arrowBrush = brush
+
 
 if __name__ == "__main__":
     item = ArrowItem(stem_pen=pg.mkPen("w", width=4), arrow_brush=pg.mkBrush("r"))

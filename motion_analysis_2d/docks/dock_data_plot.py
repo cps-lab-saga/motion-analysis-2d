@@ -84,14 +84,15 @@ class DataPlotDock(BaseDock):
         self.trackers[new_name]["x"].setData(pen=new_color)
         self.trackers[new_name]["y"].setData(pen=new_color)
 
-        self.plot_widgets["Trackers"].lines["x"][new_name] = self.plot_widgets[
-            "Trackers"
-        ].lines["x"][name]
-        self.plot_widgets["Trackers"].lines["y"][new_name] = self.plot_widgets[
-            "Trackers"
-        ].lines["y"][name]
-        del self.plot_widgets["Trackers"].lines["x"][name]
-        del self.plot_widgets["Trackers"].lines["y"][name]
+        if new_name != name:
+            self.plot_widgets["Trackers"].lines["x"][new_name] = self.plot_widgets[
+                "Trackers"
+            ].lines["x"][name]
+            self.plot_widgets["Trackers"].lines["y"][new_name] = self.plot_widgets[
+                "Trackers"
+            ].lines["y"][name]
+            del self.plot_widgets["Trackers"].lines["x"][name]
+            del self.plot_widgets["Trackers"].lines["y"][name]
 
     def show_tracker(self, name):
         self.plot_widgets["Trackers"].show_line("x", name)
@@ -124,10 +125,11 @@ class DataPlotDock(BaseDock):
 
         self.angles[new_name]["θ"].setData(pen=new_color)
 
-        self.plot_widgets["Angles"].lines["θ"][new_name] = self.plot_widgets[
-            "Angles"
-        ].lines["θ"][name]
-        del self.plot_widgets["Angles"].lines["θ"][name]
+        if new_name != name:
+            self.plot_widgets["Angles"].lines["θ"][new_name] = self.plot_widgets[
+                "Angles"
+            ].lines["θ"][name]
+            del self.plot_widgets["Angles"].lines["θ"][name]
 
     def show_angle(self, name):
         self.plot_widgets["Angles"].show_line("θ", name)
@@ -158,14 +160,15 @@ class DataPlotDock(BaseDock):
         self.distances[new_name]["x"].setData(pen=new_color)
         self.distances[new_name]["y"].setData(pen=new_color)
 
-        self.plot_widgets["Distances"].lines["x"][new_name] = self.plot_widgets[
-            "Distances"
-        ].lines["x"][name]
-        self.plot_widgets["Distances"].lines["y"][new_name] = self.plot_widgets[
-            "Distances"
-        ].lines["y"][name]
-        del self.plot_widgets["Distances"].lines["x"][name]
-        del self.plot_widgets["Distances"].lines["y"][name]
+        if new_name != name:
+            self.plot_widgets["Distances"].lines["x"][new_name] = self.plot_widgets[
+                "Distances"
+            ].lines["x"][name]
+            self.plot_widgets["Distances"].lines["y"][new_name] = self.plot_widgets[
+                "Distances"
+            ].lines["y"][name]
+            del self.plot_widgets["Distances"].lines["x"][name]
+            del self.plot_widgets["Distances"].lines["y"][name]
 
     def show_distance(self, name):
         self.plot_widgets["Distances"].show_line("x", name)
