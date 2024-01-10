@@ -82,6 +82,7 @@ class DataPlotDock(BaseDock):
             del self.trackers[name]
 
         self.trackers[new_name]["x"].setData(pen=new_color)
+        self.trackers[new_name]["y"].setData(pen=new_color)
 
         self.plot_widgets["Trackers"].lines["x"][new_name] = self.plot_widgets[
             "Trackers"
@@ -116,6 +117,18 @@ class DataPlotDock(BaseDock):
         }
         logging.debug(f"Angle {name} added to data plot dock.")
 
+    def edit_angle(self, name, new_name, new_color):
+        if new_name != name:
+            self.angles[new_name] = self.angles[name]
+            del self.angles[name]
+
+        self.angles[new_name]["θ"].setData(pen=new_color)
+
+        self.plot_widgets["Angles"].lines["θ"][new_name] = self.plot_widgets[
+            "Angles"
+        ].lines["θ"][name]
+        del self.plot_widgets["Angles"].lines["θ"][name]
+
     def show_angle(self, name):
         self.plot_widgets["Angles"].show_line("θ", name)
 
@@ -136,6 +149,23 @@ class DataPlotDock(BaseDock):
             "y": self.plot_widgets["Distances"].add_line("y", name, color),
         }
         logging.debug(f"Distance {name} added to data plot dock.")
+
+    def edit_distance(self, name, new_name, new_color):
+        if new_name != name:
+            self.distances[new_name] = self.distances[name]
+            del self.distances[name]
+
+        self.distances[new_name]["x"].setData(pen=new_color)
+        self.distances[new_name]["y"].setData(pen=new_color)
+
+        self.plot_widgets["Distances"].lines["x"][new_name] = self.plot_widgets[
+            "Distances"
+        ].lines["x"][name]
+        self.plot_widgets["Distances"].lines["y"][new_name] = self.plot_widgets[
+            "Distances"
+        ].lines["y"][name]
+        del self.plot_widgets["Distances"].lines["x"][name]
+        del self.plot_widgets["Distances"].lines["y"][name]
 
     def show_distance(self, name):
         self.plot_widgets["Distances"].show_line("x", name)

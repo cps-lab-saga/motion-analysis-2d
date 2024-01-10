@@ -974,6 +974,38 @@ class FrameWidget(QtWidgets.QWidget):
 
         logging.debug(f"Angle {name} added to frame display.")
 
+    def edit_angle(self, name, new_name, new_color):
+        i = self.angles["name"].index(name)
+        self.angles["name"][i] = new_name
+        self.angles["color"][i] = new_color
+
+        sector_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["angle_sector_pen_width"]
+        )
+        sector_brush = pg.mkBrush(
+            color=(
+                *sector_pen.color().toTuple()[:3],
+                self.visual_settings["angle_sector_fill_transparency"],
+            )
+        )
+        vector_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["angle_vector_pen_width"]
+        )
+
+        self.angles["vec1"][i].setPen(vector_pen)
+        self.angles["vec2"][i].setPen(vector_pen)
+        self.angles["pie"][i].setPen(sector_pen)
+        self.angles["pie"][i].setBrush(sector_brush)
+
+        self.angles["label"][i].setColor(sector_pen.color())
+        self.angles["label"][i].setText(new_name)
+
+        if new_name != name:
+            for children in self.trackers["children"]:
+                if (name, "angle") in children:
+                    children.remove((name, "angle"))
+                    children.add((new_name, "angle"))
+
     def update_angle_parent_name(self, name, parent_name, new_parent_name):
         i = self.angles["name"].index(name)
         for x in ["start1", "end1", "start2", "end2"]:

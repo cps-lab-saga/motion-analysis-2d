@@ -545,6 +545,21 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Items"].add_row(name, color, "angle")
         self.docks["DataPlot"].add_angle(name, color)
 
+    def edit_angle(self, name):
+        i = self.frame_widget.angles["name"].index(name)
+        color = self.frame_widget.angles["color"][i]
+
+        dialog = AngleDialog(default_name=name, default_color=color)
+        dialog.exec()
+        if dialog.result():
+            new_name, new_color = dialog.get_inputs()
+            if new_name != name:
+                new_name = self.prevent_name_collision(new_name, item_type="angle")
+            self.frame_widget.edit_angle(name, new_name, new_color)
+            self.docks["Items"].edit_row(name, new_name, new_color, item_type="angle")
+            self.docks["DataPlot"].edit_angle(name, new_name, new_color)
+            self.tracking_worker.edit_angle(name, new_name)
+
     def remove_angle(self, name):
         self.tracking_worker.remove_angle(name)
         self.frame_widget.remove_angle(name)

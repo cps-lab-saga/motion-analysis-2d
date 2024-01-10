@@ -3,10 +3,10 @@ from motion_analysis_2d.custom_components import ColorButton, tab10_rgb
 
 
 class AngleDialog(QtWidgets.QDialog):
-    def __init__(self, default_color=tab10_rgb["green"]):
+    def __init__(self, default_name="", default_color=tab10_rgb["green"]):
         super().__init__()
 
-        self.name = ""
+        self.name = default_name
         self.color = default_color
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
 

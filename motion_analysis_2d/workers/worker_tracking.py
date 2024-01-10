@@ -128,6 +128,13 @@ class TrackingWorker(QtCore.QObject):
         logging.debug(f"Angle data for {name} updated.")
         self.mutex.unlock()
 
+    def edit_angle(self, name, new_name):
+        self.mutex.lock()
+        if new_name != name:
+            self.analysis_data["angle"][new_name] = self.analysis_data["angle"][name]
+            del self.analysis_data["angle"][name]
+        self.mutex.unlock()
+
     def add_distance(self, name, start, end):
         self.mutex.lock()
         distance_data = self.analysis_data["distance"]
@@ -143,6 +150,15 @@ class TrackingWorker(QtCore.QObject):
             self.tracking_data[end]["target"] - self.tracking_data[start]["target"]
         )
         logging.debug(f"Distance data for {name} updated.")
+        self.mutex.unlock()
+
+    def edit_distance(self, name, new_name):
+        self.mutex.lock()
+        if new_name != name:
+            self.analysis_data["distance"][new_name] = self.analysis_data["distance"][
+                name
+            ]
+            del self.analysis_data["distance"][name]
         self.mutex.unlock()
 
     def reset_trackers(self):

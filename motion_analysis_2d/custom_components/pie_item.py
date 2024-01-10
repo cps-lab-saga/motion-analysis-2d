@@ -49,6 +49,14 @@ class PieItem(pg.GraphicsObject):
         self.span_angle = round(span_angle) * 16
         self.generatePicture()
 
+    def setPen(self, pen):
+        self.pen = pen
+        self.generatePicture()
+
+    def setBrush(self, brush):
+        self.brush = brush
+        self.generatePicture()
+
 
 if __name__ == "__main__":
     item = PieItem((10, 10), 10, pen=pg.mkPen("w"), brush=pg.mkBrush("r"))
