@@ -126,6 +126,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Items"].show_item.connect(self.show_item)
         self.docks["Items"].hide_item.connect(self.hide_item)
+        self.docks["Items"].edit_item_suggested.connect(self.edit_item)
         self.docks["Items"].remove_item_suggested.connect(self.remove_item)
         self.docks["Save"].autosave_toggled.connect(self.autosave_toggled)
         self.docks["Save"].export_clicked.connect(self.export_data)
@@ -430,6 +431,18 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.hide_distance(name)
             self.docks["DataPlot"].hide_distance(name)
 
+    def edit_item(self, item_type, name):
+        self.play_video(False)
+        while not self.stream_queue.empty():
+            sleep(0.1)
+
+        if item_type == "tracker":
+            self.edit_tracker(name)
+        elif item_type == "angle":
+            self.edit_angle(name)
+        elif item_type == "distance":
+            self.edit_distance(name)
+
     def remove_item(self, item_type, name):
         self.play_video(False)
         while not self.stream_queue.empty():
@@ -460,6 +473,21 @@ class MainWidget(QtWidgets.QMainWindow):
         )
         self.docks["Items"].add_row(name, color, "tracker")
         self.docks["DataPlot"].add_tracker(name, color)
+
+    def edit_tracker(self, name):
+        i = self.frame_widget.trackers["name"].index(name)
+        color = self.frame_widget.trackers["color"][i]
+
+        dialog = TrackerDialog(default_name=name, default_color=color)
+        dialog.exec()
+        if dialog.result():
+            new_name, new_color, new_tracker_type = dialog.get_inputs()
+            if new_name != name:
+                new_name = self.prevent_name_collision(new_name, item_type="tracker")
+            self.frame_widget.edit_tracker(name, new_name, new_color, new_tracker_type)
+            self.docks["Items"].edit_row(name, new_name, new_color, item_type="tracker")
+            self.docks["DataPlot"].edit_tracker(name, new_name, new_color)
+            self.tracking_worker.edit_tracker(name, new_name, new_tracker_type)
 
     def prevent_name_collision(self, name, item_type="tracker"):
         if item_type == "tracker":

@@ -78,6 +78,34 @@ class TrackingWorker(QtCore.QObject):
             logging.warning(f"Create tracker failed for {name}.")
         self.mutex.unlock()
 
+    def edit_tracker(self, name, new_name, new_tracker_type):
+        self.mutex.lock()
+
+        if new_name != name:
+            self.tracking_data[new_name] = self.tracking_data[name]
+            self.trackers[new_name] = self.trackers[name]
+            del self.tracking_data[name]
+            del self.trackers[name]
+
+        bbox = self.tracking_data[new_name]["bbox"][self.frame_no - 1]
+        _, offset, _ = self.trackers[new_name]
+
+        if (~np.isnan(bbox)).any():
+            tracker = self.create_tracker(new_tracker_type)
+            tracker.init(self.frame, bbox.astype(np.int32))
+            self.trackers[new_name] = (tracker, offset, new_tracker_type)
+
+        if new_name != name:
+            for angle in self.analysis_data["angle"].values():
+                for i, parent_name in enumerate(angle["trackers"]):
+                    if parent_name == name:
+                        angle["trackers"][i] = new_name
+            for distance in self.analysis_data["distance"].values():
+                for i, parent_name in enumerate(distance["trackers"]):
+                    if parent_name == name:
+                        distance["trackers"][i] = new_name
+        self.mutex.unlock()
+
     def add_angle(self, name, start1, end1, start2, end2):
         self.mutex.lock()
         angle_data = self.analysis_data["angle"]
@@ -85,7 +113,7 @@ class TrackingWorker(QtCore.QObject):
             angle_data[name] = {
                 "frame_no": np.arange(self.no_of_frames) + 1,
                 "angle": np.full(self.no_of_frames, np.nan, dtype=float),
-                "trackers": (start1, end1, start2, end2),
+                "trackers": [start1, end1, start2, end2],
             }
             logging.debug(f"New angle data for {name} added.")
 
@@ -107,7 +135,7 @@ class TrackingWorker(QtCore.QObject):
             distance_data[name] = {
                 "frame_no": np.arange(self.no_of_frames) + 1,
                 "distance": np.full((self.no_of_frames, 2), np.nan, dtype=float),
-                "trackers": (start, end),
+                "trackers": [start, end],
             }
             logging.debug(f"New distance data for {name} added.")
 

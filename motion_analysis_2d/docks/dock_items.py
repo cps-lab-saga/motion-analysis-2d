@@ -43,6 +43,13 @@ class ItemsDock(BaseDock):
         self.collapsibles[item_type].addWidget(row)
         logging.debug(f"{item_type.capitalize()} {name} added to items dock.")
 
+    def edit_row(self, name, new_name, new_color, item_type):
+        if new_name != name:
+            self.rows[item_type][new_name] = self.rows[item_type][name]
+            del self.rows[item_type][name]
+
+        self.rows[item_type][new_name].set_props(new_name, item_type, new_color)
+
     def remove_row(self, name, item_type):
         row = self.rows[item_type].pop(name)
         self.collapsibles[item_type].removeWidget(row)
@@ -76,9 +83,9 @@ class ItemsRow(QtWidgets.QWidget):
         self.item_type = item_type
 
         self.context_menu = QtWidgets.QMenu(self)
-        # edit_action = self.context_menu.addAction("Edit")
-        # edit_action.setIcon(qta.icon("mdi6.pencil"))
-        # edit_action.triggered.connect(self.emit_edit_item)
+        edit_action = self.context_menu.addAction("Edit")
+        edit_action.setIcon(qta.icon("mdi6.pencil"))
+        edit_action.triggered.connect(self.emit_edit_item)
         delete_action = self.context_menu.addAction("Remove")
         delete_action.setIcon(qta.icon("mdi6.close", color="red"))
         delete_action.triggered.connect(self.emit_remove_item)
@@ -90,24 +97,33 @@ class ItemsRow(QtWidgets.QWidget):
         self.main_layout.setContentsMargins(0, 0, 11, 0)
 
         self.checkbox = QtWidgets.QCheckBox(self)
-        self.checkbox.setText(self.name)
         self.checkbox.setChecked(True)
-        if item_type == "tracker":
-            self.checkbox.setIcon(
-                qta.icon("mdi6.square-outline", color=QtGui.QColor(*self.color))
-            )
-        elif item_type == "angle":
-            self.checkbox.setIcon(
-                qta.icon("mdi6.angle-acute", color=QtGui.QColor(*self.color))
-            )
-        elif item_type == "distance":
-            self.checkbox.setIcon(
-                qta.icon("mdi6.ruler", color=QtGui.QColor(*self.color))
-            )
-        self.checkbox.toggled.connect(partial(self.checkbox_toggled.emit, name))
+        self.checkbox.toggled.connect(partial(self.checkbox_toggled.emit, self.name))
+
+        self.set_props(name, item_type, color)
         self.main_layout.addWidget(self.checkbox)
 
         self.main_layout.addStretch()
+
+    def set_props(self, name, item_type, color):
+        self.name = name
+        self.color = color
+        self.item_type = item_type
+
+        self.checkbox.setText(name)
+        self.checkbox.toggled.disconnect()
+        self.checkbox.toggled.connect(partial(self.checkbox_toggled.emit, self.name))
+
+        if item_type == "tracker":
+            self.checkbox.setIcon(
+                qta.icon("mdi6.square-outline", color=QtGui.QColor(*color))
+            )
+        elif item_type == "angle":
+            self.checkbox.setIcon(
+                qta.icon("mdi6.angle-acute", color=QtGui.QColor(*color))
+            )
+        elif item_type == "distance":
+            self.checkbox.setIcon(qta.icon("mdi6.ruler", color=QtGui.QColor(*color)))
 
     def context_menu_requested(self, pos):
         self.context_menu.exec(QtGui.QCursor.pos())
@@ -125,6 +141,7 @@ if __name__ == "__main__":
     dock.add_row("test_distance", (44, 160, 44), "distance")
     dock.add_row("test_angle", (44, 160, 44), "angle")
     dock.add_row("test_tracker", (44, 160, 44), "tracker")
+    dock.edit_row("test_tracker", "test2", (44, 160, 44), "tracker")
     dock.show()
 
     app.exec()

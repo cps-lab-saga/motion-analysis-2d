@@ -641,6 +641,46 @@ class FrameWidget(QtWidgets.QWidget):
 
         logging.debug(f"Tracker {name} added to frame display.")
 
+    def edit_tracker(self, name, new_name, new_color, new_tracker_type):
+        i = self.trackers["name"].index(name)
+        self.trackers["name"][i] = new_name
+        self.trackers["color"][i] = new_color
+        self.trackers["tracker_type"][i] = new_tracker_type
+
+        bbox_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["tracker_bbox_pen_width"]
+        )
+        bbox_hover_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["tracker_bbox_hover_pen_width"]
+        )
+        self.trackers["roi"][i].setPen(bbox_pen)
+        self.trackers["roi"][i].hoverPen = bbox_hover_pen
+
+        target_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["tracker_target_pen_width"]
+        )
+        target_hover_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["tracker_bbox_hover_pen_width"]
+        )
+        self.trackers["target"][i].setPen(target_pen)
+        self.trackers["target"][i].setHoverPen(target_hover_pen)
+        self.trackers["label"][i].setColor(target_pen.color())
+        self.trackers["label"][i].setText(new_name)
+
+        trajectory_pen = pg.mkPen(
+            color=new_color, width=self.visual_settings["trajectory_width"]
+        )
+        self.trackers["traj"][i].setPen(trajectory_pen)
+
+        if new_name != name:
+            children = self.trackers["children"][i]
+            if len(children) > 0:
+                for child_name, child_type in children:
+                    if child_type == "angle":
+                        self.update_angle_parent_name(child_name, name, new_name)
+                    elif child_type == "distance":
+                        self.update_distance_parent_name(child_name, name, new_name)
+
     def hide_tracker(self, name):
         i = self.trackers["name"].index(name)
         if not self.trackers["show"][i]:
@@ -934,6 +974,12 @@ class FrameWidget(QtWidgets.QWidget):
 
         logging.debug(f"Angle {name} added to frame display.")
 
+    def update_angle_parent_name(self, name, parent_name, new_parent_name):
+        i = self.angles["name"].index(name)
+        for x in ["start1", "end1", "start2", "end2"]:
+            if self.angles[x][i] == parent_name:
+                self.angles[x][i] = new_parent_name
+
     def update_angle_item(self, name, dragged=False):
         i = self.angles["name"].index(name)
         start1 = self.angles["start1"][i]
@@ -1153,6 +1199,12 @@ class FrameWidget(QtWidgets.QWidget):
         self.distances["show"].append(True)
 
         logging.debug(f"Distance {name} added to frame display.")
+
+    def update_distance_parent_name(self, name, parent_name, new_parent_name):
+        i = self.distances["name"].index(name)
+        for x in ["start", "end"]:
+            if self.distances[x][i] == parent_name:
+                self.distances[x][i] = new_parent_name
 
     def update_distance_item(self, name, dragged=False):
         i = self.distances["name"].index(name)

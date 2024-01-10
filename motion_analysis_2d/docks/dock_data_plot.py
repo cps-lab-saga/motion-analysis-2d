@@ -71,10 +71,26 @@ class DataPlotDock(BaseDock):
 
     def add_tracker(self, name, color=None):
         self.trackers[name] = {
-            "x": self.plot_widgets["Trackers"].add_line("x", name, color),
-            "y": self.plot_widgets["Trackers"].add_line("y", name, color),
+            "x": self.plot_widgets["Trackers"].add_line("x", label=name, color=color),
+            "y": self.plot_widgets["Trackers"].add_line("y", label=name, color=color),
         }
         logging.debug(f"Tracker {name} added to data plot dock.")
+
+    def edit_tracker(self, name, new_name, new_color):
+        if new_name != name:
+            self.trackers[new_name] = self.trackers[name]
+            del self.trackers[name]
+
+        self.trackers[new_name]["x"].setData(pen=new_color)
+
+        self.plot_widgets["Trackers"].lines["x"][new_name] = self.plot_widgets[
+            "Trackers"
+        ].lines["x"][name]
+        self.plot_widgets["Trackers"].lines["y"][new_name] = self.plot_widgets[
+            "Trackers"
+        ].lines["y"][name]
+        del self.plot_widgets["Trackers"].lines["x"][name]
+        del self.plot_widgets["Trackers"].lines["y"][name]
 
     def show_tracker(self, name):
         self.plot_widgets["Trackers"].show_line("x", name)

@@ -76,13 +76,16 @@ class DataPlotWidget(QtWidgets.QWidget):
         for frame_line in self.frame_lines.values():
             frame_line.setBounds(bounds)
 
-    def add_line(self, param, label, color=None):
+    def add_line(self, param, label, color=None, show_in_legend=False):
         plot_widget = self.plots[param]
 
         if color is None:
             color = self.foreground_color
+        if show_in_legend:
+            line = plot_widget.plot(pen=color, name=label)
+        else:
+            line = plot_widget.plot(pen=color)
 
-        line = plot_widget.plot(pen=color, name=label)
         self.lines[param][label] = (line, True)
         return line
 
