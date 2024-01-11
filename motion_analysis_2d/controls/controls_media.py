@@ -31,9 +31,9 @@ class MediaControls(QtWidgets.QFrame):
         self.track_button = QtWidgets.QPushButton(self)
         self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.tracking_icon = qta.icon(
-            "fa.spinner", animation=qta.Spin(self.track_button, interval=10, step=10)
+            "fa5s.spinner", animation=qta.Spin(self.track_button, interval=10, step=10)
         )
-        self.tracking_not_icon = qta.icon("fa.spinner")
+        self.tracking_not_icon = qta.icon("fa5s.spinner")
         self.track_button.setIcon(self.tracking_not_icon)
         self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.track_button.setCheckable(True)
