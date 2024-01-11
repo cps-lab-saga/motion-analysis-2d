@@ -6,7 +6,7 @@ import numpy as np
 
 from defs import QtCore, Signal
 from motion_analysis_2d.custom_components import StaticTracker
-from motion_analysis_2d.funcs import bbox_to_target, angle_vec
+from motion_analysis_2d.funcs import angle_vec
 
 
 class TrackingWorker(QtCore.QObject):
@@ -293,6 +293,11 @@ class TrackingWorker(QtCore.QObject):
 
     def set_tracking_data(self, data):
         self.tracking_data.update(data)
+
+
+def bbox_to_target(x, y, wx, wy, offset_x, offset_y):
+    centre_x, centre_y = (x + wx / 2, y + wy / 2)
+    return centre_x + offset_x, centre_y + offset_y
 
 
 if __name__ == "__main__":
