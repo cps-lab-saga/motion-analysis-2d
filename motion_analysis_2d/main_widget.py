@@ -644,6 +644,8 @@ class MainWidget(QtWidgets.QMainWindow):
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.frame_no,
                 self.docks["Extrinsic"].scaling,
+                self.docks["Orient"].rotation,
+                self.docks["Orient"].flip,
             )
 
     def load_data(self, path):
@@ -652,7 +654,13 @@ class MainWidget(QtWidgets.QMainWindow):
             analysis_properties,
             tracking_data,
             current_frame,
+            scaling,
+            rotation,
+            flip,
         ) = load_tracking_data(path)
+
+        self.docks["Orient"].restore_rotation(rotation)
+        self.docks["Orient"].restore_flip(flip)
 
         # move frame if current frame has no data
         first_tracker = next(iter(tracking_data.values()))

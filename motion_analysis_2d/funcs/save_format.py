@@ -5,7 +5,14 @@ import numpy as np
 
 
 def save_tracking_data(
-    path, tracker_properties, analysis_properties, tracking_data, current_frame, scaling
+    path,
+    tracker_properties,
+    analysis_properties,
+    tracking_data,
+    current_frame,
+    scaling,
+    rotation,
+    flip,
 ):
     save_data = {
         "tracker_properties": {},
@@ -24,6 +31,8 @@ def save_tracking_data(
 
     save_data["current_frame"] = current_frame
     save_data["scaling"] = scaling
+    save_data["rotation"] = rotation
+    save_data["flip"] = flip
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(save_data, f, sort_keys=False, indent=4)
@@ -58,7 +67,19 @@ def load_tracking_data(path):
 
     current_frame = save_data["current_frame"]
 
-    return tracker_properties, analysis_properties, tracking_data, current_frame
+    scaling = save_data.get("scaling")
+    rotation = save_data.get("rotation")
+    flip = save_data.get("flip")
+
+    return (
+        tracker_properties,
+        analysis_properties,
+        tracking_data,
+        current_frame,
+        scaling,
+        rotation,
+        flip,
+    )
 
 
 def export_csv(path, tracking_data, analysis_data, scaling):

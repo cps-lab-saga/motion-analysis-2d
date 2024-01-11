@@ -151,12 +151,18 @@ class OrientDock(BaseDock):
 
     def gui_restore(self, settings):
         rotation = settings.value(f"{self.save_heading}/rotate_settings")
+        self.restore_rotation(rotation)
+
+        flip = settings.value(f"{self.save_heading}/flip_settings")
+        self.restore_flip(flip)
+
+    def restore_rotation(self, rotation):
         if rotation in self.rotate_icons.keys():
             while self.rotation != rotation:
                 self.rotation = next(self.rot_cycle)
             self.update_rotate_button()
 
-        flip = settings.value(f"{self.save_heading}/flip_settings")
+    def restore_flip(self, flip):
         if flip in self.flip_icons.keys():
             while self.flip != flip:
                 self.flip = next(self.flip_cycle)
