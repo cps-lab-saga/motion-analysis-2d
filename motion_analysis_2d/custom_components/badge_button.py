@@ -29,10 +29,12 @@ class BadgeButton(QtWidgets.QWidget):
             "setIcon",
             "setIconSize",
             "setFlat",
+            "click",
             "clicked",
             "setCheckable",
             "isChecked",
             "setChecked",
+            "toggle",
             "toggled",
         ]:
             setattr(self, m, getattr(self.button, m))
