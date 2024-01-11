@@ -1,5 +1,6 @@
 import logging
 from queue import Empty
+from time import sleep
 
 import cv2 as cv
 import numpy as np
@@ -217,7 +218,25 @@ class TrackingWorker(QtCore.QObject):
                     block=True, timeout=1
                 )
                 if track:
-                    self.run_trackers(frame_no, timestamp, frame)
+                    succeed = self.run_trackers(frame_no, timestamp, frame)
+                    if not succeed:
+                        sleep(0.5)
+                        while not self.stream_queue.empty():
+                            (
+                                frame_no,
+                                timestamp,
+                                frame,
+                                track,
+                            ) = self.stream_queue.get()
+                            if track:
+                                sleep(0.5)
+                            else:
+                                self.frame_no, self.timestamp, self.frame = (
+                                    frame_no,
+                                    timestamp,
+                                    frame,
+                                )
+                                break
                 else:
                     self.frame_no, self.timestamp, self.frame = (
                         frame_no,
@@ -235,6 +254,7 @@ class TrackingWorker(QtCore.QObject):
         self.deleteLater()
 
     def run_trackers(self, frame_no, timestamp, frame):
+        succeed = True
         for name, (tracker, offset, tracker_type) in self.trackers.items():
             ret, bbox = tracker.update(frame)
             if ret:
@@ -248,6 +268,7 @@ class TrackingWorker(QtCore.QObject):
                 self.mutex.unlock()
             else:
                 self.tracking_failed.emit(name, frame_no)
+                succeed = False
                 break
         else:
             self.update_angle(frame_no)
@@ -258,6 +279,7 @@ class TrackingWorker(QtCore.QObject):
         self.frame = frame
         self.timestamp = timestamp
         self.mutex.unlock()
+        return succeed
 
     def update_angle(self, frame_no):
         angle_data = self.analysis_data["angle"]

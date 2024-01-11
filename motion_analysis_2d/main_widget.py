@@ -477,8 +477,11 @@ class MainWidget(QtWidgets.QMainWindow):
     def edit_tracker(self, name):
         i = self.frame_widget.trackers["name"].index(name)
         color = self.frame_widget.trackers["color"][i]
+        tracker_type = self.frame_widget.trackers["tracker_type"][i]
 
-        dialog = TrackerDialog(default_name=name, default_color=color)
+        dialog = TrackerDialog(
+            default_name=name, default_color=color, default_tracker_type=tracker_type
+        )
         dialog.exec()
         if dialog.result():
             new_name, new_color, new_tracker_type = dialog.get_inputs()
@@ -499,9 +502,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def tracking_failed(self, name, frame_no):
         self.play_video(False)
-        with self.stream_queue.mutex:
-            self.stream_queue.queue.clear()
         self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
+        self.stream_worker.move_frame_to(frame_no - 2, track=False)
 
     def add_tracker_failed(self, name, error):
         self.error_dialog(f"Could not initialise tracker for ({name})!\n{error}")
