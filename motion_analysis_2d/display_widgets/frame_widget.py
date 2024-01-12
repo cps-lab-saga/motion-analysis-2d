@@ -735,9 +735,11 @@ class FrameWidget(QtWidgets.QWidget):
 
         logging.debug(f"Tracker {name} removed from frame display.")
 
-    def frame_shape_changed(self):
+    def frame_shape_changed(self, frame_data=None):
+        if frame_data is not None:
+            self.update_frame(*frame_data)
         for roi in self.trackers["roi"]:
-            self.keep_roi_in_frame(roi)
+            self.bbox_moved(roi)
 
     def bbox_moved(self, roi=None):
         if roi is None:

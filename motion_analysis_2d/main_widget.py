@@ -369,10 +369,13 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def frame_shape_changed(self):
         if self.stream_worker is not None:
+            self.play_video(False)
+            while not self.stream_queue.empty():
+                sleep(0.1)
+
             self.frame_widget.update_scaling(self.docks["Extrinsic"].scaling)
-            self.stream_worker.read_current_frame()
-            self.update_frame_view()
-            self.frame_widget.frame_shape_changed()
+            frame_no, timestamp, frame = self.stream_worker.read_current_frame()
+            self.frame_widget.frame_shape_changed((frame, frame_no, timestamp / 1000))
 
     def seek_bar_moved(self, frame_no):
         if self.stream_worker is not None:

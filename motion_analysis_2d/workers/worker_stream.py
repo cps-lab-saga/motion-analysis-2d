@@ -85,6 +85,11 @@ class StreamWorker(QtCore.QObject):
             )
         )
         self.mutex.unlock()
+        return (
+            self.frame_no,
+            self.timestamp,
+            self.frame,
+        )
 
     def process_frame(self, frame):
         frame = self.intrinsic_cal.undistort_map(frame)
@@ -93,19 +98,19 @@ class StreamWorker(QtCore.QObject):
         return frame
 
     def move_frame_forwards(self, track=None):
-        self.read_single_frame(track=track)
+        return self.read_single_frame(track=track)
 
     def move_frame_backwards(self, track=None):
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 2)
-        self.read_single_frame(track=track)
+        return self.read_single_frame(track=track)
 
     def read_current_frame(self, track=None):
-        self.read_single_frame(track=track)
         self.cap.set(cv.CAP_PROP_POS_FRAMES, self.frame_no - 1)
+        return self.read_single_frame(track=track)
 
     def move_frame_to(self, frame_no, track=False):
-        self.cap.set(cv.CAP_PROP_POS_FRAMES, frame_no)
-        self.read_single_frame(track=track)
+        self.cap.set(cv.CAP_PROP_POS_FRAMES, frame_no - 1)
+        return self.read_single_frame(track=track)
 
     def set_stop(self):
         self.stop_flag = True

@@ -92,9 +92,14 @@ class TrackingWorker(QtCore.QObject):
         _, offset, _ = self.trackers[new_name]
 
         if (~np.isnan(bbox)).any():
-            tracker = self.create_tracker(new_tracker_type)
-            tracker.init(self.frame, bbox.astype(np.int32))
-            self.trackers[new_name] = (tracker, offset, new_tracker_type)
+            try:
+                tracker = self.create_tracker(new_tracker_type)
+                tracker.init(self.frame, bbox.astype(np.int32))
+            except Exception as e:
+                self.add_tracker_failed.emit(name, e)
+                logging.warning(f"Create tracker failed for {name}.")
+            else:
+                self.trackers[new_name] = (tracker, offset, new_tracker_type)
 
         if new_name != name:
             for angle in self.analysis_data["angle"].values():
@@ -167,9 +172,14 @@ class TrackingWorker(QtCore.QObject):
         for name, (_, offset, tracker_type) in self.trackers.items():
             bbox = self.tracking_data[name]["bbox"][self.frame_no - 1]
             if (~np.isnan(bbox)).any():
-                tracker = self.create_tracker(tracker_type)
-                tracker.init(self.frame, bbox.astype(np.int32))
-                self.trackers[name] = (tracker, offset, tracker_type)
+                try:
+                    tracker = self.create_tracker(tracker_type)
+                    tracker.init(self.frame, bbox.astype(np.int32))
+                except Exception as e:
+                    self.add_tracker_failed.emit(name, e)
+                    logging.warning(f"Create tracker failed for {name}.")
+                else:
+                    self.trackers[name] = (tracker, offset, tracker_type)
         self.mutex.unlock()
 
     def remove_tracker(self, name):
@@ -257,6 +267,7 @@ class TrackingWorker(QtCore.QObject):
         succeed = True
         for name, (tracker, offset, tracker_type) in self.trackers.items():
             ret, bbox = tracker.update(frame)
+
             if ret:
                 bbox = bbox
                 target = bbox_to_target(*bbox, *offset)
