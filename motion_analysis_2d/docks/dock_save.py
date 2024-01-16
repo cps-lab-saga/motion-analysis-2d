@@ -27,6 +27,7 @@ class SaveDock(BaseDock):
         self.autosave_button.setCheckable(True)
         self.autosave_button.setFlat(True)
         self.autosave_button.toggled.connect(self.autosave_button_toggled)
+        self.gui_save_exceptions.append(self.autosave_button)
         row.addWidget(self.autosave_button)
 
         self.export_button = QtWidgets.QPushButton(self)
