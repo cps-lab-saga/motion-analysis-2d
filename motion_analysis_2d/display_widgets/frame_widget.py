@@ -93,7 +93,7 @@ class FrameWidget(QtWidgets.QWidget):
             "tracker_target_size": 10,
             "tracker_target_pen_width": 2,
             "tracker_target_hover_pen_width": 4,
-            "angle_sector_radius": 4,
+            "angle_sector_radius": 100,
             "angle_sector_pen_width": 1,
             "angle_sector_fill_transparency": 150,
             "angle_vector_pen_width": 1,
@@ -1245,6 +1245,7 @@ class FrameWidget(QtWidgets.QWidget):
         brush = pg.mkBrush(color=new_color)
 
         self.distances["arrow"][i].setStemPen(pen)
+        self.distances["arrow"][i].setArrowPen(pen)
         self.distances["arrow"][i].setArrowBrush(brush)
 
         self.distances["label"][i].setColor(pen.color())

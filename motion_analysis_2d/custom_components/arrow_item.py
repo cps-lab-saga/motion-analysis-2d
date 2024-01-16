@@ -35,7 +35,13 @@ class ArrowItem(pg.GraphicsObject):
         self.generatePicture()
 
     def generatePicture(self):
+        if not self.getViewBox():
+            return
         p = QtGui.QPainter(self.picture)
+        (w, _), (_, h) = self.pixelVectors()
+        local_arrow_height = self.arrow_height * w / 2
+        local_arrow_width = self.arrow_width * w / 2
+
         start_point = QtCore.QPointF(*self.start_pos)
         end_point = QtCore.QPointF(*self.end_pos)
 
@@ -44,9 +50,10 @@ class ArrowItem(pg.GraphicsObject):
         perpendicular_unit_vec = QtCore.QPointF(unit_vec.y(), -unit_vec.x())
 
         p.setPen(self.stem_pen)
+
         p.drawLine(
-            start_point + unit_vec * self.arrow_height,
-            end_point - unit_vec * self.arrow_height,
+            start_point + unit_vec * local_arrow_height,
+            end_point - unit_vec * local_arrow_height,
         )
 
         p.setPen(self.arrow_pen)
@@ -57,11 +64,11 @@ class ArrowItem(pg.GraphicsObject):
             [
                 end_point,
                 end_point
-                - unit_vec * self.arrow_height
-                - perpendicular_unit_vec * self.arrow_width / 2,
+                - unit_vec * local_arrow_height
+                - perpendicular_unit_vec * local_arrow_width / 2,
                 end_point
-                - unit_vec * self.arrow_height
-                + perpendicular_unit_vec * self.arrow_width / 2,
+                - unit_vec * local_arrow_height
+                + perpendicular_unit_vec * local_arrow_width / 2,
             ],
         )
 
@@ -70,17 +77,19 @@ class ArrowItem(pg.GraphicsObject):
             [
                 start_point,
                 start_point
-                + unit_vec * self.arrow_height
-                - perpendicular_unit_vec * self.arrow_width / 2,
+                + unit_vec * local_arrow_height
+                - perpendicular_unit_vec * local_arrow_width / 2,
                 start_point
-                + unit_vec * self.arrow_height
-                + perpendicular_unit_vec * self.arrow_width / 2,
+                + unit_vec * local_arrow_height
+                + perpendicular_unit_vec * local_arrow_width / 2,
             ],
         )
 
         p.end()
 
     def paint(self, p, *args):
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        self.generatePicture()
         p.drawPicture(0, 0, self.picture)
 
     def boundingRect(self):
@@ -103,20 +112,24 @@ class ArrowItem(pg.GraphicsObject):
         self.start_pos = start_pos
         self.end_pos = end_pos
         self.generatePicture()
+        self.update()
 
     def setStemPen(self, pen):
         self.stem_pen = pen
+        self.update()
 
     def setArrowPen(self, pen):
         self.arrow_pen = pen
+        self.update()
 
     def setArrowBrush(self, brush):
-        self.arrowBrush = brush
+        self.arrow_brush = brush
+        self.update()
 
 
 if __name__ == "__main__":
     item = ArrowItem(stem_pen=pg.mkPen("w", width=4), arrow_brush=pg.mkBrush("r"))
-    item.setData((0, 0), (100, 100))
+    item.setData((0, 0), (10, 10))
     plt = pg.plot()
     plt.setAspectLocked()
     plt.addItem(item)

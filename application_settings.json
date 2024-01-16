@@ -28,7 +28,7 @@
       "tracker_target_size": 10,
       "tracker_target_pen_width": 2,
       "tracker_target_hover_pen_width": 2,
-      "angle_sector_radius": 4,
+      "angle_sector_radius": 100,
       "angle_sector_pen_width": 1,
       "angle_sector_fill_transparency": 150,  // 0 - 255
       "angle_vector_pen_width": 1,
