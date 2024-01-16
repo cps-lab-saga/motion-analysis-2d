@@ -933,12 +933,12 @@ class FrameWidget(QtWidgets.QWidget):
             pen=vector_pen,
         )
         self.fig.addItem(vec2)
-        vec1_angle = angle_vec(
+        (vec1_angle,) = angle_vec(
             [[vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y]]
-        )[0]
-        vec2_angle = angle_vec(
+        )
+        (vec2_angle,) = angle_vec(
             [[vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y]]
-        )[0]
+        )
 
         pie = PieItem(
             center=(vec1_start_x, vec1_start_y),
@@ -1031,12 +1031,12 @@ class FrameWidget(QtWidgets.QWidget):
         vec2_start_x, vec2_start_y = self.get_target_pos_from_tracker_name(start2)
         vec2_end_x, vec2_end_y = self.get_target_pos_from_tracker_name(end2)
 
-        vec1_angle = angle_vec(
+        (vec1_angle,) = angle_vec(
             [[vec1_end_x - vec1_start_x, vec1_end_y - vec1_start_y]]
-        )[0]
-        vec2_angle = angle_vec(
+        )
+        (vec2_angle,) = angle_vec(
             [[vec2_end_x - vec2_start_x, vec2_end_y - vec2_start_y]]
-        )[0]
+        )
 
         vec1.setData(
             [vec1_start_x, vec1_end_x],
@@ -1640,12 +1640,12 @@ if __name__ == "__main__":
     # widget.set_mouse_mode("add_tracker")
 
     widget.add_tracker("test1", (20, 40), (5, 5), (0, 0), "green", "")
-    # widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
-    # widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
-    # widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test2", (40, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test3", (20, 40), (5, 5), (0, 0), "green", "")
+    widget.add_tracker("test4", (40, 40), (5, 5), (0, 0), "green", "")
 
-    # widget.set_mouse_mode("add_angle")
-    # widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
+    widget.set_mouse_mode("add_angle")
+    widget.add_angle("angle1", "test1", "test2", "test3", "test4", "green")
 
     # widget.set_mouse_mode("add_distance")
     # widget.add_distance("distance1", "test1", "test2", "green")

@@ -2,48 +2,51 @@ import numpy as np
 from scipy import signal
 
 
-def angle_vec(vec1):
+def angle_vec(vec1: np.array) -> np.array:
+    """
+    Calculate anticlockwise angle of vector from x-axis
+
+    :param vec1: vectors to calculate angle from
+    :type vec1: 2d numpy array of vectors
+    :return: angles
+    :rtype: 2d numpy array of angles
+    """
     mag1 = np.linalg.norm(vec1, axis=1)
     vec1_hat = vec1 / mag1.reshape(-1, 1)
     vec2_hat = np.array([1, 0])
-    dot_product = np.dot(vec1_hat, vec2_hat)
+
     cross_product = np.cross(vec1_hat, vec2_hat)
+    dot_product = np.dot(vec1_hat, vec2_hat)
+    # dot_product = np.dot(vec1_hat, vec2_hat.T)
+    # dot_product = np.einsum("ij, j->i", vec1_hat, vec2_hat)
     angle = np.degrees(np.arccos(dot_product))
     angle[cross_product < 0] = -angle[cross_product < 0]
     return angle
 
 
-def angle_between(vec1, vec2):
+def angle_between(vec1: np.array, vec2: np.array) -> np.array:
+    """
+    Calculate anticlockwise angle between two vectors
+
+    :param vec1: vectors to calculate angle from
+    :type vec1: 2d numpy array of vectors
+    :param vec2: vectors to calculate angle from
+    :type vec2: 2d numpy array of vectors
+    :return: angles
+    :rtype: 2d numpy array of angles
+    """
     mag1 = np.linalg.norm(vec1, axis=1)
     mag2 = np.linalg.norm(vec2, axis=1)
 
     vec1_hat = vec1 / mag1.reshape(-1, 1)
     vec2_hat = vec2 / mag2.reshape(-1, 1)
 
-    # dot_product = np.diag(vec1_hat @ vec2_hat.T)
+    cross_product = np.cross(vec1_hat, vec2_hat)
+    # dot_product = np.dot(vec1_hat, vec2_hat.T)
     dot_product = np.einsum("ij, ij->i", vec1_hat, vec2_hat)
     angle = np.degrees(np.arccos(dot_product))
-    if dot_product < 0:
-        return -angle
-    else:
-        return angle
-
-
-def angle_360(vec1, vec2):
-    mag1 = np.linalg.norm(vec1, axis=1)
-    mag2 = np.linalg.norm(vec2, axis=1)
-
-    vec1_hat = vec1 / mag1.reshape(-1, 1)
-    vec2_hat = vec2 / mag2.reshape(-1, 1)
-
-    det = np.cross(vec1_hat, vec2_hat)
-    dot_product = np.einsum("ij, ij->i", vec1_hat, vec2_hat)
-    angle = np.arctan2(det, dot_product)
-    return np.degrees(angle)
-
-
-def distance(vec, ref_vec, ref_distance):
-    return np.abs(vec / np.linalg.norm(ref_vec, axis=1).reshape(-1, 1) * ref_distance)
+    angle[cross_product < 0] = -angle[cross_product < 0]
+    return angle
 
 
 def filter_lowpass(data, fs, highcut):

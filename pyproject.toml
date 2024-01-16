@@ -19,6 +19,8 @@ superqt = "~0.6"
 pytest = "~7.4"
 pytest-qt = "~4.3"
 pyinstaller = "~6.3"
+pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
+matplotlib = "^3.8.2"
 
 [build-system]
 requires = ["poetry-core"]
