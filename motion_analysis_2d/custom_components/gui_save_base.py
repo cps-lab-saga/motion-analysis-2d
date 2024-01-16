@@ -14,8 +14,12 @@ class BaseGuiSave:
     def __init__(self):
         self.save_heading = "Gui"
 
+        self.gui_save_exceptions = []
+
     def gui_save(self, settings):
         for name, obj in inspect.getmembers(self):
+            if obj in self.gui_save_exceptions:
+                continue
             value = None
             if isinstance(obj, QtWidgets.QLineEdit):
                 value = obj.text()
@@ -34,6 +38,8 @@ class BaseGuiSave:
 
     def gui_restore(self, settings):
         for name, obj in inspect.getmembers(self):
+            if obj in self.gui_save_exceptions:
+                continue
             if value := settings.value(f"{self.save_heading}/{name}"):
                 if isinstance(obj, (QtWidgets.QLineEdit, PathEdit)):
                     obj.setText(value)

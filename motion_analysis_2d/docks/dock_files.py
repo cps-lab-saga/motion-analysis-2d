@@ -30,6 +30,7 @@ class FilesDock(BaseDock):
         self.continue_button.setToolTip(
             "Automatically continue to next video in queue and start playing."
         )
+        self.gui_save_exceptions.append(self.continue_button)
         self.dock_layout.addWidget(self.continue_button)
 
         self.file_list_widget = FileListWidget(filetypes, self)
