@@ -3,6 +3,7 @@ from .check_mimetypes import (
     check_file_type,
     is_json_file,
 )
+from .geometric_calc import make_offset_polygon, distance_from_line
 from .intrinsic_calc import (
     find_points,
     calibrate_camera,
