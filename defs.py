@@ -1,7 +1,7 @@
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.0"
+app_version = "0.1.1"
 
 module_name = project_name.replace("-", "_")
 
