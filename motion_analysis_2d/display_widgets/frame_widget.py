@@ -34,7 +34,7 @@ class FrameWidget(QtWidgets.QWidget):
     distance_moved = Signal(str, str, str, tuple)
     distance_removal_suggested = Signal(str)
     marker_file_dropped = Signal(object)
-    set_perspective_points_suggested = Signal(list, list)
+    set_perspective_points_suggested = Signal(list, list, list)
 
     def __init__(self, visual_settings=None, parent=None):
         super().__init__(parent=parent)
@@ -1624,16 +1624,33 @@ class FrameWidget(QtWidgets.QWidget):
             return
 
         inner_corners, outer_corners, outer_offsets = self.end_perspective_selection()
-        img_points = inner_corners
-        obj_points = [
-            (0, 0),
-            (0, y),
-            (x, y),
-            (x, 0),
-        ]
+        img_points = np.array(inner_corners)
+        obj_points = np.array([(0, 0), (0, y), (x, y), (x, 0)])
+        boundary_points = np.array(outer_corners)
 
-        logging.debug(f"Perspective points obtained with {img_points}, {obj_points}.")
-        self.set_perspective_points_suggested.emit(img_points, obj_points)
+        x_pixel = np.linalg.norm(img_points[0] - img_points[3])
+        y_pixel = np.linalg.norm(img_points[1] - img_points[0])
+        pixel_per_real = np.array((x_pixel / x, y_pixel / y))
+
+        pixel_offset = img_points[0] - boundary_points[0]
+        real_offset = pixel_offset / pixel_per_real
+
+        final_obj_points = obj_points + real_offset
+
+        w = boundary_points[0] - boundary_points[3]
+        w_real = np.abs(np.linalg.norm(w / pixel_per_real))
+
+        h = boundary_points[1] - boundary_points[0]
+        h_real = np.abs(np.linalg.norm(h / pixel_per_real))
+
+        output_size_real = [w_real, h_real]
+
+        logging.debug(
+            f"Perspective points obtained with {img_points}, {obj_points}, {output_size_real}."
+        )
+        self.set_perspective_points_suggested.emit(
+            img_points.tolist(), final_obj_points.tolist(), output_size_real
+        )
 
     def animate_crosshairs(self, pos):
         """

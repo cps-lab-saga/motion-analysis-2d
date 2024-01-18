@@ -15,7 +15,7 @@ from .intrinsic_calc import (
     undistort,
     get_undistort_funcs,
 )
-from .load_extrinsic import load_extrinsic, save_warp_points
+from .load_extrinsic import load_extrinsic, save_perspective_points
 from .load_intrinsic import load_intrinsic
 from .load_settings import load_application_settings
 from .logger_setup import setup_logger

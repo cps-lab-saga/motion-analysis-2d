@@ -31,7 +31,7 @@ from motion_analysis_2d.funcs import (
     load_tracking_data,
     export_csv,
     load_application_settings,
-    save_warp_points,
+    save_perspective_points,
 )
 from motion_analysis_2d.splashscreen import SplashScreen
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
@@ -808,14 +808,19 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.end_perspective_selection()
         self.set_normal_mode()
 
-    def perspective_points_suggested(self, img_points, obj_points):
+    def perspective_points_suggested(
+        self,
+        img_points,
+        obj_points,
+        output_size_real,
+    ):
         self.docks["Extrinsic"].uncheck_select_points_button()
         path = QtWidgets.QFileDialog.getSaveFileName(
             self, "Save points", "perspective_points", "JSON (*.json)"
         )
         if path[1] == "JSON (*.json)":
             save_path = Path(path[0]).resolve()
-            save_warp_points(img_points, obj_points, save_path)
+            save_perspective_points(img_points, obj_points, output_size_real, save_path)
             self.docks["Extrinsic"].extrinsic_cal_file_edit.setText(
                 str(save_path.resolve())
             )

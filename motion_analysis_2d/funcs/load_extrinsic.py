@@ -22,7 +22,7 @@ def load_extrinsic(file_path):
     return M, mask, size, scaling
 
 
-def save_warp_points(img_points, obj_points, file_path):
+def save_perspective_points(img_points, obj_points, output_size_real, file_path):
     corners_in = np.array(img_points)
     corners_out = np.array(obj_points)
 
@@ -38,20 +38,16 @@ def save_warp_points(img_points, obj_points, file_path):
         }
 
     else:
-        in_width, in_height = np.array(img_points).max(axis=0) - np.array(
-            img_points
-        ).min(axis=0)
-        out_width, out_height = np.array(obj_points).max(axis=0) - np.array(
-            obj_points
-        ).min(axis=0)
-        scaling = np.round(np.mean([in_width / out_width, in_height / out_height]), 2)
+        in_width, in_height = corners_in.max(axis=0) - corners_in.min(axis=0)
+        out_width, out_height = corners_out.max(axis=0) - corners_out.min(axis=0)
+        scaling = np.mean([in_width / out_width, in_height / out_height])
+
+        output_size = np.array(output_size_real) * scaling
         corners_out *= scaling
         save_data = {
             "corners_in": corners_in.tolist(),
             "corners_out": corners_out.tolist(),
-            "output_size": (
-                np.array(corners_out).max(axis=0) - np.array(corners_out).min(axis=0)
-            ).tolist(),
+            "output_size": output_size.tolist(),
             "scaling": scaling,
         }
 
