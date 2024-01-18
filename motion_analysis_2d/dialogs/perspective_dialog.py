@@ -4,7 +4,7 @@ from defs import QtCore, QtWidgets, Signal
 class PerspectiveDialog(QtWidgets.QDialog):
     completed = Signal(float, float)
 
-    def __init__(self, title="Adjust Perspective Transform"):
+    def __init__(self, title="Adjust perspective"):
         super().__init__()
 
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -19,13 +19,17 @@ class PerspectiveDialog(QtWidgets.QDialog):
         self.main_layout.addLayout(self.form_layout)
 
         self.x_spinbox = QtWidgets.QDoubleSpinBox(self)
-        self.x_spinbox.setRange(0, 10**6)
-        self.x_spinbox.setValue(1)
+        self.x_spinbox.setRange(0, 10**5)
+        self.x_spinbox.setDecimals(3)
+        self.x_spinbox.setValue(0)
+        self.x_spinbox.setSpecialValueText("Auto")
         self.form_layout.addRow("X: ", self.x_spinbox)
 
         self.y_spinbox = QtWidgets.QDoubleSpinBox(self)
-        self.y_spinbox.setRange(0, 10**6)
-        self.y_spinbox.setValue(1)
+        self.y_spinbox.setRange(0, 10**5)
+        self.y_spinbox.setDecimals(3)
+        self.y_spinbox.setValue(0)
+        self.y_spinbox.setSpecialValueText("Auto")
         self.form_layout.addRow("Y: ", self.y_spinbox)
 
         self.main_layout.addStretch()

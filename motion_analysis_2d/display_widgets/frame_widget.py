@@ -20,6 +20,7 @@ from motion_analysis_2d.funcs import (
     is_json_file,
     angle_vec,
     offset_at_centre,
+    check_file_type,
 )
 
 
@@ -34,7 +35,9 @@ class FrameWidget(QtWidgets.QWidget):
     distance_moved = Signal(str, str, str, tuple)
     distance_removal_suggested = Signal(str)
     marker_file_dropped = Signal(object)
+    image_file_dropped = Signal(object)
     set_perspective_points_suggested = Signal(list, list, list)
+    set_perspective_ended = Signal()
 
     def __init__(self, visual_settings=None, parent=None):
         super().__init__(parent=parent)
@@ -193,6 +196,7 @@ class FrameWidget(QtWidgets.QWidget):
         )
 
         self.img = None
+        self.raw_img = None
         self.temp_tracker = None
         self.temp_angle = None
         self.temp_distance = None
@@ -324,12 +328,14 @@ class FrameWidget(QtWidgets.QWidget):
         self.fig.autoRange()
         logging.debug(f"Auto range frame.")
 
-    def set_image(self, img):
+    def set_image(self, img, raw=False):
         if img is None:
             return
-
+        if raw:
+            self.raw_img = img
         self.img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         self.im_item.setImage(self.img)
+
         logging.trace(f"Set image.")
 
     def update_frame(self, img, frame_no, t_sec):
@@ -1359,6 +1365,7 @@ class FrameWidget(QtWidgets.QWidget):
 
         self.fig.clear()
         self.im_item = pg.ImageItem(axisOrder="row-major")
+        self.raw_img = None
         self.fig.addItem(self.im_item)
         logging.debug(f"Frame display cleared.")
 
@@ -1539,6 +1546,7 @@ class FrameWidget(QtWidgets.QWidget):
 
         dialog = PerspectiveDialog()
         dialog.completed.connect(self.emit_new_perspective_points)
+        dialog.rejected.connect(self.set_perspective_ended.emit)
 
         self.temp_perspective = {
             "item": item,
@@ -1606,8 +1614,9 @@ class FrameWidget(QtWidgets.QWidget):
         for distance in self.distances["name"]:
             self.show_distance(distance, index=1)
 
-        self.temp_perspective["dialog"].close()
+        self.temp_perspective["dialog"].blockSignals(True)
         self.temp_perspective["dialog"].deleteLater()
+        self.temp_perspective["dialog"].close()
         self.set_perspective_steps_index = 0
         inner_corner, outer_corners, outer_offsets = (
             self.temp_perspective["item"].get_params().values()
@@ -1625,11 +1634,17 @@ class FrameWidget(QtWidgets.QWidget):
 
         inner_corners, outer_corners, outer_offsets = self.end_perspective_selection()
         img_points = np.array(inner_corners)
-        obj_points = np.array([(0, 0), (0, y), (x, y), (x, 0)])
         boundary_points = np.array(outer_corners)
 
         x_pixel = np.linalg.norm(img_points[0] - img_points[3])
         y_pixel = np.linalg.norm(img_points[1] - img_points[0])
+
+        if x == 0:
+            x = x_pixel
+        if y == 0:
+            y = y_pixel
+
+        obj_points = np.array([(0, 0), (0, y), (x, y), (x, 0)])
         pixel_per_real = np.array((x_pixel / x, y_pixel / y))
 
         pixel_offset = img_points[0] - boundary_points[0]
@@ -1646,7 +1661,7 @@ class FrameWidget(QtWidgets.QWidget):
         output_size_real = [w_real, h_real]
 
         logging.debug(
-            f"Perspective points obtained with {img_points}, {obj_points}, {output_size_real}."
+            f"Perspective points obtained with {img_points}, {final_obj_points}, {output_size_real}."
         )
         self.set_perspective_points_suggested.emit(
             img_points.tolist(), final_obj_points.tolist(), output_size_real
@@ -1711,7 +1726,8 @@ class FrameWidget(QtWidgets.QWidget):
 
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls():
-            if is_json_file(e.mimeData().urls()[0].toLocalFile()):
+            path = Path(e.mimeData().urls()[0].toLocalFile())
+            if is_json_file(path) or check_file_type(path, ["image"]):
                 e.acceptProposedAction()
                 e.setDropAction(QtCore.Qt.LinkAction)
         else:
@@ -1734,6 +1750,16 @@ class FrameWidget(QtWidgets.QWidget):
 
                 logging.debug("Marker file dropped.")
                 self.marker_file_dropped.emit(path)
+            elif check_file_type(path, ["image"]):
+                e.accept()
+
+                logging.debug("Image file dropped.")
+                try:
+                    img = cv.imread(str(path))
+                except Exception as e:
+                    return
+                self.set_image(img, raw=True)
+                self.image_file_dropped.emit(img)
         else:
             super().dropEvent(e)
 
@@ -1770,7 +1796,7 @@ if __name__ == "__main__":
     # widget.add_distance("distance1", "test1", "test2", "green")
 
     widget.start_new_perspective()
-    # widget.end_perspective_selection()
+    widget.end_perspective_selection()
     widget.show()
 
     app.exec()

@@ -82,9 +82,11 @@ class MainWidget(QtWidgets.QMainWindow):
         self.frame_widget.distance_moved.connect(self.move_distance)
         self.frame_widget.distance_removal_suggested.connect(self.remove_distance)
         self.frame_widget.marker_file_dropped.connect(self.load_markers)
+        self.frame_widget.image_file_dropped.connect(self.load_image)
         self.frame_widget.set_perspective_points_suggested.connect(
             self.perspective_points_suggested
         )
+        self.frame_widget.set_perspective_ended.connect(self.stop_add_perspective)
         self.main_layout.addWidget(self.frame_widget, 0, 0)
 
         self.splashscreen.set_progress(30)
@@ -384,6 +386,8 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.update_scaling(self.docks["Extrinsic"].scaling)
             frame_no, timestamp, frame = self.stream_worker.read_current_frame()
             self.frame_widget.frame_shape_changed((frame, frame_no, timestamp / 1000))
+        else:
+            self.load_image()
 
     def seek_bar_moved(self, frame_no):
         if self.stream_worker is not None:
@@ -799,6 +803,22 @@ class MainWidget(QtWidgets.QMainWindow):
             except Exception as e:
                 self.error_dialog(f"Failed to load markers.\n{e}")
 
+    def load_image(self, frame=None):
+        self.play_video(False)
+
+        if frame is None:
+            frame = self.frame_widget.raw_img
+            if frame is None:
+                return
+        else:
+            self.docks["Extrinsic"].add_perspective_button.setDisabled(False)
+
+        frame = self.docks["Intrinsic"].undistort_map(frame)
+        frame = self.docks["Orient"].orient_img(frame)
+        frame = self.docks["Extrinsic"].change_perspective(frame)
+        self.frame_widget.set_image(frame)
+        self.frame_widget.auto_range()
+
     def export_data(self, path):
         if self.frame_widget.trackers["name"] and self.stream_worker is not None:
             try:
@@ -821,13 +841,13 @@ class MainWidget(QtWidgets.QMainWindow):
             self.autosave_timer.stop()
 
     def start_add_perspective(self):
-        if self.stream_worker is None:
+        if self.stream_worker is None and self.frame_widget.raw_img is None:
             return
         self.edit_mode_changed("select_perspective")
         self.frame_widget.start_new_perspective()
 
     def stop_add_perspective(self):
-        if self.stream_worker is None:
+        if self.stream_worker is None and self.frame_widget.raw_img is None:
             return
         self.frame_widget.end_perspective_selection()
         self.set_normal_mode()

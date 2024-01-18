@@ -18,7 +18,7 @@ class LoadExtrinsicDock(BaseDock):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Warp Perspective")
+        self.setWindowTitle("Perspective Correction and Scale")
 
         self.cal_ok = False
         self.M, self.mask, self.output_size, self.scaling = None, None, None, 1
