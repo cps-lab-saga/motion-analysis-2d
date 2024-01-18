@@ -56,9 +56,35 @@ def distance_from_line(point, line_start, line_end, clip=False):
         return np.abs(np.dot(point_vec, line_vec_hat_perp))
 
 
+def offset_at_centre(line_start, line_end, offset):
+    line_start = np.array(line_start)
+    line_end = np.array(line_end)
+
+    line_vec = line_end - line_start
+    line_length = np.linalg.norm(line_vec)
+    line_vec_hat = line_vec / line_length
+
+    line_centre = line_start + line_vec * 0.5
+
+    rot_mat = np.array([[0, -1], [1, 0]])
+    line_vec_hat_perp = rot_mat @ line_vec_hat
+
+    return line_centre + np.abs(offset) * line_vec_hat_perp
+
+
+def area_quadrilateral(corners_in):
+    vertices = np.array(corners_in)
+
+    vec1 = vertices[2] - vertices[0]
+    vec2 = vertices[3] - vertices[1]
+
+    return np.linalg.norm(np.cross(vec1, vec2)) / 2
+
+
 if __name__ == "__main__":
     c = ((0, 0), (0, 1), (1, 1), (1, 0))
     o = (1, 1, 0, 1)
-    offset_c = make_offset_polygon(c, o)
 
+    offset_c = make_offset_polygon(c, o)
     distance_from_line((0.5, 0.5), (0, 0), (0, 1))
+    area_quadrilateral(c)

@@ -9,6 +9,7 @@ from motion_analysis_2d.funcs.geometric_calc import (
 
 class PerspectiveItem(pg.GraphicsObject):
     sigInnerCornerMoved = QtCore.Signal(int, tuple)
+    sigMoved = QtCore.Signal(object)
 
     def __init__(
         self,
@@ -199,18 +200,20 @@ class PerspectiveItem(pg.GraphicsObject):
         if any(self.handle_dragging):
             i = self.handle_dragging.index(True)
             pos = ev.pos().toTuple()
-            self.inner_corners[i] = ev.pos().toTuple()
-            self.update()
+            self.inner_corners[i] = pos
             self.sigInnerCornerMoved.emit(i, pos)
+            self.update()
         elif self.outer_dragging is not None:
             pos = ev.pos()
             i, line_start, line_end = self.outer_dragging
             d = distance_from_line(pos.toTuple(), line_start, line_end)
             self.outer_offsets[i] = d
             self.update()
+
         elif self.inner_dragging is not None:
             pos = ev.pos()
             self.inner_corners = [(x + pos).toTuple() for x in self.inner_dragging]
+            self.sigMoved.emit(self.inner_corners)
             self.update()
 
     def boundingRect(self):

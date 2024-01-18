@@ -9,7 +9,11 @@ from PySide6 import QtGui
 from defs import QtCore, QtWidgets, project_root, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
-from motion_analysis_2d.dialogs import TrackerDialog, AngleDialog, DistanceDialog
+from motion_analysis_2d.dialogs import (
+    TrackerDialog,
+    AngleDialog,
+    DistanceDialog,
+)
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
     FilesDock,
@@ -124,7 +128,7 @@ class MainWidget(QtWidgets.QMainWindow):
             self.start_add_perspective
         )
         self.docks["Extrinsic"].add_perspective_finished.connect(
-            self.finish_add_perspective
+            self.stop_add_perspective
         )
         self.docks["Extrinsic"].add_perspective_button.setDisabled(True)
         self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
@@ -798,16 +802,16 @@ class MainWidget(QtWidgets.QMainWindow):
         self.edit_mode_changed("select_perspective")
         self.frame_widget.start_new_perspective()
 
-    def finish_add_perspective(self):
+    def stop_add_perspective(self):
         if self.stream_worker is None:
             return
-        self.frame_widget.emit_new_perspective_points()
+        self.frame_widget.end_perspective_selection()
         self.set_normal_mode()
 
     def perspective_points_suggested(self, img_points, obj_points):
         self.docks["Extrinsic"].uncheck_select_points_button()
         path = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save points", "warp_points", "JSON (*.json)"
+            self, "Save points", "perspective_points", "JSON (*.json)"
         )
         if path[1] == "JSON (*.json)":
             save_path = Path(path[0]).resolve()

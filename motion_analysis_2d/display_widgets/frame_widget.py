@@ -14,10 +14,12 @@ from motion_analysis_2d.custom_components import (
     PerspectiveItem,
     tab10_rgb,
 )
+from motion_analysis_2d.dialogs import PerspectiveDialog
 from motion_analysis_2d.funcs import (
     setup_logger,
     is_json_file,
     angle_vec,
+    offset_at_centre,
 )
 
 
@@ -76,7 +78,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.remove_distance_instructions = "Select distance to remove."
 
         self.set_perspective_steps_index = 0
-        self.set_perspective_instructions = "Adjust perspective. Press Enter when done."
+        self.set_perspective_instructions = "Adjust perspective."
 
         self.visual_settings = {
             "new_item_pen_color": tab10_rgb["green"],
@@ -1486,7 +1488,6 @@ class FrameWidget(QtWidgets.QWidget):
             self.hide_distance(distance, index=1)
 
         im_w, im_h = self.im_item.width(), self.im_item.height()
-
         item = PerspectiveItem(
             inner_corners=(
                 (im_w * 0.2, im_h * 0.2),
@@ -1514,22 +1515,86 @@ class FrameWidget(QtWidgets.QWidget):
         )
         self.fig.addItem(item)
         item.sigInnerCornerMoved.connect(self.perspective_corner_moved)
+        item.sigMoved.connect(self.perspective_moved)
+
+        x_label = pg.TextItem(
+            "x",
+            anchor=(0.5, 0.5),
+            color=self.visual_settings["set_perspective_inner_pen_color"],
+            fill=self.visual_settings["item_name_label_fill_color"],
+        )
+        y_label = pg.TextItem(
+            "y",
+            anchor=(0.5, 0.5),
+            color=self.visual_settings["set_perspective_inner_pen_color"],
+            fill=self.visual_settings["item_name_label_fill_color"],
+        )
+        inner_corners = item.get_params()["inner_corners"]
+        (w, _), (_, h) = self.fig.pixelVectors()
+        self.fig.addItem(x_label)
+        self.fig.addItem(y_label)
+
+        x_label.setPos(*offset_at_centre(inner_corners[3], inner_corners[0], 5 * h))
+        y_label.setPos(*offset_at_centre(inner_corners[0], inner_corners[1], 5 * w))
+
+        dialog = PerspectiveDialog()
+        dialog.completed.connect(self.emit_new_perspective_points)
 
         self.temp_perspective = {
             "item": item,
+            "x_label": x_label,
+            "y_label": y_label,
+            "dialog": dialog,
         }
+        dialog.show()
 
-    def perspective_corner_moved(self, i, pos):
+    def perspective_corner_moved(self, i, point):
         if self.temp_perspective is None:
             return
 
-        x, y = self.keep_point_in_frame(*pos)
+        x, y = self.keep_point_in_frame(*point)
         self.temp_perspective["item"].setInnerCorner(i, (x, y))
+
+        (w, _), (_, h) = self.fig.pixelVectors()
+        inner_corners = self.temp_perspective["item"].get_params()["inner_corners"]
+        self.temp_perspective["x_label"].setPos(
+            *offset_at_centre(inner_corners[3], inner_corners[0], 5 * h)
+        )
+        self.temp_perspective["y_label"].setPos(
+            *offset_at_centre(inner_corners[0], inner_corners[1], 5 * h)
+        )
+
+    def perspective_moved(self, inner_corners):
+        im_x, im_y = self.im_item.pos()
+        im_w, im_h = self.im_item.width(), self.im_item.height()
+
+        new_corners = np.array(inner_corners)
+        if (new_corners[:, 0] >= (im_x + im_w)).any():
+            new_corners[:, 0] = new_corners[:, 0] - (
+                new_corners[:, 0].max() - (im_x + im_w) + 1
+            )
+        elif (new_corners[:, 0] <= im_x).any():
+            new_corners[:, 0] = new_corners[:, 0] + (im_x - new_corners[:, 0].min()) - 1
+        if (new_corners[:, 1] >= (im_y + im_h)).any():
+            new_corners[:, 1] = (
+                new_corners[:, 1] - (new_corners[:, 1].max() - (im_y + im_h)) + 1
+            )
+        elif (new_corners[:, 1] <= im_y).any():
+            new_corners[:, 1] = new_corners[:, 1] + (im_y - new_corners[:, 1].min()) - 1
+        self.temp_perspective["item"].setData(inner_corners=new_corners.tolist())
+
+        (w, _), (_, h) = self.fig.pixelVectors()
+        self.temp_perspective["x_label"].setPos(
+            *offset_at_centre(new_corners[3], new_corners[0], 5 * h)
+        )
+        self.temp_perspective["y_label"].setPos(
+            *offset_at_centre(new_corners[0], new_corners[1], 5 * h)
+        )
 
     def next_set_perspective_step(self):
         self.set_perspective_steps_index += 1
 
-    def emit_new_perspective_points(self):
+    def end_perspective_selection(self):
         if self.temp_perspective is None:
             return
 
@@ -1541,17 +1606,34 @@ class FrameWidget(QtWidgets.QWidget):
         for distance in self.distances["name"]:
             self.show_distance(distance, index=1)
 
+        self.temp_perspective["dialog"].close()
+        self.temp_perspective["dialog"].deleteLater()
         self.set_perspective_steps_index = 0
-        inner_corner, outer_corners, outer_offsets = self.temp_perspective[
-            "item"
-        ].get_params()
+        inner_corner, outer_corners, outer_offsets = (
+            self.temp_perspective["item"].get_params().values()
+        )
         self.fig.removeItem(self.temp_perspective["item"])
+        self.fig.removeItem(self.temp_perspective["x_label"])
+        self.fig.removeItem(self.temp_perspective["y_label"])
         self.temp_perspective = None
         self.set_mouse_mode(MouseModes.NORMAL)
-        logging.debug(
-            f"Perspective points obtained with {inner_corner}, {outer_corners}."
-        )
-        # self.set_perspective_points_suggested.emit(img_points, obj_points)
+        return inner_corner, outer_corners, outer_offsets
+
+    def emit_new_perspective_points(self, x, y):
+        if self.temp_perspective is None:
+            return
+
+        inner_corners, outer_corners, outer_offsets = self.end_perspective_selection()
+        img_points = inner_corners
+        obj_points = [
+            (0, 0),
+            (0, y),
+            (x, y),
+            (x, 0),
+        ]
+
+        logging.debug(f"Perspective points obtained with {img_points}, {obj_points}.")
+        self.set_perspective_points_suggested.emit(img_points, obj_points)
 
     def animate_crosshairs(self, pos):
         """
@@ -1671,7 +1753,7 @@ if __name__ == "__main__":
     # widget.add_distance("distance1", "test1", "test2", "green")
 
     widget.start_new_perspective()
-    widget.emit_new_perspective_points()
+    # widget.end_perspective_selection()
     widget.show()
 
     app.exec()
