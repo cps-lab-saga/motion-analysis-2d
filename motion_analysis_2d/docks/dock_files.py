@@ -8,6 +8,7 @@ from motion_analysis_2d.custom_components import BaseDock, FileListWidget, tab10
 
 class FilesDock(BaseDock):
     video_file_changed = Signal(Path)
+    batch_button_toggled = Signal(Path)
 
     def __init__(self, filetypes=None):
         super().__init__()
@@ -20,18 +21,19 @@ class FilesDock(BaseDock):
         )
 
         icon_size = 18
-        self.continue_button = QtWidgets.QPushButton(self)
+        self.batch_button = QtWidgets.QPushButton(self)
         self.continue_icon = qta.icon("mdi.playlist-play")
-        self.continue_button.setIcon(self.continue_icon)
-        self.continue_button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        self.continue_button.setCheckable(True)
-        self.continue_button.setFlat(True)
-        self.continue_button.setText("Batch Processing")
-        self.continue_button.setToolTip(
+        self.batch_button.setIcon(self.continue_icon)
+        self.batch_button.setIconSize(QtCore.QSize(icon_size, icon_size))
+        self.batch_button.setCheckable(True)
+        self.batch_button.setFlat(True)
+        self.batch_button.setText("Batch Processing")
+        self.batch_button.setToolTip(
             "Automatically continue to next video in queue and start playing."
         )
-        self.gui_save_exceptions.append(self.continue_button)
-        self.dock_layout.addWidget(self.continue_button)
+        self.gui_save_exceptions.append(self.batch_button)
+        self.batch_button.toggled.connect(self.batch_button_toggled.emit)
+        self.dock_layout.addWidget(self.batch_button)
 
         self.file_list_widget = FileListWidget(filetypes, self)
         self.file_list_widget.setToolTip("Quick files.\nDrop files here.")

@@ -124,6 +124,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.docks["Items"])
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.docks["DataPlot"])
         self.docks["Files"].video_file_changed.connect(self.video_file_changed)
+        self.docks["Files"].batch_button_toggled.connect(self.batch_toggled)
         self.docks["Intrinsic"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Extrinsic"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Extrinsic"].add_perspective_started.connect(
@@ -225,10 +226,10 @@ class MainWidget(QtWidgets.QMainWindow):
             self.frame_widget.auto_range()
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
-                logging.info("Data file exist!")
+                logging.info(f"Loaded data file {track_file.name}")
                 self.load_data(track_file)
 
-            if self.docks["Files"].continue_button.isChecked():
+            if self.docks["Files"].batch_button.isChecked():
                 self.play_video(True)
 
     def close_video(self):
@@ -239,15 +240,15 @@ class MainWidget(QtWidgets.QMainWindow):
                 QtCore.QCoreApplication.processEvents()
 
     def next_video(self):
-        logging.info("Go to next video")
+        logging.debug("Go to next video")
         self.docks["Files"].next_file()
 
     def previous_video(self):
-        logging.info("Go to previous video")
+        logging.debug("Go to previous video")
         self.docks["Files"].previous_file()
 
     def reached_end(self):
-        if self.docks["Files"].continue_button.isChecked():
+        if self.docks["Files"].batch_button.isChecked():
             self.play_video(False)
             self.next_video()
 
@@ -310,6 +311,9 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def click_export(self):
         self.docks["Save"].export_button.click()
+
+    def set_autosave(self, autosave: bool):
+        self.docks["Save"].autosave_button.setChecked(autosave)
 
     def stream_finished(self):
         self.stream_thread.exit()
@@ -517,8 +521,18 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def tracking_failed(self, name, frame_no):
         self.play_video(False)
-        self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
-        self.stream_worker.move_frame_to(frame_no - 2, track=False)
+        if self.docks["Files"].batch_button.isChecked():
+            msg = f"Tracking failed for {name} at frame {frame_no} in {self.stream_worker.path.name}!"
+            self.info_dialog(
+                "Tracking Failure!",
+                msg,
+            )
+            logging.info(msg)
+            self.stream_worker.move_frame_to(frame_no - 2, track=False)
+            self.next_video()
+        else:
+            self.error_dialog(f"Tracking failed for {name} at frame {frame_no}!")
+            self.stream_worker.move_frame_to(frame_no - 2, track=False)
 
     def add_tracker_failed(self, name, error):
         self.error_dialog(f"Could not initialise tracker for ({name})!\n{error}")
@@ -869,6 +883,10 @@ class MainWidget(QtWidgets.QMainWindow):
                 str(save_path.resolve())
             )
 
+    def batch_toggled(self, checked):
+        if checked:
+            self.set_autosave(True)
+
     def gui_save(self, settings):
         for dock in self.docks.values():
             dock.gui_save(settings)
@@ -894,6 +912,13 @@ class MainWidget(QtWidgets.QMainWindow):
         self.gui_save(settings)
         event.accept()
 
+    def info_dialog(self, title, msg):
+        message_box = QtWidgets.QMessageBox(self)
+        message_box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+        message_box.setText(msg)
+        message_box.setWindowTitle(title)
+        message_box.show()
+
     def error_dialog(self, error):
         QtWidgets.QMessageBox.critical(self, "Error", error)
 
@@ -911,7 +936,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
 
 def main():
-    setup_logger(logging.DEBUG)
+    setup_logger(logging.INFO)
 
     app = QtWidgets.QApplication([])
     win = MainWidget()
