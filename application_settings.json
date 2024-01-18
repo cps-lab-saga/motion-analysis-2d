@@ -35,7 +35,13 @@
       "distance_arrow_stem_width": 3,
       "distance_arrow_head_width": 42,
       "distance_arrow_head_height": 42,
-      "warp_point_symbol": "d",  // diamond
-      "warp_point_color": [44, 160, 44]
+      "set_perspective_inner_pen_color": [44, 160, 44],
+      "set_perspective_inner_pen_width": 2,
+      "set_perspective_inner_hover_pen_color": [44, 160, 44],
+      "set_perspective_inner_hover_pen_width": 4,
+      "set_perspective_outer_pen_color": [44, 160, 44],
+      "set_perspective_outer_pen_width": 1,
+      "set_perspective_outer_hover_pen_color": [44, 160, 44],
+      "set_perspective_outer_hover_pen_width": 3
   }
 }
