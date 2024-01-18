@@ -8,6 +8,8 @@ from motion_analysis_2d.funcs.geometric_calc import (
 
 
 class PerspectiveItem(pg.GraphicsObject):
+    sigInnerCornerMoved = QtCore.Signal(int, tuple)
+
     def __init__(
         self,
         inner_corners=((0, 0), (0, 1), (1, 1), (1, 0)),
@@ -146,12 +148,12 @@ class PerspectiveItem(pg.GraphicsObject):
             else:
                 (w, _), (_, h) = self.pixelVectors()
                 local_handle_size = self.handle_size * w / 2
-                self.handle_hover = self.pos_at_handle(ev.pos(), local_handle_size)
+                self.handle_hover = self.pos_at_handle(ev.lastPos(), local_handle_size)
                 if any(self.handle_hover):
                     self.update()
                     return
 
-                self.outer_hover = self.pos_at_outer(ev.pos(), 20 * w / 2)
+                self.outer_hover = self.pos_at_outer(ev.lastPos(), 20 * w / 2)
                 if any(self.outer_hover):
                     self.update()
                     return
@@ -196,8 +198,10 @@ class PerspectiveItem(pg.GraphicsObject):
 
         if any(self.handle_dragging):
             i = self.handle_dragging.index(True)
+            pos = ev.pos().toTuple()
             self.inner_corners[i] = ev.pos().toTuple()
             self.update()
+            self.sigInnerCornerMoved.emit(i, pos)
         elif self.outer_dragging is not None:
             pos = ev.pos()
             i, line_start, line_end = self.outer_dragging
@@ -212,11 +216,37 @@ class PerspectiveItem(pg.GraphicsObject):
     def boundingRect(self):
         return QtCore.QRectF(self.picture.boundingRect())
 
+    def setData(self, inner_corners=None, outer_offsets=None):
+        if inner_corners is not None:
+            self.inner_corners = inner_corners
+        if outer_offsets is not None:
+            self.outer_offsets = outer_offsets
+
+    def setInnerCorner(self, i, pos):
+        self.inner_corners[i] = pos
+
     def setInnerPen(self, pen):
         self.inner_pen = pen
+        self.update()
 
     def setOuterPen(self, pen):
         self.outer_pen = pen
+        self.update()
+
+    def setInnerHoverPen(self, pen):
+        self.inner_hover_pen = pen
+        self.update()
+
+    def setOuterHoverPen(self, pen):
+        self.outer_hover_pen = pen
+        self.update()
+
+    def get_params(self):
+        return {
+            "inner_corners": self.inner_corners,
+            "outer_corners": self.outer_corners,
+            "outer_offsets": self.outer_offsets,
+        }
 
 
 if __name__ == "__main__":

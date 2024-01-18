@@ -12,8 +12,8 @@ from motion_analysis_2d.funcs import load_extrinsic
 
 class LoadExtrinsicDock(BaseDock):
     settings_updated = Signal()
-    select_points_started = Signal()
-    select_points_finished = Signal()
+    add_perspective_started = Signal()
+    add_perspective_finished = Signal()
 
     def __init__(self):
         super().__init__()
@@ -51,14 +51,14 @@ class LoadExtrinsicDock(BaseDock):
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
         row.insertWidget(0, self.cal_status_label)
 
-        self.select_points_button = QtWidgets.QPushButton(self)
+        self.add_perspective_button = QtWidgets.QPushButton(self)
         # self.select_points_button.setText("Select Points")
-        self.select_points_button.setToolTip("Select calibration points from frame.")
-        self.select_points_button.setFlat(True)
-        self.select_points_button.setCheckable(True)
-        self.select_points_button.setIcon(qta.icon("mdi6.cursor-default-click"))
-        self.select_points_button.toggled.connect(self.select_points_button_toggled)
-        row.addWidget(self.select_points_button)
+        self.add_perspective_button.setToolTip("Select calibration points from frame.")
+        self.add_perspective_button.setFlat(True)
+        self.add_perspective_button.setCheckable(True)
+        self.add_perspective_button.setIcon(qta.icon("mdi6.cursor-default-click"))
+        self.add_perspective_button.toggled.connect(self.add_perspective_button_toggled)
+        row.addWidget(self.add_perspective_button)
 
         self.dock_layout.addStretch()
 
@@ -110,17 +110,17 @@ class LoadExtrinsicDock(BaseDock):
         else:
             return img
 
-    def select_points_button_toggled(self, checked):
+    def add_perspective_button_toggled(self, checked):
         if checked:
             self.extrinsic_cal_file_edit.setText("")
-            self.select_points_started.emit()
+            self.add_perspective_started.emit()
         else:
-            self.select_points_finished.emit()
+            self.add_perspective_finished.emit()
 
     def uncheck_select_points_button(self):
-        self.select_points_button.blockSignals(True)
-        self.select_points_button.setChecked(False)
-        self.select_points_button.blockSignals(False)
+        self.add_perspective_button.blockSignals(True)
+        self.add_perspective_button.setChecked(False)
+        self.add_perspective_button.blockSignals(False)
 
     def gui_save(self, settings):
         self.uncheck_select_points_button()

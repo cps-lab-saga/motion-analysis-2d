@@ -8,8 +8,12 @@ import numpy as np
 import pyqtgraph as pg
 
 from defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.custom_components import PieItem, ArrowItem, tab10_rgb
-from motion_analysis_2d.dialogs import PointDialog
+from motion_analysis_2d.custom_components import (
+    PieItem,
+    ArrowItem,
+    PerspectiveItem,
+    tab10_rgb,
+)
 from motion_analysis_2d.funcs import (
     setup_logger,
     is_json_file,
@@ -28,7 +32,7 @@ class FrameWidget(QtWidgets.QWidget):
     distance_moved = Signal(str, str, str, tuple)
     distance_removal_suggested = Signal(str)
     marker_file_dropped = Signal(object)
-    new_warp_points_selected = Signal(list, list)
+    set_perspective_points_suggested = Signal(list, list)
 
     def __init__(self, visual_settings=None, parent=None):
         super().__init__(parent=parent)
@@ -71,10 +75,8 @@ class FrameWidget(QtWidgets.QWidget):
         self.remove_angle_instructions = "Select angle to remove."
         self.remove_distance_instructions = "Select distance to remove."
 
-        self.select_warp_points_instructions = (
-            "Add calibration points to warp perspective: "
-        )
-        self.warp_points_steps_index = 0
+        self.set_perspective_steps_index = 0
+        self.set_perspective_instructions = "Adjust perspective. Press Enter when done."
 
         self.visual_settings = {
             "new_item_pen_color": tab10_rgb["green"],
@@ -100,8 +102,14 @@ class FrameWidget(QtWidgets.QWidget):
             "distance_arrow_stem_width": 3,
             "distance_arrow_head_width": 42,
             "distance_arrow_head_height": 42,
-            "warp_point_symbol": "d",
-            "warp_point_color": tab10_rgb["blue"],
+            "set_perspective_inner_pen_color": tab10_rgb["green"],
+            "set_perspective_inner_pen_width": 2,
+            "set_perspective_inner_hover_pen_color": tab10_rgb["green"],
+            "set_perspective_inner_hover_pen_width": 4,
+            "set_perspective_outer_pen_color": tab10_rgb["green"],
+            "set_perspective_outer_pen_width": 1,
+            "set_perspective_outer_hover_pen_color": tab10_rgb["green"],
+            "set_perspective_outer_hover_pen_width": 3,
         }
         self.visual_settings.update(visual_settings)
 
@@ -112,9 +120,6 @@ class FrameWidget(QtWidgets.QWidget):
         self.crosshair_pen = pg.mkPen(
             color=self.visual_settings["crosshair_pen_color"],
             width=self.visual_settings["crosshair_pen_width"],
-        )
-        self.warp_point_brush = pg.mkBrush(
-            color=self.visual_settings["warp_point_color"]
         )
 
         self.trackers = {
@@ -189,7 +194,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.temp_tracker = None
         self.temp_angle = None
         self.temp_distance = None
-        self.temp_warp_points = None
+        self.temp_perspective = None
 
         self.plot_widget.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot_widget.scene().sigMouseMoved.connect(self.mouse_moved)
@@ -284,12 +289,8 @@ class FrameWidget(QtWidgets.QWidget):
                         self.remove_distance_suggested(item)
                         break
 
-        elif self.mouse_mode == MouseModes.SELECT_WARP_POINTS:
-            if not evt.double() and evt.button() == QtCore.Qt.LeftButton:
-                if self.warp_points_steps_index == 0:
-                    self.start_new_warp_points(evt.scenePos())
-                else:
-                    self.add_warp_point(evt.scenePos())
+        elif self.mouse_mode == MouseModes.SET_PERSPECTIVE:
+            pass
 
         self.update_instructions()
 
@@ -376,7 +377,7 @@ class FrameWidget(QtWidgets.QWidget):
     def show_instruction(self, text):
         self.instruction_label.setText(text)
         self.instruction_label.setParentItem(self.fig.getViewBox())
-        logging.debug(f"Instruction {text} shown.")
+        logging.debug(f"Instruction '{text}' shown.")
 
     def hide_instruction(self):
         self.instruction_label.setText("")
@@ -396,10 +397,8 @@ class FrameWidget(QtWidgets.QWidget):
             self.show_instruction(self.add_distance_steps[self.distance_steps_index])
         elif self.mouse_mode == MouseModes.REMOVE_DISTANCE:
             self.show_instruction(self.remove_distance_instructions)
-        elif self.mouse_mode == MouseModes.SELECT_WARP_POINTS:
-            self.show_instruction(
-                self.select_warp_points_instructions + f"{self.warp_points_steps_index}"
-            )
+        elif self.mouse_mode == MouseModes.SET_PERSPECTIVE:
+            self.show_instruction(self.set_perspective_instructions)
         else:
             self.hide_instruction()
 
@@ -418,7 +417,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.tracker_steps_index = 0
         self.angle_steps_index = 0
         self.distance_steps_index = 0
-        self.warp_points_steps_index = 0
+        self.set_perspective_steps_index = 0
 
         self.update_instructions()
 
@@ -565,11 +564,11 @@ class FrameWidget(QtWidgets.QWidget):
             self.temp_distance = None
             logging.debug("Removed incomplete distance from frame.")
 
-    def remove_warp_points(self):
-        if self.temp_warp_points is not None:
-            self.fig.removeItem(self.temp_warp_points["plot_points"])
-            self.temp_warp_points = None
-            logging.debug("Removed drawn warp points from frame.")
+    def remove_temp_perspective(self):
+        if self.temp_perspective is not None:
+            self.fig.removeItem(self.temp_perspective["item"])
+            self.temp_perspective = None
+            logging.debug("Removed perspective object from frame.")
 
     def add_tracker(self, name, bbox_pos, bbox_size, offset, color, tracker_type):
         bbox_pen = pg.mkPen(
@@ -637,7 +636,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.trackers["color"].append(color)
         self.trackers["tracker_type"].append(tracker_type)
         self.trackers["children"].append(set())
-        self.trackers["show"].append(True)
+        self.trackers["show"].append([True, True, True])
 
         logging.debug(f"Tracker {name} added to frame display.")
 
@@ -681,27 +680,34 @@ class FrameWidget(QtWidgets.QWidget):
                     elif child_type == "distance":
                         self.update_distance_parent_name(child_name, name, new_name)
 
-    def hide_tracker(self, name):
+    def hide_tracker(self, name, index=0):
         i = self.trackers["name"].index(name)
-        if not self.trackers["show"][i]:
-            return
+        assert index < len(self.trackers["show"][i]), "Invalid index!"
+
+        if not any(self.trackers["show"][i]):
+            self.trackers["show"][i][index] = False
+            return  # already hidden
         else:
             self.fig.removeItem(self.trackers["roi"][i])
             self.fig.removeItem(self.trackers["target"][i])
             self.fig.removeItem(self.trackers["traj"][i])
-            self.trackers["show"][i] = False
+            self.trackers["show"][i][index] = False
             logging.debug(f"Tracker {name} hidden in frame display.")
 
-    def show_tracker(self, name):
+    def show_tracker(self, name, index=0):
         i = self.trackers["name"].index(name)
-        if self.trackers["show"][i]:
-            return
+        assert index < len(self.trackers["show"][i]), "Invalid index!"
+
+        if all(self.trackers["show"][i]):
+            self.trackers["show"][i][index] = True
+            return  # already shown
         else:
-            self.fig.addItem(self.trackers["roi"][i])
-            self.fig.addItem(self.trackers["target"][i])
-            self.fig.addItem(self.trackers["traj"][i])
-            self.trackers["show"][i] = True
-            logging.debug(f"Tracker {name} shown in frame display.")
+            self.trackers["show"][i][index] = True
+            if all(self.trackers["show"][i]):
+                self.fig.addItem(self.trackers["roi"][i])
+                self.fig.addItem(self.trackers["target"][i])
+                self.fig.addItem(self.trackers["traj"][i])
+                logging.debug(f"Tracker {name} shown in frame display.")
 
     def remove_tracker_suggested(self, item):
         if isinstance(item, pg.ROI):
@@ -717,7 +723,7 @@ class FrameWidget(QtWidgets.QWidget):
         i = self.trackers["name"].index(name)
 
         children = self.trackers["children"][i]
-        if self.trackers["show"][i]:
+        if not all(self.trackers["show"][i]):
             self.fig.removeItem(self.trackers["roi"][i])
             self.fig.removeItem(self.trackers["target"][i])
             self.fig.removeItem(self.trackers["traj"][i])
@@ -972,7 +978,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.angles["start2"].append(start2)
         self.angles["end2"].append(end2)
         self.angles["color"].append(color)
-        self.angles["show"].append(True)
+        self.angles["show"].append([True, True, True])
 
         logging.debug(f"Angle {name} added to frame display.")
 
@@ -1062,29 +1068,36 @@ class FrameWidget(QtWidgets.QWidget):
             logging.debug(f"Angle {name} manually moved in frame display.")
             self.angle_moved.emit(name, start1, end1, start2, end2, color)
 
-    def hide_angle(self, name):
+    def hide_angle(self, name, index=0):
         i = self.angles["name"].index(name)
-        if not self.angles["show"][i]:
-            return
+        assert index < len(self.angles["show"][i]), "Invalid index!"
+
+        if not any(self.angles["show"][i]):
+            self.angles["show"][i][index] = False
+            return  # already hidden
         else:
             self.fig.removeItem(self.angles["vec1"][i])
             self.fig.removeItem(self.angles["vec2"][i])
             self.fig.removeItem(self.angles["pie"][i])
             self.fig.removeItem(self.angles["label"][i])
-            self.angles["show"][i] = False
+            self.angles["show"][i][index] = False
             logging.debug(f"Angle {name} hidden in frame display.")
 
-    def show_angle(self, name):
+    def show_angle(self, name, index=0):
         i = self.angles["name"].index(name)
-        if self.angles["show"][i]:
-            return
+        assert index < len(self.angles["show"][i]), "Invalid index!"
+
+        if all(self.angles["show"][i]):
+            self.angles["show"][i][index] = True
+            return  # already shown
         else:
-            self.fig.addItem(self.angles["vec1"][i])
-            self.fig.addItem(self.angles["vec2"][i])
-            self.fig.addItem(self.angles["pie"][i])
-            self.fig.addItem(self.angles["label"][i])
-            self.angles["show"][i] = True
-            logging.debug(f"Angle {name} shown in frame display.")
+            self.angles["show"][i][index] = True
+            if all(self.angles["show"][i]):
+                self.fig.addItem(self.angles["vec1"][i])
+                self.fig.addItem(self.angles["vec2"][i])
+                self.fig.addItem(self.angles["pie"][i])
+                self.fig.addItem(self.angles["label"][i])
+                logging.debug(f"Angle {name} shown in frame display.")
 
     def remove_angle_suggested(self, item):
         if isinstance(item, PieItem):
@@ -1108,7 +1121,7 @@ class FrameWidget(QtWidgets.QWidget):
         end1 = self.angles["end1"][i]
         start2 = self.angles["start2"][i]
         end2 = self.angles["end2"][i]
-        if self.angles["show"][i]:
+        if not all(self.angles["show"][i]):
             self.fig.removeItem(self.angles["vec1"][i])
             self.fig.removeItem(self.angles["vec2"][i])
             self.fig.removeItem(self.angles["pie"][i])
@@ -1230,7 +1243,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.distances["start"].append(start)
         self.distances["end"].append(end)
         self.distances["color"].append(color)
-        self.distances["show"].append(True)
+        self.distances["show"].append([True, True, True])
 
         logging.debug(f"Distance {name} added to frame display.")
 
@@ -1281,25 +1294,33 @@ class FrameWidget(QtWidgets.QWidget):
             logging.debug(f"Distance {name} manually moved in frame display.")
             self.distance_moved.emit(name, start, end, color)
 
-    def hide_distance(self, name):
+    def hide_distance(self, name, index=0):
         i = self.distances["name"].index(name)
-        if not self.distances["show"][i]:
-            return
+        assert index < len(self.distances["show"][i]), "Invalid index!"
+
+        if not any(self.distances["show"][i]):
+            self.distances["show"][i][index] = False
+            return  # already hidden
         else:
             self.fig.removeItem(self.distances["arrow"][i])
             self.fig.removeItem(self.distances["label"][i])
-            self.distances["show"][i] = False
+            self.distances["show"][i][index] = False
             logging.debug(f"Distance {name} hidden in frame display.")
 
-    def show_distance(self, name):
+    def show_distance(self, name, index=0):
         i = self.distances["name"].index(name)
-        if self.distances["show"][i]:
-            return
+        assert index < len(self.distances["show"][i]), "Invalid index!"
+
+        if all(self.distances["show"][i]):
+            self.distances["show"][i][index] = True
+            return  # already shown
         else:
-            self.fig.addItem(self.distances["arrow"][i])
-            self.fig.addItem(self.distances["label"][i])
-            self.distances["show"][i] = True
-            logging.debug(f"Distance {name} shown in frame display.")
+            self.distances["show"][i][index] = True
+
+            if all(self.distances["show"][i]):
+                self.fig.addItem(self.distances["arrow"][i])
+                self.fig.addItem(self.distances["label"][i])
+                logging.debug(f"Distance {name} shown in frame display.")
 
     def remove_distance_suggested(self, item):
         if isinstance(item, ArrowItem):
@@ -1314,8 +1335,9 @@ class FrameWidget(QtWidgets.QWidget):
 
         start = self.distances["start"][i]
         end = self.distances["end"][i]
-        self.fig.removeItem(self.distances["arrow"][i])
-        self.fig.removeItem(self.distances["label"][i])
+        if not all(self.distances["show"][i]):
+            self.fig.removeItem(self.distances["arrow"][i])
+            self.fig.removeItem(self.distances["label"][i])
 
         for n in [start, end]:
             self.remove_children_from_tracker(n, name, "distance")
@@ -1454,85 +1476,82 @@ class FrameWidget(QtWidgets.QWidget):
             )
         logging.trace(f"Tracker trajectory updated.")
 
-    def start_new_warp_points(self, pos):
-        mouse_point = self.fig.vb.mapSceneToView(pos)
-        x = round(mouse_point.x())
-        y = round(mouse_point.y())
-        x, y = self.keep_point_in_frame(x, y)
+    def start_new_perspective(self):
+        # temporarily remove other items
+        for trackers in self.trackers["name"]:
+            self.hide_tracker(trackers, index=1)
+        for angle in self.angles["name"]:
+            self.hide_angle(angle, index=1)
+        for distance in self.distances["name"]:
+            self.hide_distance(distance, index=1)
 
-        img_point = (x, y)
-        plot_points = self.fig.plot(
-            np.array([img_point]),
-            pen=pg.mkPen(None),
-            symbolBrush=self.warp_point_brush,
-            symbol=self.visual_settings["warp_point_symbol"],
+        im_w, im_h = self.im_item.width(), self.im_item.height()
+
+        item = PerspectiveItem(
+            inner_corners=(
+                (im_w * 0.2, im_h * 0.2),
+                (im_w * 0.2, im_h * 0.8),
+                (im_w * 0.8, im_h * 0.8),
+                (im_w * 0.8, im_h * 0.2),
+            ),
+            outer_offsets=(im_w * 0.1, im_h * 0.1, im_w * 0.1, im_h * 0.1),
+            inner_pen=pg.mkPen(
+                color=self.visual_settings["set_perspective_inner_pen_color"],
+                width=self.visual_settings["set_perspective_inner_pen_width"],
+            ),
+            inner_hover_pen=pg.mkPen(
+                color=self.visual_settings["set_perspective_inner_hover_pen_color"],
+                width=self.visual_settings["set_perspective_inner_hover_pen_width"],
+            ),
+            outer_pen=pg.mkPen(
+                color=self.visual_settings["set_perspective_outer_pen_color"],
+                width=self.visual_settings["set_perspective_outer_pen_width"],
+            ),
+            outer_hover_pen=pg.mkPen(
+                color=self.visual_settings["set_perspective_outer_hover_pen_color"],
+                width=self.visual_settings["set_perspective_outer_hover_pen_width"],
+            ),
         )
-        dialog = PointDialog(img_point, "Point 1")
-        dialog.exec()
-        if dialog.result():
-            obj_points, finish = dialog.get_result()
-            self.temp_warp_points = {
-                "plot_points": plot_points,
-                "img_points": [img_point],
-                "obj_points": [obj_points],
-            }
-            logging.debug(
-                f"Perspective warp point started at {img_point}, labeled as {obj_points}."
-            )
-            self.next_warp_point_step()
-            if finish:
-                self.emit_new_warp_points()
-        else:
-            self.fig.removeItem(plot_points)
+        self.fig.addItem(item)
+        item.sigInnerCornerMoved.connect(self.perspective_corner_moved)
 
-    def add_warp_point(self, pos):
-        mouse_point = self.fig.vb.mapSceneToView(pos)
-        x = round(mouse_point.x())
-        y = round(mouse_point.y())
-        x, y = self.keep_point_in_frame(x, y)
+        self.temp_perspective = {
+            "item": item,
+        }
 
-        img_point = (x, y)
-        self.temp_warp_points["plot_points"].setData(
-            np.array(self.temp_warp_points["img_points"] + [img_point])
-        )
-
-        dialog = PointDialog(
-            img_point, f"Point {len(self.temp_warp_points['img_points']) + 1}"
-        )
-        dialog.exec()
-        if dialog.result():
-            obj_points, finish = dialog.get_result()
-            self.temp_warp_points["img_points"].append((x, y))
-            self.temp_warp_points["obj_points"].append(obj_points)
-            logging.debug(
-                f"Perspective warp point added at {img_point}, labeled as {obj_points}."
-            )
-            self.next_warp_point_step()
-            if finish:
-                self.emit_new_warp_points()
-        else:
-            self.temp_warp_points["plot_points"].setData(
-                np.array(self.temp_warp_points["img_points"])
-            )
-
-    def next_warp_point_step(self):
-        self.warp_points_steps_index += 1
-
-    def emit_new_warp_points(self):
-        if self.temp_warp_points is None:
+    def perspective_corner_moved(self, i, pos):
+        if self.temp_perspective is None:
             return
 
-        self.warp_points_steps_index = 0
-        img_points = self.temp_warp_points["img_points"]
-        obj_points = self.temp_warp_points["obj_points"]
-        self.fig.removeItem(self.temp_warp_points["plot_points"])
+        x, y = self.keep_point_in_frame(*pos)
+        self.temp_perspective["item"].setInnerCorner(i, (x, y))
 
-        self.temp_warp_points = None
+    def next_set_perspective_step(self):
+        self.set_perspective_steps_index += 1
+
+    def emit_new_perspective_points(self):
+        if self.temp_perspective is None:
+            return
+
+        # restore temporarily removed items
+        for trackers in self.trackers["name"]:
+            self.show_tracker(trackers, index=1)
+        for angle in self.angles["name"]:
+            self.show_angle(angle, index=1)
+        for distance in self.distances["name"]:
+            self.show_distance(distance, index=1)
+
+        self.set_perspective_steps_index = 0
+        inner_corner, outer_corners, outer_offsets = self.temp_perspective[
+            "item"
+        ].get_params()
+        self.fig.removeItem(self.temp_perspective["item"])
+        self.temp_perspective = None
         self.set_mouse_mode(MouseModes.NORMAL)
         logging.debug(
-            f"Drawn and labeled point finished with {img_points}, {obj_points}."
+            f"Perspective points obtained with {inner_corner}, {outer_corners}."
         )
-        self.new_warp_points_selected.emit(img_points, obj_points)
+        # self.set_perspective_points_suggested.emit(img_points, obj_points)
 
     def animate_crosshairs(self, pos):
         """
@@ -1628,7 +1647,7 @@ class MouseModes(Enum):
     REMOVE_ANGLE = 4
     ADD_DISTANCE = 5
     REMOVE_DISTANCE = 6
-    SELECT_WARP_POINTS = 7
+    SET_PERSPECTIVE = 7
 
 
 if __name__ == "__main__":
@@ -1651,8 +1670,8 @@ if __name__ == "__main__":
     # widget.set_mouse_mode("add_distance")
     # widget.add_distance("distance1", "test1", "test2", "green")
 
-    # widget.set_mouse_mode("select_warp_points")
-
+    widget.start_new_perspective()
+    widget.emit_new_perspective_points()
     widget.show()
 
     app.exec()
