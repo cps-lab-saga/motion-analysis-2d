@@ -654,7 +654,12 @@ class MainWidget(QtWidgets.QMainWindow):
                 },
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.frame_no,
-                self.docks["Extrinsic"].scaling,
+                self.docks["Intrinsic"].intrinsic_cal_file_edit.text()
+                if self.docks["Intrinsic"].cal_ok
+                else None,
+                self.docks["Extrinsic"].extrinsic_cal_file_edit.text()
+                if self.docks["Extrinsic"].cal_ok
+                else None,
                 self.docks["Orient"].rotation,
                 self.docks["Orient"].flip,
             )
@@ -665,13 +670,32 @@ class MainWidget(QtWidgets.QMainWindow):
             analysis_properties,
             tracking_data,
             current_frame,
-            scaling,
+            intrinsic,
+            extrinsic,
             rotation,
             flip,
         ) = load_tracking_data(path)
 
         self.docks["Orient"].restore_rotation(rotation)
         self.docks["Orient"].restore_flip(flip)
+
+        if intrinsic is not None:
+            relative, absolute = intrinsic
+            if relative is not None and (path / relative).is_file():
+                self.docks["Intrinsic"].intrinsic_cal_file_edit.setText(
+                    str((path / relative).resolve())
+                )
+            else:
+                self.docks["Intrinsic"].intrinsic_cal_file_edit.setText(absolute)
+
+        if extrinsic is not None:
+            relative, absolute = extrinsic
+            if relative is not None and (path / relative).is_file():
+                self.docks["Extrinsic"].extrinsic_cal_file_edit.setText(
+                    str((path / relative).resolve())
+                )
+            else:
+                self.docks["Extrinsic"].extrinsic_cal_file_edit.setText(absolute)
 
         # move frame if current frame has no data
         first_tracker = next(iter(tracking_data.values()))

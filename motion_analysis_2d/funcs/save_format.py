@@ -1,5 +1,7 @@
 import csv
 import json
+from os.path import relpath
+from pathlib import Path
 
 import numpy as np
 
@@ -10,7 +12,8 @@ def save_tracking_data(
     analysis_properties,
     tracking_data,
     current_frame,
-    scaling,
+    intrinsic_path,
+    extrinsic_path,
     rotation,
     flip,
 ):
@@ -30,7 +33,31 @@ def save_tracking_data(
         save_data["tracking_data"][tracker_name] = save_params
 
     save_data["current_frame"] = current_frame
-    save_data["scaling"] = scaling
+    if intrinsic_path is not None and Path(intrinsic_path).is_file():
+        try:
+            relative_path = str(relpath(intrinsic_path, path))
+        except ValueError:
+            relative_path = None
+
+        save_data["intrinsic"] = (
+            relative_path,
+            str(Path(intrinsic_path).absolute()),
+        )
+    else:
+        save_data["intrinsic"] = None
+
+    if extrinsic_path is not None and Path(extrinsic_path).is_file():
+        try:
+            relative_path = str(relpath(extrinsic_path, path))
+        except ValueError:
+            relative_path = None
+        save_data["extrinsic"] = (
+            relative_path,
+            str(Path(extrinsic_path).absolute()),
+        )
+    else:
+        save_data["extrinsic"] = None
+
     save_data["rotation"] = rotation
     save_data["flip"] = flip
 
@@ -67,7 +94,8 @@ def load_tracking_data(path):
 
     current_frame = save_data["current_frame"]
 
-    scaling = save_data.get("scaling")
+    intrinsic = save_data.get("intrinsic")
+    extrinsic = save_data.get("extrinsic")
     rotation = save_data.get("rotation")
     flip = save_data.get("flip")
 
@@ -76,7 +104,8 @@ def load_tracking_data(path):
         analysis_properties,
         tracking_data,
         current_frame,
-        scaling,
+        intrinsic,
+        extrinsic,
         rotation,
         flip,
     )
