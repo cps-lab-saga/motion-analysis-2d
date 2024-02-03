@@ -27,36 +27,22 @@ class EditControls(QtWidgets.QFrame):
         self.buttons = []
 
         self.add_button(
-            "Add Tracker", "add_tracker", qta.icon("mdi6.vector-rectangle"), "+", "blue"
-        )
-        self.add_button(
-            "Remove Tracker",
-            "remove_tracker",
+            "Add Tracker",
+            "add_tracker",
             qta.icon("mdi6.vector-rectangle"),
-            "−",
-            "red",
-        )
-        # self.add_button(
-        #     "Add Vector", "add_vector", qta.icon("mdi6.vector-line"), "+", "blue"
-        # )
-        # self.add_button(
-        #     "Remove Vector",
-        #     "remove_vector",
-        #     qta.icon("mdi6.vector-line"),
-        #     "−",
-        #     "red",
-        # )
-        self.add_button(
-            "Add Angle", "add_angle", qta.icon("mdi6.angle-acute"), "+", "blue"
+            badge_text="+",
         )
         self.add_button(
-            "Remove Angle", "remove_angle", qta.icon("mdi6.angle-acute"), "−", "red"
+            "Add Angle", "add_angle", qta.icon("mdi6.angle-acute"), badge_text="+"
         )
         self.add_button(
-            "Add Distance", "add_distance", qta.icon("mdi6.ruler"), "+", "blue"
+            "Add Distance", "add_distance", qta.icon("mdi6.ruler"), badge_text="+"
         )
         self.add_button(
-            "Remove Distance", "remove_distance", qta.icon("mdi6.ruler"), "−", "red"
+            "Remove",
+            "remove_item",
+            qta.icon("ei.remove", color=tab10_qcolor["red"]),
+            icon_size=20,
         )
 
         self.main_layout.addStretch()
@@ -66,16 +52,22 @@ class EditControls(QtWidgets.QFrame):
         label,
         mode,
         icon,
-        badge_text,
-        color="blue",
         icon_size=24,
-        badge_size=8,
-        point_size=12,
+        badge_text=None,
+        badge=None,
     ):
-        button = BadgeButton(
-            badge_size, tab10_qcolor[color], "white", point_size, parent=self
-        )
-        button.set_badge(badge_text)
+        if badge is None:
+            badge = {
+                "badge_size": 8,
+                "badge_color": tab10_qcolor["blue"],
+                "badge_text_color": "white",
+                "point_size": 12,
+            }
+        if badge_text is None:
+            button = QtWidgets.QPushButton(parent=self)
+        else:
+            button = BadgeButton(**badge, parent=self)
+            button.set_badge(badge_text)
         button.setToolTip(label)
         button.setIcon(icon)
         button.setIconSize(QtCore.QSize(icon_size, icon_size))

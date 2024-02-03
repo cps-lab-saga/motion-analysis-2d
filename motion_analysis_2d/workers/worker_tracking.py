@@ -46,6 +46,46 @@ class TrackingWorker(QtCore.QObject):
         self.trackers = {}
         logging.debug("Tracking data cleared.")
 
+    def add_item(self, item_type, item_props):
+        if item_type == "tracker":
+            self.add_tracker(
+                item_props["name"],
+                item_props["bbox_pos"],
+                item_props["bbox_size"],
+                item_props["offset"],
+                item_props["tracker_type"],
+            )
+        elif item_type == "angle":
+            self.add_angle(
+                item_props["name"],
+                item_props["start1"],
+                item_props["end1"],
+                item_props["start2"],
+                item_props["end2"],
+            )
+        elif item_type == "distance":
+            self.add_distance(
+                item_props["name"],
+                item_props["start"],
+                item_props["end"],
+            )
+
+    def remove_item(self, item_type, name):
+        if item_type == "tracker":
+            self.remove_tracker(name)
+        elif item_type == "angle":
+            self.remove_angle(name)
+        elif item_type == "distance":
+            self.remove_distance(name)
+
+    def edit_item(self, item_type, name, props):
+        if item_type == "tracker":
+            self.edit_tracker(name, props)
+        elif item_type == "angle":
+            self.edit_angle(name, props)
+        elif item_type == "distance":
+            self.edit_distance(name, props)
+
     def add_tracker(self, name, bbox_pos, bbox_size, offset, tracker_type="Static"):
         self.mutex.lock()
         if self.tracking_data.get(name) is None:
@@ -79,37 +119,37 @@ class TrackingWorker(QtCore.QObject):
             logging.warning(f"Create tracker failed for {name}.")
         self.mutex.unlock()
 
-    def edit_tracker(self, name, new_name, new_tracker_type):
+    def edit_tracker(self, name, props):
         self.mutex.lock()
 
-        if new_name != name:
-            self.tracking_data[new_name] = self.tracking_data[name]
-            self.trackers[new_name] = self.trackers[name]
+        if props["name"] != name:
+            self.tracking_data[props["name"]] = self.tracking_data[name]
+            self.trackers[props["name"]] = self.trackers[name]
             del self.tracking_data[name]
             del self.trackers[name]
 
-        bbox = self.tracking_data[new_name]["bbox"][self.frame_no - 1]
-        _, offset, _ = self.trackers[new_name]
+        bbox = self.tracking_data[props["name"]]["bbox"][self.frame_no - 1]
+        _, offset, _ = self.trackers[props["name"]]
 
         if (~np.isnan(bbox)).any():
             try:
-                tracker = self.create_tracker(new_tracker_type)
+                tracker = self.create_tracker(props["tracker_type"])
                 tracker.init(self.frame, bbox.astype(np.int32))
             except Exception as e:
                 self.add_tracker_failed.emit(name, e)
                 logging.warning(f"Create tracker failed for {name}.")
             else:
-                self.trackers[new_name] = (tracker, offset, new_tracker_type)
+                self.trackers[props["name"]] = (tracker, offset, props["tracker_type"])
 
-        if new_name != name:
+        if props["name"] != name:
             for angle in self.analysis_data["angle"].values():
                 for i, parent_name in enumerate(angle["trackers"]):
                     if parent_name == name:
-                        angle["trackers"][i] = new_name
+                        angle["trackers"][i] = props["name"]
             for distance in self.analysis_data["distance"].values():
                 for i, parent_name in enumerate(distance["trackers"]):
                     if parent_name == name:
-                        distance["trackers"][i] = new_name
+                        distance["trackers"][i] = props["name"]
         self.mutex.unlock()
 
     def add_angle(self, name, start1, end1, start2, end2):
@@ -134,10 +174,12 @@ class TrackingWorker(QtCore.QObject):
         logging.debug(f"Angle data for {name} updated.")
         self.mutex.unlock()
 
-    def edit_angle(self, name, new_name):
+    def edit_angle(self, name, props):
         self.mutex.lock()
-        if new_name != name:
-            self.analysis_data["angle"][new_name] = self.analysis_data["angle"][name]
+        if props["name"] != name:
+            self.analysis_data["angle"][props["name"]] = self.analysis_data["angle"][
+                name
+            ]
             del self.analysis_data["angle"][name]
         self.mutex.unlock()
 
@@ -158,12 +200,12 @@ class TrackingWorker(QtCore.QObject):
         logging.debug(f"Distance data for {name} updated.")
         self.mutex.unlock()
 
-    def edit_distance(self, name, new_name):
+    def edit_distance(self, name, props):
         self.mutex.lock()
-        if new_name != name:
-            self.analysis_data["distance"][new_name] = self.analysis_data["distance"][
-                name
-            ]
+        if props["name"] != name:
+            self.analysis_data["distance"][props["name"]] = self.analysis_data[
+                "distance"
+            ][name]
             del self.analysis_data["distance"][name]
         self.mutex.unlock()
 

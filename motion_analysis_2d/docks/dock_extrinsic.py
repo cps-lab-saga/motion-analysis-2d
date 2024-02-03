@@ -7,7 +7,7 @@ import qtawesome as qta
 
 from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
-from motion_analysis_2d.funcs import load_extrinsic
+from motion_analysis_2d.funcs import load_extrinsic, save_perspective_points
 
 
 class LoadExtrinsicDock(BaseDock):
@@ -116,6 +116,16 @@ class LoadExtrinsicDock(BaseDock):
             self.add_perspective_started.emit()
         else:
             self.add_perspective_finished.emit()
+
+    def save_points(self, img_points, obj_points, output_size_real):
+        self.uncheck_select_points_button()
+        path = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save points", "perspective_points", "JSON (*.json)"
+        )
+        if path[1] == "JSON (*.json)":
+            save_path = Path(path[0]).resolve()
+            save_perspective_points(img_points, obj_points, output_size_real, save_path)
+            self.extrinsic_cal_file_edit.setText(str(save_path.resolve()))
 
     def uncheck_select_points_button(self):
         self.add_perspective_button.blockSignals(True)

@@ -69,6 +69,46 @@ class DataPlotDock(BaseDock):
         for plot_widget in self.plot_widgets.values():
             plot_widget.set_frame_line_draggable(draggable)
 
+    def add_item(self, item_type, item_props):
+        if item_type == "tracker":
+            self.add_tracker(item_props["name"], item_props["color"])
+        elif item_type == "angle":
+            self.add_angle(item_props["name"], item_props["color"])
+        elif item_type == "distance":
+            self.add_distance(item_props["name"], item_props["color"])
+
+    def remove_item(self, item_type, name):
+        if item_type == "tracker":
+            self.remove_tracker(name)
+        elif item_type == "angle":
+            self.remove_angle(name)
+        elif item_type == "distance":
+            self.remove_distance(name)
+
+    def edit_item(self, item_type, name, props):
+        if item_type == "tracker":
+            self.edit_tracker(name, props)
+        elif item_type == "angle":
+            self.edit_angle(name, props)
+        elif item_type == "distance":
+            self.edit_distance(name, props)
+
+    def show_item(self, item_type, name):
+        if item_type == "tracker":
+            self.show_tracker(name)
+        elif item_type == "angle":
+            self.show_angle(name)
+        elif item_type == "distance":
+            self.show_distance(name)
+
+    def hide_item(self, item_type, name):
+        if item_type == "tracker":
+            self.hide_tracker(name)
+        elif item_type == "angle":
+            self.hide_angle(name)
+        elif item_type == "distance":
+            self.hide_distance(name)
+
     def add_tracker(self, name, color=None):
         self.trackers[name] = {
             "x": self.plot_widgets["Trackers"].add_line("x", label=name, color=color),
@@ -76,19 +116,19 @@ class DataPlotDock(BaseDock):
         }
         logging.debug(f"Tracker {name} added to data plot dock.")
 
-    def edit_tracker(self, name, new_name, new_color):
-        if new_name != name:
-            self.trackers[new_name] = self.trackers[name]
+    def edit_tracker(self, name, props):
+        if props["name"] != name:
+            self.trackers[props["name"]] = self.trackers[name]
             del self.trackers[name]
 
-        self.trackers[new_name]["x"].setData(pen=new_color)
-        self.trackers[new_name]["y"].setData(pen=new_color)
+        self.trackers[props["name"]]["x"].setData(pen=props["color"])
+        self.trackers[props["name"]]["y"].setData(pen=props["color"])
 
-        if new_name != name:
-            self.plot_widgets["Trackers"].lines["x"][new_name] = self.plot_widgets[
+        if props["name"] != name:
+            self.plot_widgets["Trackers"].lines["x"][props["name"]] = self.plot_widgets[
                 "Trackers"
             ].lines["x"][name]
-            self.plot_widgets["Trackers"].lines["y"][new_name] = self.plot_widgets[
+            self.plot_widgets["Trackers"].lines["y"][props["name"]] = self.plot_widgets[
                 "Trackers"
             ].lines["y"][name]
             del self.plot_widgets["Trackers"].lines["x"][name]
@@ -118,15 +158,15 @@ class DataPlotDock(BaseDock):
         }
         logging.debug(f"Angle {name} added to data plot dock.")
 
-    def edit_angle(self, name, new_name, new_color):
-        if new_name != name:
-            self.angles[new_name] = self.angles[name]
+    def edit_angle(self, name, props):
+        if props["name"] != name:
+            self.angles[props["name"]] = self.angles[name]
             del self.angles[name]
 
-        self.angles[new_name]["θ"].setData(pen=new_color)
+        self.angles[props["name"]]["θ"].setData(pen=props["color"])
 
-        if new_name != name:
-            self.plot_widgets["Angles"].lines["θ"][new_name] = self.plot_widgets[
+        if props["name"] != name:
+            self.plot_widgets["Angles"].lines["θ"][props["name"]] = self.plot_widgets[
                 "Angles"
             ].lines["θ"][name]
             del self.plot_widgets["Angles"].lines["θ"][name]
@@ -152,21 +192,21 @@ class DataPlotDock(BaseDock):
         }
         logging.debug(f"Distance {name} added to data plot dock.")
 
-    def edit_distance(self, name, new_name, new_color):
-        if new_name != name:
-            self.distances[new_name] = self.distances[name]
+    def edit_distance(self, name, props):
+        if props["name"] != name:
+            self.distances[props["name"]] = self.distances[name]
             del self.distances[name]
 
-        self.distances[new_name]["x"].setData(pen=new_color)
-        self.distances[new_name]["y"].setData(pen=new_color)
+        self.distances[props["name"]]["x"].setData(pen=props["color"])
+        self.distances[props["name"]]["y"].setData(pen=props["color"])
 
-        if new_name != name:
-            self.plot_widgets["Distances"].lines["x"][new_name] = self.plot_widgets[
-                "Distances"
-            ].lines["x"][name]
-            self.plot_widgets["Distances"].lines["y"][new_name] = self.plot_widgets[
-                "Distances"
-            ].lines["y"][name]
+        if props["name"] != name:
+            self.plot_widgets["Distances"].lines["x"][
+                props["name"]
+            ] = self.plot_widgets["Distances"].lines["x"][name]
+            self.plot_widgets["Distances"].lines["y"][
+                props["name"]
+            ] = self.plot_widgets["Distances"].lines["y"][name]
             del self.plot_widgets["Distances"].lines["x"][name]
             del self.plot_widgets["Distances"].lines["y"][name]
 

@@ -34,7 +34,10 @@ class ItemsDock(BaseDock):
         self.collapsibles[item_type] = collapsible
         self.rows[item_type] = {}
 
-    def add_row(self, name, color, item_type):
+    def add_row(self, item_type, item_props):
+        name = item_props["name"]
+        color = item_props["color"]
+
         row = ItemsRow(name, color, item_type, parent=self)
         row.checkbox_toggled.connect(partial(self.checkbox_toggled, item_type))
         row.edit_item_suggested.connect(self.edit_item_suggested.emit)
@@ -43,14 +46,16 @@ class ItemsDock(BaseDock):
         self.collapsibles[item_type].addWidget(row)
         logging.debug(f"{item_type.capitalize()} {name} added to items dock.")
 
-    def edit_row(self, name, new_name, new_color, item_type):
-        if new_name != name:
-            self.rows[item_type][new_name] = self.rows[item_type][name]
+    def edit_row(self, item_type, name, props):
+        if props["name"] != name:
+            self.rows[item_type][props["name"]] = self.rows[item_type][name]
             del self.rows[item_type][name]
 
-        self.rows[item_type][new_name].set_props(new_name, item_type, new_color)
+        self.rows[item_type][props["name"]].set_props(
+            props["name"], item_type, props["color"]
+        )
 
-    def remove_row(self, name, item_type):
+    def remove_row(self, item_type, name):
         row = self.rows[item_type].pop(name)
         self.collapsibles[item_type].removeWidget(row)
         row.deleteLater()
