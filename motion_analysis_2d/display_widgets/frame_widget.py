@@ -480,12 +480,12 @@ if __name__ == "__main__":
     widget = FrameWidget()
     widget.set_image(black_img)
     # widget.set_mouse_mode("add_tracker")
-    for i, pos in enumerate([(10, 10), (50, 50), (30, 30), (40, 20)]):
+    for i, mypos in enumerate([(10, 10), (50, 50), (30, 30), (40, 20)]):
         widget.add_item(
             "tracker",
             {
                 "name": f"test{i}",
-                "bbox_pos": pos,
+                "bbox_pos": mypos,
                 "bbox_size": (27, 3),
                 "offset": (-2, -2),
                 "color": (31, 119, 180),

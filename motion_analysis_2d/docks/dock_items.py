@@ -143,10 +143,6 @@ class ItemsRow(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     dock = ItemsDock()
-    dock.add_row("test_distance", (44, 160, 44), "distance")
-    dock.add_row("test_angle", (44, 160, 44), "angle")
-    dock.add_row("test_tracker", (44, 160, 44), "tracker")
-    dock.edit_row("test_tracker", "test2", (44, 160, 44), "tracker")
     dock.show()
 
     app.exec()

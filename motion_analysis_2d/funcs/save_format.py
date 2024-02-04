@@ -145,4 +145,3 @@ if __name__ == "__main__":
             "bbox": np.full((no_of_frames, 4), 2, dtype=float),
             "target": np.full((no_of_frames, 2), 3, dtype=float),
         }
-    export_csv("test.csv", data)

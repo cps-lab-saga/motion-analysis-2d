@@ -393,7 +393,7 @@ class TrackerItem(BaseDisplayItem):
             target.setPos((roi.pos()[0] + offset[0], roi.pos()[1] + offset[1]))
             roi.blockSignals(False)
             target.blockSignals(False)
-            logging.debug(f"Tracker move pos are not available.")
+            logging.trace(f"Tracker move pos are not available.")
         else:
             bbox_pos = bbox_i[:2]
             bbox_size = bbox_i[2:]

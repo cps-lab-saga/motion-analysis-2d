@@ -1,7 +1,7 @@
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.1"
+app_version = "0.1.2"
 
 module_name = project_name.replace("-", "_")
 
@@ -31,21 +31,6 @@ def project_root() -> Path:
 
 
 def settings_file() -> Path:
-    p = project_root()
-    if "Temp" in p.parts:
-        f = (
-            p.parents[len(p.parts) - 2 - p.parts.index("Temp")]
-            / f"{project_name}"
-            / f"{project_name}.ini"
-        )
-    else:
-        f = project_root() / f"{project_name}.ini"
-
-    f.parent.mkdir(exist_ok=True, parents=True)
-    return f
-
-
-def shortcut_keys_file() -> Path:
     p = project_root()
     if "Temp" in p.parts:
         f = (

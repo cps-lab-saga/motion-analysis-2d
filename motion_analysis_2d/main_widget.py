@@ -759,14 +759,11 @@ class MainWidget(QtWidgets.QMainWindow):
     @staticmethod
     def log_new_session():
         banner = "-" * 20 + " New Session " + "-" * 20
-        logging.info("")
-        logging.info("=" * len(banner))
         logging.info(banner)
-        logging.info("=" * len(banner))
 
 
 def main():
-    setup_logger(logging.DEBUG)
+    setup_logger(logging.INFO)
 
     app = QtWidgets.QApplication([])
     win = MainWidget()
