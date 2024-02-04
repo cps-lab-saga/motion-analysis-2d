@@ -6,7 +6,7 @@ import numpy as np
 from PySide6 import QtGui
 
 from defs import QtCore, QtWidgets, project_root, settings_file, resource_dir
-from motion_analysis_2d.controls import EditControls, MediaControls
+from motion_analysis_2d.controls import EditControls, MediaControls, MenuBar
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
     FilesDock,
@@ -131,6 +131,11 @@ class MainWidget(QtWidgets.QMainWindow):
 
         self.splashscreen.set_progress(50)
 
+        self.menu_bar = MenuBar(self)
+        self.setMenuBar(self.menu_bar)
+        self.menu_bar.open_video_file.connect(self.docks["Files"].add_files)
+        self.menu_bar.open_video_folder.connect(self.docks["Files"].add_files)
+
         # thread for streaming input
         self.stream_thread = QtCore.QThread()
         self.stream_worker = None
@@ -207,12 +212,12 @@ class MainWidget(QtWidgets.QMainWindow):
                 QtCore.QCoreApplication.processEvents()
                 sleep(0.2)
 
-            self.frame_widget.auto_range()
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
                 logging.info(f"Loaded data file {track_file.name}")
                 self.load_data(track_file)
 
+            self.frame_widget.auto_range()
             if self.docks["Files"].batch_button.isChecked():
                 self.play_video(True)
 

@@ -1,3 +1,6 @@
+import os
+import platform
+import subprocess
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
@@ -52,6 +55,16 @@ def log_file() -> Path:
 
 def resource_dir() -> Path:
     return project_root() / "resource"
+
+
+def open_file(file_path):
+    if platform.system() == "Darwin":  # macOS
+        subprocess.call(("open", file_path))
+    elif platform.system() == "Windows":  # Windows
+        os.startfile(file_path)
+    else:  # linux variants
+        subprocess.call(("xdg-open", file_path))
+    os.startfile(file_path)
 
 
 config_file_name = f"{project_name}-config.ini"

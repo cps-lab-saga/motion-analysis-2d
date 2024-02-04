@@ -111,14 +111,6 @@ class FileListWidget(QtWidgets.QListWidget):
             else:
                 return [p for p in paths if check_file_type(p, self.filetypes)]
 
-    def valid_path(self, e):
-        if e.mimeData().hasUrls():
-            path = Path(e.mimeData().urls()[0].toLocalFile())
-            if self.filetypes is None and path.is_file():
-                return path
-            if check_file_type(path, self.filetypes):
-                return path
-
     def dragEnterEvent(self, e):
         if self.valid_paths(e):
             e.acceptProposedAction()
@@ -135,14 +127,17 @@ class FileListWidget(QtWidgets.QListWidget):
 
     def dropEvent(self, e):
         if paths := self.valid_paths(e):
-            for p in paths:
-                self.blockSignals(True)
-                self.add_file_to_list(p)
-                self.blockSignals(False)
-            self.itemSelectionChanged.emit()
+            self.add_items(paths)
             e.accept()
         else:
             super().dropEvent(e)
+
+    def add_items(self, paths):
+        for p in paths:
+            self.blockSignals(True)
+            self.add_file_to_list(p)
+            self.blockSignals(False)
+        self.itemSelectionChanged.emit()
 
     def remove_all(self):
         self.blockSignals(True)

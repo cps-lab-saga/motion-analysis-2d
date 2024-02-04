@@ -4,6 +4,7 @@ import qtawesome as qta
 
 from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, FileListWidget, tab10_qcolor
+from motion_analysis_2d.funcs import check_file_type
 
 
 class FilesDock(BaseDock):
@@ -14,6 +15,7 @@ class FilesDock(BaseDock):
         super().__init__()
 
         self.setWindowTitle("Files")
+        self.filetypes = filetypes
 
         self.setFeatures(
             self.DockWidgetFeature.DockWidgetFloatable
@@ -114,6 +116,11 @@ class FilesDock(BaseDock):
             self.files_action_layout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
         elif direction == QtWidgets.QBoxLayout.TopToBottom:
             self.files_action_layout.setDirection(QtWidgets.QBoxLayout.LeftToRight)
+
+    def add_files(self, paths):
+        self.file_list_widget.add_items(
+            [p for p in paths if check_file_type(p, self.filetypes)]
+        )
 
 
 if __name__ == "__main__":
