@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 
-from defs import QtWidgets, Signal
+from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import tab10_rgb
 from motion_analysis_2d.display_widgets.plot_splitter import PlotSplitter
 
@@ -26,34 +26,35 @@ class DataPlotWidget(QtWidgets.QWidget):
             self.add_plot(i, v)
 
     def add_plot(self, row, y_label, x_label=None):
-        plot_widget = self.plot_splitter.add_plot(row=row)
+        plot_widget, plot_item = self.plot_splitter.add_plot(row=row)
+        plot_widget.sizeHint = lambda: QtCore.QSize(100, 60)
         if row > 0:
-            plot_widget.setXLink(self.plot_splitter[0])
+            plot_item.setXLink(self.plot_splitter[0])
 
-        plot_widget.setLabel("left", y_label)
+        plot_item.setLabel("left", y_label)
         if x_label is not None:
-            plot_widget.setLabel("bottom", x_label)
-        plot_widget.getAxis("left").setWidth(60)
-        legend = plot_widget.addLegend(offset=(-1, 1))
+            plot_item.setLabel("bottom", x_label)
+        plot_item.getAxis("left").setWidth(60)
+        # legend = plot_widget.addLegend(offset=(-1, 1))
         # legend.setColumnCount(2)
 
-        plot_widget.setMenuEnabled(False)
-        plot_widget.autoBtn.clicked.disconnect()
-        plot_widget.autoBtn.clicked.connect(self.auto_range)
-        plot_widget.setMouseEnabled(x=True, y=True)
+        plot_item.setMenuEnabled(False)
+        plot_item.autoBtn.clicked.disconnect()
+        plot_item.autoBtn.clicked.connect(self.auto_range)
+        plot_item.setMouseEnabled(x=True, y=True)
 
-        self.plots[y_label] = plot_widget
-        self.frame_lines[y_label] = self.add_current_frame_line(plot_widget)
+        self.plots[y_label] = plot_item
+        self.frame_lines[y_label] = self.add_current_frame_line(plot_item)
         self.lines[y_label] = {}
 
-    def add_current_frame_line(self, plot_widget):
+    def add_current_frame_line(self, plot_item):
         line = pg.InfiniteLine(
             pen=self.frame_pen,
             hoverPen=self.frame_hover_pen,
             movable=True,
         )
         line.sigDragged.connect(self.frame_line_moved)
-        plot_widget.addItem(line)
+        plot_item.addItem(line)
         return line
 
     def frame_line_moved(self, dragged_line):
@@ -77,14 +78,14 @@ class DataPlotWidget(QtWidgets.QWidget):
             frame_line.setBounds(bounds)
 
     def add_line(self, param, label, color=None, show_in_legend=False):
-        plot_widget = self.plots[param]
+        plot_item = self.plots[param]
 
         if color is None:
             color = self.foreground_color
         if show_in_legend:
-            line = plot_widget.plot(pen=color, name=label)
+            line = plot_item.plot(pen=color, name=label)
         else:
-            line = plot_widget.plot(pen=color)
+            line = plot_item.plot(pen=color)
 
         self.lines[param][label] = (line, True)
         return line

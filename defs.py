@@ -5,6 +5,7 @@ app_version = "0.1.2"
 
 module_name = project_name.replace("-", "_")
 
+
 try:
     from PySide6 import QtGui, QtWidgets, QtCore
     from PySide6.QtCore import Signal, Slot

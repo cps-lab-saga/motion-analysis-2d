@@ -18,7 +18,7 @@ class PlotSplitter(QtWidgets.QSplitter):
     def add_plot(self, row):
         plot_widget = pg.PlotWidget()
         self.insertWidget(row, plot_widget)
-        return plot_widget.getPlotItem()
+        return plot_widget, plot_widget.getPlotItem()
 
     def __getitem__(self, i):
         if plot_widget := self.widget(i):

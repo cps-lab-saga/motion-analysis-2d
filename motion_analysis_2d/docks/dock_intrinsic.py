@@ -29,7 +29,7 @@ class LoadIntrinsicDock(BaseDock):
         self.intrinsic_cal_file_edit = PathEdit("file", self)
         self.intrinsic_cal_file_edit.acceptDrops()
         self.intrinsic_cal_file_edit.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
         )
         self.intrinsic_cal_file_edit.textChanged.connect(self.update_intrinsic_cal)
         self.intrinsic_cal_file_edit.setToolTip("Calibration file path.")
