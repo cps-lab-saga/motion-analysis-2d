@@ -281,7 +281,8 @@ class FrameWidget(QtWidgets.QWidget):
         if instruction is not None:
             self.show_instruction(instruction)
         else:
-            self.hide_instruction()
+            if self.instruction_label.parentItem():
+                self.hide_instruction()
 
     def set_mouse_mode(self, mode):
         if isinstance(mode, str):
@@ -330,8 +331,8 @@ class FrameWidget(QtWidgets.QWidget):
             items.clear()
 
         self.fig.clear()
-        self.im_item = pg.ImageItem(axisOrder="row-major")
         self.raw_img = None
+        self.im_item = pg.ImageItem(axisOrder="row-major")
         self.fig.addItem(self.im_item)
         logging.debug(f"Frame display cleared.")
 

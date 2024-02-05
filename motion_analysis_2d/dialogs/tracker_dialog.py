@@ -20,7 +20,7 @@ class TrackerDialog(QtWidgets.QDialog):
         self.setWindowTitle("Add Tracker")
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
-        self.form_layout = QtWidgets.QFormLayout(self)
+        self.form_layout = QtWidgets.QFormLayout()
         self.main_layout.addLayout(self.form_layout)
 
         self.name_edit = QtWidgets.QLineEdit(self)

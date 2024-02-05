@@ -487,12 +487,16 @@ class MainWidget(QtWidgets.QMainWindow):
                 },
                 self.tracking_worker.tracking_data,
                 self.tracking_worker.frame_no,
-                self.docks["Intrinsic"].intrinsic_cal_file_edit.text()
-                if self.docks["Intrinsic"].cal_ok
-                else None,
-                self.docks["Extrinsic"].extrinsic_cal_file_edit.text()
-                if self.docks["Extrinsic"].cal_ok
-                else None,
+                (
+                    self.docks["Intrinsic"].intrinsic_cal_file_edit.text()
+                    if self.docks["Intrinsic"].cal_ok
+                    else None
+                ),
+                (
+                    self.docks["Extrinsic"].extrinsic_cal_file_edit.text()
+                    if self.docks["Extrinsic"].cal_ok
+                    else None
+                ),
                 self.docks["Orient"].rotation,
                 self.docks["Orient"].flip,
             )

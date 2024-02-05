@@ -15,7 +15,7 @@ class PerspectiveDialog(QtWidgets.QDialog):
         self.setWindowTitle(title)
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
-        self.form_layout = QtWidgets.QFormLayout(self)
+        self.form_layout = QtWidgets.QFormLayout()
         self.main_layout.addLayout(self.form_layout)
 
         self.x_spinbox = QtWidgets.QDoubleSpinBox(self)
