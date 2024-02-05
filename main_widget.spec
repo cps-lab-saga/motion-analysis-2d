@@ -6,10 +6,10 @@ from defs import project_name, app_version, module_name
 block_cipher = None
 
 a = Analysis(
-    [f"{module_name}\\main_widget.py"],
+    [f"{module_name}/main_widget.py"],
     pathex=[],
     binaries=[],
-    datas=[(f"resource\\{module_name}.svg", f"resource"), ("application_settings.json", f".")],
+    datas=[(f"resource/{module_name}.svg", f"resource"), ("application_settings.json", f".")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -30,7 +30,7 @@ exe = EXE(
     a.datas,
     [],
     name=f"{project_name}-{app_version}",
-    icon=f"resource\\{module_name}.ico",
+    icon=f"resource/{module_name}.ico",
     debug=True,
     bootloader_ignore_signals=False,
     strip=False,
