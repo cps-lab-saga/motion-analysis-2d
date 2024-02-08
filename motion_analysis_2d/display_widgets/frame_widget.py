@@ -89,6 +89,10 @@ class FrameWidget(QtWidgets.QWidget):
             color=self.visual_settings["new_item_pen_color"],
             width=self.visual_settings["new_item_pen_width"],
         )
+        self.crosshair_pen = pg.mkPen(
+            color=self.visual_settings["crosshair_pen_color"],
+            width=self.visual_settings["crosshair_pen_width"],
+        )
 
         self.plot_widget = pg.PlotWidget()
         self.fig = self.plot_widget.getPlotItem()
@@ -121,6 +125,22 @@ class FrameWidget(QtWidgets.QWidget):
         }
         self.set_perspective_item = SetPerspectiveItem(
             self, self.new_item_pen, self.visual_settings
+        )
+
+        self.v_crosshair = pg.InfiniteLine(
+            pos=pg.Point(-1000, -1000), angle=90, movable=False, pen=self.crosshair_pen
+        )
+        self.v_crosshair_label = pg.TextItem(
+            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
+        )
+        self.h_crosshair = pg.InfiniteLine(
+            pos=pg.Point(-1000, -1000), angle=0, movable=False, pen=self.crosshair_pen
+        )
+        self.h_crosshair_label = pg.TextItem(
+            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
+        )
+        self.intensity_crosshair_label = pg.TextItem(
+            "", anchor=(1, 0), color=self.crosshair_pen.color(), fill=(0, 0, 0)
         )
 
         self.img = None

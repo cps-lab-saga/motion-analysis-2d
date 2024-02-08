@@ -78,15 +78,7 @@ def undistort(img, intrinsic_matrix, distortion_coeffs):
 def get_undistort_funcs(shape, intrinsic_matrix, distortion_coeffs, fisheye=False):
     h, w = shape[:2]
 
-    if not fisheye:
-        newcameramtx, roi = cv.getOptimalNewCameraMatrix(
-            intrinsic_matrix, distortion_coeffs, (w, h), 1, (w, h)
-        )
-
-        map_x, map_y = cv.initUndistortRectifyMap(
-            intrinsic_matrix, distortion_coeffs, None, newcameramtx, (w, h), 5
-        )
-    else:
+    if fisheye:
         newcameramtx = cv.fisheye.estimateNewCameraMatrixForUndistortRectify(
             intrinsic_matrix, distortion_coeffs, (w, h), np.eye(3), balance=0
         )
@@ -94,6 +86,22 @@ def get_undistort_funcs(shape, intrinsic_matrix, distortion_coeffs, fisheye=Fals
             intrinsic_matrix,
             distortion_coeffs,
             np.eye(3),
+            newcameramtx,
+            (w, h),
+            cv.CV_16SC2,
+        )
+    else:
+        newcameramtx, roi = cv.getOptimalNewCameraMatrix(
+            intrinsic_matrix,
+            distortion_coeffs,
+            (w, h),
+            1,
+            (w, h),
+        )
+        map_x, map_y = cv.initUndistortRectifyMap(
+            intrinsic_matrix,
+            distortion_coeffs,
+            None,
             newcameramtx,
             (w, h),
             cv.CV_16SC2,

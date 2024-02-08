@@ -22,6 +22,7 @@ class LoadIntrinsicDock(BaseDock):
         self.cal_ok = False
         self.K = None
         self.D = None
+        self.fisheye = None
         self.map_x, self.map_y, self.new_K = None, None, None
         self.img_shape = None
 
@@ -80,6 +81,8 @@ class LoadIntrinsicDock(BaseDock):
 
         self.K = None
         self.D = None
+        self.fisheye = None
+
         self.map_x, self.map_y, self.new_K = None, None, None
 
     def set_image_shape(self, shape):
@@ -89,11 +92,11 @@ class LoadIntrinsicDock(BaseDock):
     def update_intrinsic_cal(self):
         try:
             file_name = self.intrinsic_cal_file_edit.text()
-            self.K, self.D = load_intrinsic(Path(file_name).resolve())
+            self.K, self.D, self.fisheye = load_intrinsic(Path(file_name).resolve())
             self.set_cal_ok()
             if self.img_shape is not None:
                 self.map_x, self.map_y, self.new_K = get_undistort_funcs(
-                    self.img_shape, self.K, self.D, fisheye=True
+                    self.img_shape, self.K, self.D, self.fisheye
                 )
             logging.info(f"Intrinsic calibration load successful. File: {file_name}")
             logging_repr = (
@@ -101,6 +104,7 @@ class LoadIntrinsicDock(BaseDock):
             )
             logging.info(f"K: {logging_repr(self.K)}")
             logging.info(f"D: {logging_repr(self.D)}")
+            logging.info(f"fisheye: {self.fisheye}")
             if self.img_shape is not None:
                 logging.info(f"new_K: {logging_repr(self.new_K)}")
 
@@ -119,7 +123,12 @@ class LoadIntrinsicDock(BaseDock):
 
     def undistort_points(self, points):
         if self.cal_ok:
-            return cv.undistortPoints(points, self.K, self.D, None, self.new_K)
+            if self.fisheye:
+                return cv.fisheye.undistortPoints(
+                    points, self.K, self.D, None, self.new_K
+                )
+            else:
+                return cv.undistortPoints(points, self.K, self.D, None, self.new_K)
         else:
             return points
 
@@ -134,14 +143,23 @@ class LoadIntrinsicDock(BaseDock):
                 np.zeros(points.shape[0]),
             ]
         ).T
-        distorted_points, _ = cv.projectPoints(
-            scaled_points,
-            np.zeros(3),
-            np.zeros(3),
-            self.K,
-            self.D,
-            aspectRatio=self.new_K[0, 0] / self.new_K[1, 1],
-        )
+        if self.fisheye:
+            distorted_points, _ = cv.fisheye.projectPoints(
+                scaled_points,
+                np.zeros(3),
+                np.zeros(3),
+                self.K,
+                self.D,
+            )
+        else:
+            distorted_points, _ = cv.projectPoints(
+                scaled_points,
+                np.zeros(3),
+                np.zeros(3),
+                self.K,
+                self.D,
+                aspectRatio=self.new_K[0, 0] / self.new_K[1, 1],
+            )
         return distorted_points
 
     def start_calibration_widget(self):
@@ -151,7 +169,10 @@ class LoadIntrinsicDock(BaseDock):
         calibration_widget.show()
 
     def calibration_widget_finished(self, path):
+        self.intrinsic_cal_file_edit.blockSignals(True)
         self.intrinsic_cal_file_edit.setText(str(path))
+        self.intrinsic_cal_file_edit.blockSignals(False)
+        self.update_intrinsic_cal()
 
 
 if __name__ == "__main__":
