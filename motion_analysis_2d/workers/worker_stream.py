@@ -23,7 +23,6 @@ class StreamWorker(QtCore.QObject):
         super().__init__()
 
         self.path = path
-        self.stop_flag = False
         self.stream_queue = stream_queue
         self.cap = None
         self.intrinsic_cal = intrinsic_cal

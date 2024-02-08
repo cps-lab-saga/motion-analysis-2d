@@ -201,12 +201,12 @@ class DataPlotDock(BaseDock):
         self.distances[props["name"]]["y"].setData(pen=props["color"])
 
         if props["name"] != name:
-            self.plot_widgets["Distances"].lines["x"][props["name"]] = (
-                self.plot_widgets["Distances"].lines["x"][name]
-            )
-            self.plot_widgets["Distances"].lines["y"][props["name"]] = (
-                self.plot_widgets["Distances"].lines["y"][name]
-            )
+            self.plot_widgets["Distances"].lines["x"][
+                props["name"]
+            ] = self.plot_widgets["Distances"].lines["x"][name]
+            self.plot_widgets["Distances"].lines["y"][
+                props["name"]
+            ] = self.plot_widgets["Distances"].lines["y"][name]
             del self.plot_widgets["Distances"].lines["x"][name]
             del self.plot_widgets["Distances"].lines["y"][name]
 

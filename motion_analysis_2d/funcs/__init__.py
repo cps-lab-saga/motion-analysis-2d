@@ -2,6 +2,7 @@ from .check_mimetypes import (
     guess_file_type,
     check_file_type,
     is_json_file,
+    get_extensions_for_type,
 )
 from .geometric_calc import (
     make_offset_polygon,

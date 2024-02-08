@@ -3,6 +3,7 @@ from pathlib import Path
 import qtawesome as qta
 
 from defs import QtWidgets, Signal, open_file, project_root
+from motion_analysis_2d.funcs import get_extensions_for_type
 
 
 class MenuBar(QtWidgets.QMenuBar):
@@ -31,14 +32,16 @@ class MenuBar(QtWidgets.QMenuBar):
         self.settings_action.triggered.connect(self.open_settings)
 
     def add_file(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(
+        extensions = [f"*{x}" for x, _ in get_extensions_for_type("video")]
+
+        file_names, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Open Video File",
             None,
-            "Video Files (*.mp4 *.avi *.mov *.webm *.wmv)",
+            f"Video Files ({' '.join(extensions)})",
         )
-        if file_name:
-            self.open_video_file.emit([Path(file_name)])
+        if file_names:
+            self.open_video_file.emit([Path(name) for name in file_names])
 
     def add_folder(self):
         folder_name = QtWidgets.QFileDialog.getExistingDirectory(
