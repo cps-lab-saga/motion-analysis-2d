@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2 as cv
 import numpy as np
 import qtawesome as qta
+from camera_calibration import CalibrationWidget
 
 from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
@@ -51,6 +52,14 @@ class LoadIntrinsicDock(BaseDock):
         self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
         row.insertWidget(0, self.cal_status_label)
+
+        self.add_calibration_button = QtWidgets.QPushButton(self)
+        # self.select_points_button.setText("Select Points")
+        self.add_calibration_button.setToolTip("Add calibration.")
+        self.add_calibration_button.setFlat(True)
+        self.add_calibration_button.setIcon(qta.icon("mdi6.checkerboard"))
+        self.add_calibration_button.clicked.connect(self.start_calibration_widget)
+        row.addWidget(self.add_calibration_button)
 
         self.dock_layout.addStretch()
 
@@ -134,6 +143,14 @@ class LoadIntrinsicDock(BaseDock):
             aspectRatio=self.new_K[0, 0] / self.new_K[1, 1],
         )
         return distorted_points
+
+    def start_calibration_widget(self):
+        calibration_widget = CalibrationWidget(self)
+        calibration_widget.calibration_saved.connect(self.calibration_widget_finished)
+        calibration_widget.show()
+
+    def calibration_widget_finished(self, path):
+        self.intrinsic_cal_file_edit.setText(str(path))
 
 
 if __name__ == "__main__":

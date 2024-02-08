@@ -13,6 +13,27 @@ files = [
 ]
 
 [[package]]
+name = "camera-calibration"
+version = "0.1.5"
+description = "Intrinsic calibration of camera"
+category = "main"
+optional = false
+python-versions = ">=3.11,<3.13"
+files = []
+develop = false
+
+[package.dependencies]
+opencv-contrib-python-headless = "~4.9"
+PySide6 = "~6.6"
+QtAwesome = "~1.3"
+
+[package.source]
+type = "git"
+url = "https://github.com/cps-lab-saga/camera-calibration"
+reference = "main"
+resolved_reference = "55b9dc90ef7a3dfc8d4a86dc97482b1d3017092e"
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -613,4 +634,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "5717c2ec18315e8d062f4b1b4a2e86377a348add455ef33fb43ed04bff8f8fb2"
+content-hash = "c3d4e6cf1ebbd2f5c1664e71780d0fab981a9832a979a7d14cc039110abbddf9"
