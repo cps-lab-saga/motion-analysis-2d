@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import tab10_rgb
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.display_widgets.plot_splitter import PlotSplitter
 
 

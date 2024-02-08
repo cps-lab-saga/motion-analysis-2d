@@ -5,8 +5,8 @@ from time import sleep
 import cv2 as cv
 import numpy as np
 
-from defs import QtCore, Signal
 from motion_analysis_2d.custom_components import StaticTracker
+from motion_analysis_2d.defs import QtCore, Signal
 from motion_analysis_2d.funcs import angle_vec
 
 

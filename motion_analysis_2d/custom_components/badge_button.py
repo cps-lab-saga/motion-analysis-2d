@@ -1,4 +1,4 @@
-from defs import QtCore, QtWidgets, QtGui
+from motion_analysis_2d.defs import QtCore, QtWidgets, QtGui
 
 
 class BadgeButton(QtWidgets.QWidget):

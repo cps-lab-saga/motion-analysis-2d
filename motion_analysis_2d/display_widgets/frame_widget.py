@@ -7,10 +7,10 @@ import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
 
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import (
     tab10_rgb,
 )
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.display_items import (
     TrackerItem,
     AngleItem,

@@ -1,8 +1,8 @@
 import qtawesome as qta
 from PySide6 import QtCore
 
-from defs import QtWidgets, Signal
 from motion_analysis_2d.custom_components import SpinBoxSlider
+from motion_analysis_2d.defs import QtWidgets, Signal
 
 
 class MediaControls(QtWidgets.QFrame):

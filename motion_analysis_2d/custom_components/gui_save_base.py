@@ -1,8 +1,8 @@
 import inspect
 from distutils.util import strtobool
 
-from defs import QtWidgets
 from motion_analysis_2d.custom_components.path_edit import PathEdit
+from motion_analysis_2d.defs import QtWidgets
 
 
 class BaseGuiSave:

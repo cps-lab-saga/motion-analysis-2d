@@ -1,6 +1,6 @@
 from itertools import cycle
 
-from defs import QtGui
+from motion_analysis_2d.defs import QtGui
 
 tab10_rgb = {
     "blue": (31, 119, 180),

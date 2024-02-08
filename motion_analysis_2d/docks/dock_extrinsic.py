@@ -5,8 +5,8 @@ import cv2 as cv
 import numpy as np
 import qtawesome as qta
 
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import load_extrinsic, save_perspective_points
 
 

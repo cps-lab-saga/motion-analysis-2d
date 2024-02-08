@@ -2,7 +2,7 @@ from time import sleep
 
 import cv2 as cv
 
-from defs import QtCore, Signal
+from motion_analysis_2d.defs import QtCore, Signal
 
 
 class StreamWorker(QtCore.QObject):

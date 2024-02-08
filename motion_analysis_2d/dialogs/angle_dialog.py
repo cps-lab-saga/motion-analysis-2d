@@ -1,5 +1,5 @@
-from defs import QtCore, QtWidgets, QtGui
 from motion_analysis_2d.custom_components import ColorButton, tab10_rgb
+from motion_analysis_2d.defs import QtCore, QtWidgets, QtGui
 
 
 class AngleDialog(QtWidgets.QDialog):

@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from defs import project_name, app_version, module_name
+from motion_analysis_2d.defs import project_name, app_version, module_name
 
 
 block_cipher = None

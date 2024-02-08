@@ -1,4 +1,4 @@
-from defs import QtCore, QtWidgets, Signal
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 
 
 class PerspectiveDialog(QtWidgets.QDialog):

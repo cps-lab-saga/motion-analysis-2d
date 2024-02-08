@@ -5,8 +5,14 @@ from time import sleep
 import numpy as np
 from PySide6 import QtGui
 
-from defs import QtCore, QtWidgets, project_root, settings_file, resource_dir
 from motion_analysis_2d.controls import EditControls, MediaControls, MenuBar
+from motion_analysis_2d.defs import (
+    QtCore,
+    QtWidgets,
+    project_root,
+    settings_file,
+    resource_dir,
+)
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
     FilesDock,

@@ -1,7 +1,7 @@
 import logging
 
-from defs import QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock
+from motion_analysis_2d.defs import QtWidgets, Signal
 from motion_analysis_2d.display_widgets import DataPlotWidget
 
 

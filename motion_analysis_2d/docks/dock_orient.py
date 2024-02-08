@@ -4,8 +4,8 @@ from itertools import cycle
 import cv2 as cv
 import qtawesome as qta
 
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, BadgeButton, tab10_qcolor
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 
 
 class OrientDock(BaseDock):

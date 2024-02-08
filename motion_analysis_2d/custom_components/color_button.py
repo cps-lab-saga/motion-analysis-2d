@@ -1,6 +1,5 @@
-from defs import QtWidgets, QtGui, Signal
-
 from motion_analysis_2d.custom_components.my_colors import tab10_qcolor
+from motion_analysis_2d.defs import QtWidgets, QtGui, Signal
 
 
 class ColorButton(QtWidgets.QPushButton):

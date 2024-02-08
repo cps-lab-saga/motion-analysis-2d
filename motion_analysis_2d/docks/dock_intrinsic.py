@@ -6,8 +6,8 @@ import numpy as np
 import qtawesome as qta
 from camera_calibration import CalibrationWidget
 
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import get_undistort_funcs, load_intrinsic
 
 
@@ -147,6 +147,7 @@ class LoadIntrinsicDock(BaseDock):
     def start_calibration_widget(self):
         calibration_widget = CalibrationWidget(self)
         calibration_widget.calibration_saved.connect(self.calibration_widget_finished)
+        calibration_widget.resize(600, 400)
         calibration_widget.show()
 
     def calibration_widget_finished(self, path):

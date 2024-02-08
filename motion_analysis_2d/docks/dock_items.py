@@ -4,8 +4,8 @@ from functools import partial
 import qtawesome as qta
 from superqt import QCollapsible
 
-from defs import QtCore, QtWidgets, QtGui, Signal
 from motion_analysis_2d.custom_components import BaseDock
+from motion_analysis_2d.defs import QtCore, QtWidgets, QtGui, Signal
 
 
 class ItemsDock(BaseDock):

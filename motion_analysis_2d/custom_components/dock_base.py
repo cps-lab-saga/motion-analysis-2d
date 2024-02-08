@@ -1,5 +1,5 @@
-from defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.custom_components.gui_save_base import BaseGuiSave
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 
 
 class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):

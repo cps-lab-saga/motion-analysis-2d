@@ -1,6 +1,6 @@
 from time import sleep
 
-from defs import (
+from motion_analysis_2d.defs import (
     QtCore,
     QtGui,
     QtWidgets,

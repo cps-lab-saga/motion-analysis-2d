@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from defs import log_file
+from motion_analysis_2d.defs import log_file
 
 
 def setup_logger(logging_level=logging.DEBUG):

@@ -1,4 +1,4 @@
-from defs import project_root
+from motion_analysis_2d.defs import project_root
 from motion_analysis_2d.display_widgets.frame_widget import FrameWidget
 from motion_analysis_2d.funcs.load_settings import load_application_settings
 from motion_analysis_2d.main_widget import MainWidget

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import qtawesome as qta
 
-from defs import QtWidgets, Signal, open_file, project_root
+from motion_analysis_2d.defs import QtWidgets, Signal, open_file, project_root
 from motion_analysis_2d.funcs import get_extensions_for_type
 
 
