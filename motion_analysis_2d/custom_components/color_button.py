@@ -19,7 +19,7 @@ class ColorButton(QtWidgets.QPushButton):
         self.clicked.connect(self.color_button_clicked)
 
     def set_default_color(self, color):
-        if color in tab10_qcolor:
+        if isinstance(color, str) and color in tab10_qcolor:
             self.color_dialog.setCurrentColor(tab10_qcolor[color])
         elif isinstance(color, QtGui.QColor):
             self.color_dialog.setCurrentColor(color)

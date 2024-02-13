@@ -10,8 +10,8 @@ from .base_item_display import BaseDisplayItem
 
 
 class TrackerItem(BaseDisplayItem):
-    def __init__(self, display, new_item_pen, visual_settings):
-        super().__init__(display, new_item_pen, visual_settings)
+    def __init__(self, display, new_item_pen, visual_preferences):
+        super().__init__(display, new_item_pen, visual_preferences)
 
         self.dragging_mode = "bbox_follows_target"
         self.item_type_name = "tracker"
@@ -40,6 +40,49 @@ class TrackerItem(BaseDisplayItem):
         )
         self.steps_index = 0
 
+    def update_visual_preferences(self, preferences, new_item_pen):
+        super().update_visual_preferences(preferences, new_item_pen)
+        for i in range(len(self._items["name"])):
+            color = self._items["color"][i]
+            roi = self._items["roi"][i]
+            target = self._items["target"][i]
+            traj = self._items["traj"][i]
+            label = self._items["label"][i]
+
+            bbox_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["tracker_bbox_pen_width"],
+            )
+            bbox_hover_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["tracker_bbox_hover_pen_width"],
+            )
+            target_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["tracker_target_pen_width"],
+            )
+            target_hover_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["tracker_bbox_hover_pen_width"],
+            )
+            trajectory_pen = pg.mkPen(
+                color=color, width=self.visual_preferences["trajectory_width"]
+            )
+
+            roi.setPen(bbox_pen)
+            roi.hoverPen = bbox_hover_pen
+
+            target.setPen(target_pen)
+            target.setHoverPen(target_hover_pen)
+            target.scale = self.visual_preferences["tracker_target_size"]
+            target.viewTransformChanged()
+
+            label.fill = pg.mkBrush(
+                self.visual_preferences["item_name_label_fill_color"]
+            )
+
+            traj.setPen(trajectory_pen)
+
     def start_item_suggestion(self):
         new_roi = pg.ROI(
             (0, 0),
@@ -53,7 +96,7 @@ class TrackerItem(BaseDisplayItem):
         )
         target = pg.TargetItem(
             (0, 0),
-            size=self.visual_settings["tracker_target_size"],
+            size=self.visual_preferences["tracker_target_size"],
             pen=pg.mkPen(None),
             brush=pg.mkBrush(None),
             movable=False,
@@ -168,21 +211,23 @@ class TrackerItem(BaseDisplayItem):
 
     def add_item(self, props):
         bbox_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["tracker_bbox_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["tracker_bbox_pen_width"],
         )
         bbox_hover_pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["tracker_bbox_hover_pen_width"],
+            width=self.visual_preferences["tracker_bbox_hover_pen_width"],
         )
         target_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["tracker_target_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["tracker_target_pen_width"],
         )
         target_hover_pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["tracker_bbox_hover_pen_width"],
+            width=self.visual_preferences["tracker_bbox_hover_pen_width"],
         )
         trajectory_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["trajectory_width"]
+            color=props["color"], width=self.visual_preferences["trajectory_width"]
         )
 
         roi = pg.ROI(
@@ -204,7 +249,7 @@ class TrackerItem(BaseDisplayItem):
         target_pos = cx + props["offset"][0], cy + props["offset"][1]
         target = pg.TargetItem(
             target_pos,
-            size=self.visual_settings["tracker_target_size"],
+            size=self.visual_preferences["tracker_target_size"],
             pen=target_pen,
             hoverPen=target_hover_pen,
             movable=True,
@@ -218,7 +263,7 @@ class TrackerItem(BaseDisplayItem):
             offset=(-20, 0),
             anchor=(0, 1),
             color=target_pen.color(),
-            fill=self.visual_settings["item_name_label_fill_color"],
+            fill=self.visual_preferences["item_name_label_fill_color"],
         )
         traj = pg.PlotDataItem(pen=trajectory_pen)
         self.add_items_to_display([target, roi, traj])
@@ -243,21 +288,23 @@ class TrackerItem(BaseDisplayItem):
         self._items["tracker_type"][i] = props["tracker_type"]
 
         bbox_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["tracker_bbox_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["tracker_bbox_pen_width"],
         )
         bbox_hover_pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["tracker_bbox_hover_pen_width"],
+            width=self.visual_preferences["tracker_bbox_hover_pen_width"],
         )
         self._items["roi"][i].setPen(bbox_pen)
         self._items["roi"][i].hoverPen = bbox_hover_pen
 
         target_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["tracker_target_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["tracker_target_pen_width"],
         )
         target_hover_pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["tracker_bbox_hover_pen_width"],
+            width=self.visual_preferences["tracker_bbox_hover_pen_width"],
         )
         self._items["target"][i].setPen(target_pen)
         self._items["target"][i].setHoverPen(target_hover_pen)
@@ -265,7 +312,7 @@ class TrackerItem(BaseDisplayItem):
         self._items["label"][i].setText(props["name"])
 
         trajectory_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["trajectory_width"]
+            color=props["color"], width=self.visual_preferences["trajectory_width"]
         )
         self._items["traj"][i].setPen(trajectory_pen)
 
@@ -419,14 +466,14 @@ class TrackerItem(BaseDisplayItem):
     def set_trajectory(self, name, frame_i, bbox_all, target_all):
         i = self._items["name"].index(name)
         traj = self._items["traj"][i]
-        if frame_i > self.visual_settings["trajectory_length"]:
+        if frame_i > self.visual_preferences["trajectory_length"]:
             traj.setData(
                 target_all[
-                    frame_i - self.visual_settings["trajectory_length"] : frame_i,
+                    frame_i - self.visual_preferences["trajectory_length"] : frame_i,
                     0,
                 ],
                 target_all[
-                    frame_i - self.visual_settings["trajectory_length"] : frame_i,
+                    frame_i - self.visual_preferences["trajectory_length"] : frame_i,
                     1,
                 ],
             )

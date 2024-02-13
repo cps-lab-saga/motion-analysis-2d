@@ -7,9 +7,6 @@ import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
 
-from motion_analysis_2d.custom_components import (
-    tab10_rgb,
-)
 from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.display_items import (
     TrackerItem,
@@ -21,6 +18,9 @@ from motion_analysis_2d.funcs import (
     setup_logger,
     is_json_file,
     check_file_type,
+)
+from motion_analysis_2d.preferences_pane import (
+    visual_preferences as default_preferences,
 )
 
 
@@ -34,7 +34,7 @@ class FrameWidget(QtWidgets.QWidget):
     new_settings_suggested = Signal(str, object)
     new_settings_ended = Signal()
 
-    def __init__(self, visual_settings=None, parent=None):
+    def __init__(self, visual_preferences=None, parent=None):
         super().__init__(parent=parent)
 
         self.setAcceptDrops(True)
@@ -46,52 +46,20 @@ class FrameWidget(QtWidgets.QWidget):
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.scaling = 1
 
-        if visual_settings is None:
-            visual_settings = {}
-        self.visual_settings = {
-            "new_item_pen_color": tab10_rgb["green"],
-            "new_item_pen_width": 3,
-            "crosshair_pen_color": tab10_rgb["cyan"],
-            "crosshair_pen_width": 1,
-            "trajectory_length": 30,
-            "trajectory_width": 2,
-            "frame_label_text_color": [255, 255, 255],
-            "frame_label_fill_color": [0, 0, 0, 150],
-            "instruction_label_text_color": [255, 255, 255],
-            "instruction_label_fill_color": tab10_rgb["green"],
-            "item_name_label_fill_color": [0, 0, 0, 150],
-            "tracker_bbox_pen_width": 2,
-            "tracker_bbox_hover_pen_width": 4,
-            "tracker_target_size": 10,
-            "tracker_target_pen_width": 2,
-            "tracker_target_hover_pen_width": 4,
-            "angle_sector_radius": 100,
-            "angle_sector_pen_width": 1,
-            "angle_sector_fill_transparency": 150,
-            "angle_vector_pen_width": 1,
-            "distance_arrow_stem_width": 3,
-            "distance_arrow_head_width": 42,
-            "distance_arrow_head_height": 42,
-            "set_perspective_inner_pen_color": tab10_rgb["green"],
-            "set_perspective_inner_pen_width": 2,
-            "set_perspective_inner_hover_pen_color": tab10_rgb["green"],
-            "set_perspective_inner_hover_pen_width": 4,
-            "set_perspective_outer_pen_color": tab10_rgb["green"],
-            "set_perspective_outer_pen_width": 1,
-            "set_perspective_outer_hover_pen_color": tab10_rgb["green"],
-            "set_perspective_outer_hover_pen_width": 3,
-        }
-        self.visual_settings.update(visual_settings)
+        if visual_preferences is None:
+            self.visual_preferences = default_preferences
+        else:
+            self.visual_preferences = visual_preferences
         self.show_crosshairs = False
         self.mouse_mode = MouseModes.NORMAL
 
         self.new_item_pen = pg.mkPen(
-            color=self.visual_settings["new_item_pen_color"],
-            width=self.visual_settings["new_item_pen_width"],
+            color=self.visual_preferences["new_item_pen_color"],
+            width=self.visual_preferences["new_item_pen_width"],
         )
         self.crosshair_pen = pg.mkPen(
-            color=self.visual_settings["crosshair_pen_color"],
-            width=self.visual_settings["crosshair_pen_width"],
+            color=self.visual_preferences["crosshair_pen_color"],
+            width=self.visual_preferences["crosshair_pen_width"],
         )
 
         self.plot_widget = pg.PlotWidget()
@@ -111,12 +79,12 @@ class FrameWidget(QtWidgets.QWidget):
         self.instruction_label = self.add_instruction_label()
         self.crosshair_items = self.add_crosshairs()
 
-        self.trackers = TrackerItem(self, self.new_item_pen, self.visual_settings)
+        self.trackers = TrackerItem(self, self.new_item_pen, self.visual_preferences)
         self.angles = AngleItem(
-            self, self.new_item_pen, self.visual_settings, self.trackers
+            self, self.new_item_pen, self.visual_preferences, self.trackers
         )
         self.distances = DistanceItem(
-            self, self.new_item_pen, self.visual_settings, self.trackers
+            self, self.new_item_pen, self.visual_preferences, self.trackers
         )
         self.display_items = {
             "tracker": self.trackers,
@@ -124,7 +92,7 @@ class FrameWidget(QtWidgets.QWidget):
             "distance": self.distances,
         }
         self.set_perspective_item = SetPerspectiveItem(
-            self, self.new_item_pen, self.visual_settings
+            self, self.new_item_pen, self.visual_preferences
         )
 
         self.v_crosshair = pg.InfiniteLine(
@@ -149,6 +117,57 @@ class FrameWidget(QtWidgets.QWidget):
         self.plot_widget.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot_widget.scene().sigMouseMoved.connect(self.mouse_moved)
         self.plot_widget.sigRangeChanged.connect(self.range_changed)
+
+    def update_visual_preferences(self, new_preferences):
+        self.visual_preferences.update(new_preferences)
+        self.new_item_pen = pg.mkPen(
+            color=self.visual_preferences["new_item_pen_color"],
+            width=self.visual_preferences["new_item_pen_width"],
+        )
+
+        self.trackers.update_visual_preferences(
+            self.visual_preferences, self.new_item_pen
+        )
+        self.angles.update_visual_preferences(
+            self.visual_preferences, self.new_item_pen
+        )
+        self.distances.update_visual_preferences(
+            self.visual_preferences, self.new_item_pen
+        )
+
+        self.show_crosshairs = True
+        self.toggle_crosshairs(None)
+        self.crosshair_pen = pg.mkPen(
+            color=self.visual_preferences["crosshair_pen_color"],
+            width=self.visual_preferences["crosshair_pen_width"],
+        )
+        self.v_crosshair = pg.InfiniteLine(
+            pos=pg.Point(-1000, -1000), angle=90, movable=False, pen=self.crosshair_pen
+        )
+        self.v_crosshair_label = pg.TextItem(
+            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
+        )
+        self.h_crosshair = pg.InfiniteLine(
+            pos=pg.Point(-1000, -1000), angle=0, movable=False, pen=self.crosshair_pen
+        )
+        self.h_crosshair_label = pg.TextItem(
+            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
+        )
+        self.intensity_crosshair_label = pg.TextItem(
+            "", anchor=(1, 0), color=self.crosshair_pen.color(), fill=(0, 0, 0)
+        )
+
+        self.instruction_label.fill = pg.mkBrush(
+            self.visual_preferences["instruction_label_fill_color"]
+        )
+        self.instruction_label.setColor(
+            self.visual_preferences["instruction_label_text_color"]
+        )
+
+        self.frame_label.fill = pg.mkBrush(
+            self.visual_preferences["frame_label_fill_color"]
+        )
+        self.frame_label.setColor(self.visual_preferences["frame_label_text_color"])
 
     def set_item_data(self, item_type, name, data):
         self.display_items[item_type].set_data(name, data)
@@ -252,8 +271,8 @@ class FrameWidget(QtWidgets.QWidget):
         frame_label = pg.TextItem(
             "Frame: {}\nTime: {:.2f} s".format(0, 0),
             anchor=(0, 0),
-            color=self.visual_settings["frame_label_text_color"],
-            fill=self.visual_settings["frame_label_fill_color"],
+            color=self.visual_preferences["frame_label_text_color"],
+            fill=self.visual_preferences["frame_label_fill_color"],
         )
         frame_label.setParentItem(self.fig.getViewBox())
         return frame_label
@@ -275,8 +294,8 @@ class FrameWidget(QtWidgets.QWidget):
         frame_label = pg.TextItem(
             "",
             anchor=(0.5, 1),
-            color=self.visual_settings["instruction_label_text_color"],
-            fill=self.visual_settings["instruction_label_fill_color"],
+            color=self.visual_preferences["instruction_label_text_color"],
+            fill=self.visual_preferences["instruction_label_fill_color"],
         )
         view_box = self.fig.getViewBox()
         frame_label.setPos(view_box.width() / 2, view_box.height())
@@ -363,8 +382,8 @@ class FrameWidget(QtWidgets.QWidget):
 
     def add_crosshairs(self):
         crosshair_pen = pg.mkPen(
-            color=self.visual_settings["crosshair_pen_color"],
-            width=self.visual_settings["crosshair_pen_width"],
+            color=self.visual_preferences["crosshair_pen_color"],
+            width=self.visual_preferences["crosshair_pen_width"],
         )
         return {
             "v_crosshair": pg.InfiniteLine(

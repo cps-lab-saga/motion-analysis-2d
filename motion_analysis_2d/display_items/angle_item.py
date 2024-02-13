@@ -9,8 +9,8 @@ from .base_item_display import BaseDisplayItem
 
 
 class AngleItem(BaseDisplayItem):
-    def __init__(self, display, new_item_pen, visual_settings, parent):
-        super().__init__(display, new_item_pen, visual_settings, parent)
+    def __init__(self, display, new_item_pen, visual_preferences, parent):
+        super().__init__(display, new_item_pen, visual_preferences, parent)
 
         self.item_type_name = "angle"
         self._items = {
@@ -40,6 +40,39 @@ class AngleItem(BaseDisplayItem):
             "Set name and properties.",
         )
         self.steps_index = 0
+
+    def update_visual_preferences(self, preferences, new_item_pen):
+        super().update_visual_preferences(preferences, new_item_pen)
+        for i in range(len(self._items["name"])):
+            color = self._items["color"][i]
+            vec1 = self._items["vec1"][i]
+            vec2 = self._items["vec2"][i]
+            pie = self._items["pie"][i]
+            label = self._items["label"][i]
+
+            sector_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["angle_sector_pen_width"],
+            )
+            sector_brush = pg.mkBrush(
+                color=(
+                    *sector_pen.color().toTuple()[:3],
+                    self.visual_preferences["angle_sector_fill_transparency"],
+                )
+            )
+            vector_pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["angle_vector_pen_width"],
+            )
+
+            vec1.setPen(vector_pen)
+            vec2.setPen(vector_pen)
+            pie.setPen(sector_pen)
+            pie.setBrush(sector_brush)
+
+            label.fill = pg.mkBrush(
+                self.visual_preferences["item_name_label_fill_color"]
+            )
 
     def start_item_suggestion(self):
         vec1 = pg.PlotDataItem(pen=pg.mkPen(None))
@@ -175,16 +208,18 @@ class AngleItem(BaseDisplayItem):
 
     def add_item(self, props):
         sector_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["angle_sector_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["angle_sector_pen_width"],
         )
         sector_brush = pg.mkBrush(
             color=(
                 *sector_pen.color().toTuple()[:3],
-                self.visual_settings["angle_sector_fill_transparency"],
+                self.visual_preferences["angle_sector_fill_transparency"],
             )
         )
         vector_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["angle_vector_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["angle_vector_pen_width"],
         )
 
         for n in self.parent_item_names:
@@ -213,7 +248,7 @@ class AngleItem(BaseDisplayItem):
         )
         pie = PieItem(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.visual_settings["angle_sector_radius"],
+            radius=self.visual_preferences["angle_sector_radius"],
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
             pen=sector_pen,
@@ -223,7 +258,7 @@ class AngleItem(BaseDisplayItem):
             props["name"],
             anchor=(0, 0.5),
             color=sector_pen.color(),
-            fill=self.visual_settings["item_name_label_fill_color"],
+            fill=self.visual_preferences["item_name_label_fill_color"],
         )
         self.add_items_to_display([vec1, vec2, pie, label])
 
@@ -247,16 +282,18 @@ class AngleItem(BaseDisplayItem):
         self._items["color"][i] = props["color"]
 
         sector_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["angle_sector_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["angle_sector_pen_width"],
         )
         sector_brush = pg.mkBrush(
             color=(
                 *sector_pen.color().toTuple()[:3],
-                self.visual_settings["angle_sector_fill_transparency"],
+                self.visual_preferences["angle_sector_fill_transparency"],
             )
         )
         vector_pen = pg.mkPen(
-            color=props["color"], width=self.visual_settings["angle_vector_pen_width"]
+            color=props["color"],
+            width=self.visual_preferences["angle_vector_pen_width"],
         )
         self._items["vec1"][i].setPen(vector_pen)
         self._items["vec2"][i].setPen(vector_pen)
@@ -306,12 +343,12 @@ class AngleItem(BaseDisplayItem):
 
         pie.setData(
             center=(vec1_start_x, vec1_start_y),
-            radius=self.visual_settings["angle_sector_radius"],
+            radius=self.visual_preferences["angle_sector_radius"],
             start_angle=vec1_angle,
             span_angle=vec2_angle - vec1_angle,
         )
         label.setPos(
-            round(vec1_start_x) + self.visual_settings["angle_sector_radius"],
+            round(vec1_start_x) + self.visual_preferences["angle_sector_radius"],
             round(vec1_start_y),
         )
         props = {

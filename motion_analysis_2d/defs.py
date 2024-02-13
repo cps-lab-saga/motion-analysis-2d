@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.3"
+app_version = "0.1.4"
 
 module_name = project_name.replace("-", "_")
 
@@ -34,19 +34,27 @@ def project_root() -> Path:
     return Path(__file__).parent.parent
 
 
-def settings_file() -> Path:
+def settings_file(file_name) -> Path:
     p = project_root()
     if "Temp" in p.parts:
         f = (
             p.parents[len(p.parts) - 2 - p.parts.index("Temp")]
             / f"{project_name}"
-            / f"{project_name}.ini"
+            / file_name
         )
     else:
-        f = project_root() / f"{project_name}.ini"
+        f = project_root() / file_name
 
     f.parent.mkdir(exist_ok=True, parents=True)
     return f
+
+
+def shortcuts_file():
+    return settings_file("ma2d_shortcuts.json")
+
+
+def visual_preferences_file():
+    return settings_file("ma2d_visual.json")
 
 
 def log_file() -> Path:

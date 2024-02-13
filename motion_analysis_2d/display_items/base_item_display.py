@@ -4,11 +4,11 @@ from motion_analysis_2d.funcs import prevent_name_collision
 
 
 class BaseDisplayItem:
-    def __init__(self, display, new_item_pen, visual_settings, parent=None):
+    def __init__(self, display, new_item_pen, visual_preferences, parent=None):
         self.parent = parent
         self.display = display
         self.new_item_pen = new_item_pen
-        self.visual_settings = visual_settings
+        self.visual_preferences = visual_preferences
         self.steps = [""]
         self.display_item_types = []
         self.display_item_names = []
@@ -18,6 +18,10 @@ class BaseDisplayItem:
         self._items = None
         self.temp_item = None
         self.item_type_name = "base"
+
+    def update_visual_preferences(self, preferences, new_item_pen):
+        self.visual_preferences.update(preferences)
+        self.new_item_pen = new_item_pen
 
     def reset_temp_item(self):
         pass

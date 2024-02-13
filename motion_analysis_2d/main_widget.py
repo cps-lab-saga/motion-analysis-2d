@@ -9,9 +9,10 @@ from motion_analysis_2d.controls import EditControls, MediaControls, MenuBar
 from motion_analysis_2d.defs import (
     QtCore,
     QtWidgets,
-    project_root,
     settings_file,
     resource_dir,
+    shortcuts_file,
+    visual_preferences_file,
 )
 from motion_analysis_2d.display_widgets import FrameWidget
 from motion_analysis_2d.docks import (
@@ -28,7 +29,11 @@ from motion_analysis_2d.funcs import (
     save_tracking_data,
     load_tracking_data,
     export_csv,
-    load_application_settings,
+)
+from motion_analysis_2d.preferences_pane import (
+    load_preferences,
+    shortcut_keys,
+    visual_preferences,
 )
 from motion_analysis_2d.splashscreen import SplashScreen
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
@@ -47,20 +52,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
         self.log_new_session()
 
-        self.shortcut_keys = {
-            "\N{ESCAPE}": "set_normal_mode",
-            "F": "move_frame_forwards",
-            "S": "move_frame_backwards",
-        }
-        self.visual_settings = {}
-        try:
-            self.application_settings = load_application_settings(
-                project_root() / "application_settings.json"
-            )
-            self.shortcut_keys.update(self.application_settings["shortcut_keys"])
-            self.visual_settings.update(self.application_settings["visual_settings"])
-        except Exception as e:
-            self.error_dialog(f"Could not read application settings file!\n{e}")
+        self.shortcut_keys = self.load_shortcuts()
+        self.visual_preferences = self.load_visual_preferences()
 
         self.splashscreen.set_progress(10)
 
@@ -68,7 +61,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.main_layout = QtWidgets.QGridLayout(self.main_widget)
         self.setCentralWidget(self.main_widget)
 
-        self.frame_widget = FrameWidget(self.visual_settings, self)
+        self.frame_widget = FrameWidget(self.visual_preferences, self)
         self.frame_widget.new_item_suggested.connect(self.add_item)
         self.frame_widget.edit_item_suggested.connect(self.edit_item_props)
         self.frame_widget.item_moved.connect(self.move_item)
@@ -141,6 +134,8 @@ class MainWidget(QtWidgets.QMainWindow):
         self.setMenuBar(self.menu_bar)
         self.menu_bar.open_video_file.connect(self.docks["Files"].add_files)
         self.menu_bar.open_video_folder.connect(self.docks["Files"].add_files)
+        self.menu_bar.update_shortcuts.connect(self.update_shortcuts)
+        self.menu_bar.update_visual_preferences.connect(self.update_visual_preferences)
 
         # thread for streaming input
         self.stream_thread = QtCore.QThread()
@@ -173,7 +168,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.splashscreen.set_progress(90)
 
         # load settings from previous session
-        self.settings_file = settings_file()
+        self.settings_file = settings_file("ma2d_ui_restore.ini")
         if self.settings_file.is_file():
             settings = QtCore.QSettings(
                 str(self.settings_file), QtCore.QSettings.IniFormat
@@ -181,6 +176,37 @@ class MainWidget(QtWidgets.QMainWindow):
             self.gui_restore(settings)
 
         self.splashscreen.finish(self)
+
+    def load_shortcuts(self):
+        shortcuts_f = shortcuts_file()
+        if shortcuts_f.is_file():
+            try:
+                shortcuts = load_preferences(shortcuts_f)
+            except Exception as e:
+                self.error_dialog(f"{shortcuts_f} is corrupted!\n{str(e)}")
+                shortcuts = shortcut_keys
+        else:
+            shortcuts = shortcut_keys
+        return {QtCore.Qt.Key[v]: k for k, v in shortcuts.items()}
+
+    def update_shortcuts(self):
+        self.shortcut_keys = self.load_shortcuts()
+
+    def load_visual_preferences(self):
+        visual_preferences_f = visual_preferences_file()
+        if visual_preferences_f.is_file():
+            try:
+                preferences = load_preferences(visual_preferences_f)
+            except Exception as e:
+                self.error_dialog(f"{visual_preferences_f} is corrupted!\n{str(e)}")
+                preferences = visual_preferences
+        else:
+            preferences = visual_preferences
+        return preferences
+
+    def update_visual_preferences(self):
+        self.visual_preferences = self.load_visual_preferences()
+        self.frame_widget.update_visual_preferences(self.visual_preferences)
 
     def video_file_changed(self, path):
         self.play_video(False)
@@ -768,7 +794,7 @@ class MainWidget(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.critical(self, "Error", error)
 
     def keyPressEvent(self, evt):
-        if cmd := self.shortcut_keys.get(evt.text().upper()):
+        if cmd := self.shortcut_keys.get(evt.key()):
             getattr(self, cmd)()
 
     @staticmethod

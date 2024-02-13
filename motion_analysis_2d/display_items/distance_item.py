@@ -8,8 +8,8 @@ from .base_item_display import BaseDisplayItem
 
 
 class DistanceItem(BaseDisplayItem):
-    def __init__(self, display, new_item_pen, visual_settings, parent):
-        super().__init__(display, new_item_pen, visual_settings, parent)
+    def __init__(self, display, new_item_pen, visual_preferences, parent):
+        super().__init__(display, new_item_pen, visual_preferences, parent)
 
         self.item_type_name = "distance"
         self._items = {
@@ -34,12 +34,32 @@ class DistanceItem(BaseDisplayItem):
         )
         self.steps_index = 0
 
+    def update_visual_preferences(self, preferences, new_item_pen):
+        super().update_visual_preferences(preferences, new_item_pen)
+        for i in range(len(self._items["name"])):
+            color = self._items["color"][i]
+            arrow = self._items["arrow"][i]
+            label = self._items["label"][i]
+
+            pen = pg.mkPen(
+                color=color,
+                width=self.visual_preferences["distance_arrow_stem_width"],
+            )
+            brush = pg.mkBrush(color=color)
+
+            arrow.setStemPen(pen)
+            arrow.setArrowBrush(brush)
+
+            label.fill = pg.mkBrush(
+                self.visual_preferences["item_name_label_fill_color"]
+            )
+
     def start_item_suggestion(self):
         arrow = ArrowItem(
             start_pos=(0, 0),
             end_pos=(0, 0),
-            arrow_width=self.visual_settings["distance_arrow_head_width"],
-            arrow_height=self.visual_settings["distance_arrow_head_height"],
+            arrow_width=self.visual_preferences["distance_arrow_head_width"],
+            arrow_height=self.visual_preferences["distance_arrow_head_height"],
             stem_pen=self.new_item_pen,
             arrow_pen=pg.mkPen(None),
             arrow_brush=pg.mkBrush(None),
@@ -138,7 +158,7 @@ class DistanceItem(BaseDisplayItem):
     def add_item(self, props):
         pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["distance_arrow_stem_width"],
+            width=self.visual_preferences["distance_arrow_stem_width"],
         )
         brush = pg.mkBrush(color=props["color"])
 
@@ -151,8 +171,8 @@ class DistanceItem(BaseDisplayItem):
         arrow = ArrowItem(
             start_pos=start_pos,
             end_pos=end_pos,
-            arrow_width=self.visual_settings["distance_arrow_head_width"],
-            arrow_height=self.visual_settings["distance_arrow_head_height"],
+            arrow_width=self.visual_preferences["distance_arrow_head_width"],
+            arrow_height=self.visual_preferences["distance_arrow_head_height"],
             stem_pen=pen,
             arrow_pen=pg.mkPen(None),
             arrow_brush=brush,
@@ -161,7 +181,7 @@ class DistanceItem(BaseDisplayItem):
             props["name"],
             anchor=(0, 0.5),
             color=pen.color(),
-            fill=self.visual_settings["item_name_label_fill_color"],
+            fill=self.visual_preferences["item_name_label_fill_color"],
         )
         label.setPos((start_pos + end_pos) / 2)
 
@@ -184,7 +204,7 @@ class DistanceItem(BaseDisplayItem):
 
         pen = pg.mkPen(
             color=props["color"],
-            width=self.visual_settings["distance_arrow_stem_width"],
+            width=self.visual_preferences["distance_arrow_stem_width"],
         )
         brush = pg.mkBrush(color=props["color"])
 

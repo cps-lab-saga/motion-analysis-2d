@@ -27,4 +27,4 @@ def check_shortcut_commands(data):
 def check_visual_settings(data):
     fw = FrameWidget()
     for s in data["visual_settings"].keys():
-        assert s in fw.visual_settings
+        assert s in fw.visual_preferences

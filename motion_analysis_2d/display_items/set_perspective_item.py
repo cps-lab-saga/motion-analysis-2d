@@ -10,8 +10,8 @@ from .base_item_display import BaseDisplayItem
 
 
 class SetPerspectiveItem(BaseDisplayItem):
-    def __init__(self, display, new_item_pen, visual_settings):
-        super().__init__(display, new_item_pen, visual_settings)
+    def __init__(self, display, new_item_pen, visual_preferences):
+        super().__init__(display, new_item_pen, visual_preferences)
 
         self.item_type_name = "set_perspective"
         self.temp_item = None
@@ -37,20 +37,20 @@ class SetPerspectiveItem(BaseDisplayItem):
             ),
             outer_offsets=(im_w * 0.1, im_h * 0.1, im_w * 0.1, im_h * 0.1),
             inner_pen=pg.mkPen(
-                color=self.visual_settings["set_perspective_inner_pen_color"],
-                width=self.visual_settings["set_perspective_inner_pen_width"],
+                color=self.visual_preferences["set_perspective_inner_pen_color"],
+                width=self.visual_preferences["set_perspective_inner_pen_width"],
             ),
             inner_hover_pen=pg.mkPen(
-                color=self.visual_settings["set_perspective_inner_hover_pen_color"],
-                width=self.visual_settings["set_perspective_inner_hover_pen_width"],
+                color=self.visual_preferences["set_perspective_inner_hover_pen_color"],
+                width=self.visual_preferences["set_perspective_inner_hover_pen_width"],
             ),
             outer_pen=pg.mkPen(
-                color=self.visual_settings["set_perspective_outer_pen_color"],
-                width=self.visual_settings["set_perspective_outer_pen_width"],
+                color=self.visual_preferences["set_perspective_outer_pen_color"],
+                width=self.visual_preferences["set_perspective_outer_pen_width"],
             ),
             outer_hover_pen=pg.mkPen(
-                color=self.visual_settings["set_perspective_outer_hover_pen_color"],
-                width=self.visual_settings["set_perspective_outer_hover_pen_width"],
+                color=self.visual_preferences["set_perspective_outer_hover_pen_color"],
+                width=self.visual_preferences["set_perspective_outer_hover_pen_width"],
             ),
         )
         item.sigInnerCornerMoved.connect(self.perspective_corner_moved)
@@ -59,14 +59,14 @@ class SetPerspectiveItem(BaseDisplayItem):
         x_label = pg.TextItem(
             "x",
             anchor=(0.5, 0.5),
-            color=self.visual_settings["set_perspective_inner_pen_color"],
-            fill=self.visual_settings["item_name_label_fill_color"],
+            color=self.visual_preferences["set_perspective_inner_pen_color"],
+            fill=self.visual_preferences["item_name_label_fill_color"],
         )
         y_label = pg.TextItem(
             "y",
             anchor=(0.5, 0.5),
-            color=self.visual_settings["set_perspective_inner_pen_color"],
-            fill=self.visual_settings["item_name_label_fill_color"],
+            color=self.visual_preferences["set_perspective_inner_pen_color"],
+            fill=self.visual_preferences["item_name_label_fill_color"],
         )
         inner_corners = item.get_params()["inner_corners"]
         x_label.setPos(*offset_at_centre(inner_corners[3], inner_corners[0], 5 * h))

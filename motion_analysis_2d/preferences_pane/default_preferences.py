@@ -1,0 +1,51 @@
+from motion_analysis_2d.custom_components import (
+    tab10_rgb,
+)
+
+
+visual_preferences = {
+    "new_item_pen_color": tab10_rgb["green"],
+    "new_item_pen_width": 3,
+    "crosshair_pen_color": tab10_rgb["cyan"],
+    "crosshair_pen_width": 1,
+    "trajectory_length": 30,
+    "trajectory_width": 2,
+    "frame_label_text_color": [255, 255, 255],
+    "frame_label_fill_color": [0, 0, 0, 150],
+    "instruction_label_text_color": [255, 255, 255],
+    "instruction_label_fill_color": tab10_rgb["green"],
+    "item_name_label_fill_color": [0, 0, 0, 150],
+    "tracker_bbox_pen_width": 2,
+    "tracker_bbox_hover_pen_width": 4,
+    "tracker_target_size": 10,
+    "tracker_target_pen_width": 2,
+    "tracker_target_hover_pen_width": 4,
+    "angle_sector_radius": 100,
+    "angle_sector_pen_width": 1,
+    "angle_sector_fill_transparency": 150,
+    "angle_vector_pen_width": 1,
+    "distance_arrow_stem_width": 3,
+    "distance_arrow_head_width": 42,
+    "distance_arrow_head_height": 42,
+    "set_perspective_inner_pen_color": tab10_rgb["green"],
+    "set_perspective_inner_pen_width": 2,
+    "set_perspective_inner_hover_pen_color": tab10_rgb["green"],
+    "set_perspective_inner_hover_pen_width": 4,
+    "set_perspective_outer_pen_color": tab10_rgb["green"],
+    "set_perspective_outer_pen_width": 1,
+    "set_perspective_outer_hover_pen_color": tab10_rgb["green"],
+    "set_perspective_outer_hover_pen_width": 3,
+}
+
+shortcut_keys = {
+    "set_normal_mode": "Key_Escape",
+    "move_frame_forwards": "Key_F",
+    "move_frame_backwards": "Key_S",
+    "toggle_play": "Key_G",
+    "toggle_track": "Key_T",
+    "reset_trackers": "Key_R",
+    "toggle_autosave": "Key_A",
+    "click_export": "Key_V",
+    "next_video": "Key_D",
+    "previous_video": "Key_E",
+}
