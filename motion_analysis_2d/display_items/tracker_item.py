@@ -153,9 +153,10 @@ class TrackerItem(BaseDisplayItem):
             name = self.prevent_name_collision(name)
             props.update({"name": name, "color": color, "tracker_type": tracker_type})
             self.emit_new_item(props)
+            self.reset_temp_item()
         else:
+            self.reset_temp_item()
             self.start_item_suggestion()
-        self.reset_temp_item()
 
     def shape_new_tracker(self, mouse_point):
         roi_x, roi_y = self.temp_item["roi"].pos()

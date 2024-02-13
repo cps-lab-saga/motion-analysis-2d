@@ -162,7 +162,10 @@ class AngleItem(BaseDisplayItem):
             name = self.prevent_name_collision(name)
             props.update({"name": name, "color": color})
             self.emit_new_item(props)
-        self.reset_temp_item()
+            self.reset_temp_item()
+        else:
+            self.reset_temp_item()
+            self.start_item_suggestion()
 
     def shape_new_angle(self, mouse_point, vec_no):
         start_name = self.temp_item[f"start{vec_no}"]

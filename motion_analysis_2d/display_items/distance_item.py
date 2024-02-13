@@ -123,9 +123,10 @@ class DistanceItem(BaseDisplayItem):
             name = self.prevent_name_collision(name)
             props.update({"name": name, "color": color})
             self.emit_new_item(props)
+            self.reset_temp_item()
         else:
+            self.reset_temp_item()
             self.start_item_suggestion()
-        self.reset_temp_item()
 
     def shape_new_distance(self, mouse_point):
         start_name = self.temp_item["start"]
