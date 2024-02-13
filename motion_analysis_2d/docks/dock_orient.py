@@ -31,10 +31,10 @@ class OrientDock(BaseDock):
             badge_size, tab10_qcolor["red"], "white", parent=self
         )
         self.rotate_icons = {
-            "0": qta.icon("mdi.rotate-right", rotated=0),
-            "90": qta.icon("mdi.rotate-right", rotated=90),
-            "180": qta.icon("mdi.rotate-right", rotated=180),
-            "270": qta.icon("mdi.rotate-right", rotated=270),
+            "0": qta.icon("mdi.camera-retake", rotated=0, hflip=True),
+            "90": qta.icon("mdi.camera-retake", rotated=90, hflip=True),
+            "180": qta.icon("mdi.camera-retake", rotated=180, hflip=True),
+            "270": qta.icon("mdi.camera-retake", rotated=270, hflip=True),
         }
         self.rotate_tooltips = {
             "0": "Rotate frame.",
@@ -62,12 +62,12 @@ class OrientDock(BaseDock):
             badge_size, tab10_qcolor["blue"], "white", parent=self
         )
         self.flip_icons = {
-            "no_flip": qta.icon("mdi.card-outline"),
-            "h_flip": qta.icon("mdi.reflect-horizontal"),
-            "v_flip": qta.icon("mdi.reflect-vertical"),
+            "no_flip": qta.icon("mdi6.flip-horizontal"),
+            "h_flip": qta.icon("mdi6.reflect-horizontal"),
+            "v_flip": qta.icon("mdi6.reflect-vertical"),
             "hv_flip": qta.icon(
-                "mdi.reflect-horizontal",
-                "mdi.reflect-vertical",
+                "mdi6.reflect-horizontal",
+                "mdi6.reflect-vertical",
                 options=[
                     {"scale_factor": 0.7, "offset": (-0.2, 0)},
                     {"scale_factor": 0.7, "offset": (0.2, 0)},
