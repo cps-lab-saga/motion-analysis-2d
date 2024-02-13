@@ -31,7 +31,7 @@ QtAwesome = "~1.3"
 type = "git"
 url = "https://github.com/cps-lab-saga/camera-calibration"
 reference = "main"
-resolved_reference = "c8851102dc2ee4b77a286ebadd10b80f458b6e89"
+resolved_reference = "76613ed99427beb02ee62886d601c0be258318cc"
 
 [[package]]
 name = "colorama"

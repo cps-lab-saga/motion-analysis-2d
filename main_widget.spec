@@ -9,7 +9,7 @@ a = Analysis(
     [f"{module_name}/main_widget.py"],
     pathex=[],
     binaries=[],
-    datas=[(f"resource/{module_name}.svg", f"resource"), ("application_settings.json", f".")],
+    datas=[(f"resource/{module_name}.svg", f"resource")],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
