@@ -126,6 +126,13 @@ class ArrowItem(pg.GraphicsObject):
         self.arrow_brush = brush
         self.update()
 
+    def setArrowSize(self, width=None, height=None):
+        if width is not None:
+            self.arrow_width = width
+        if height is not None:
+            self.arrow_height = height
+        self.update()
+
 
 if __name__ == "__main__":
     item = ArrowItem(stem_pen=pg.mkPen("w", width=4), arrow_brush=pg.mkBrush("r"))

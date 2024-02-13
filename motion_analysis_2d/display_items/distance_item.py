@@ -49,6 +49,10 @@ class DistanceItem(BaseDisplayItem):
 
             arrow.setStemPen(pen)
             arrow.setArrowBrush(brush)
+            arrow.setArrowSize(
+                self.visual_preferences["distance_arrow_head_width"],
+                self.visual_preferences["distance_arrow_head_height"],
+            )
 
             label.fill = pg.mkBrush(
                 self.visual_preferences["item_name_label_fill_color"]
