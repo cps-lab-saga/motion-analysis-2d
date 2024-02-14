@@ -135,27 +135,16 @@ class FrameWidget(QtWidgets.QWidget):
             self.visual_preferences, self.new_item_pen
         )
 
-        self.show_crosshairs = True
-        self.toggle_crosshairs(None)
         self.crosshair_pen = pg.mkPen(
             color=self.visual_preferences["crosshair_pen_color"],
             width=self.visual_preferences["crosshair_pen_width"],
         )
-        self.v_crosshair = pg.InfiniteLine(
-            pos=pg.Point(-1000, -1000), angle=90, movable=False, pen=self.crosshair_pen
-        )
-        self.v_crosshair_label = pg.TextItem(
-            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
-        )
-        self.h_crosshair = pg.InfiniteLine(
-            pos=pg.Point(-1000, -1000), angle=0, movable=False, pen=self.crosshair_pen
-        )
-        self.h_crosshair_label = pg.TextItem(
-            "", anchor=(0, 1), color=self.crosshair_pen.color(), fill=(0, 0, 0)
-        )
-        self.intensity_crosshair_label = pg.TextItem(
-            "", anchor=(1, 0), color=self.crosshair_pen.color(), fill=(0, 0, 0)
-        )
+        self.v_crosshair.setPen(self.crosshair_pen)
+        self.h_crosshair.setPen(self.crosshair_pen)
+        self.v_crosshair.setPen(self.crosshair_pen)
+        self.v_crosshair_label.setColor(self.crosshair_pen.color())
+        self.h_crosshair_label.setColor(self.crosshair_pen.color())
+        self.intensity_crosshair_label.setColor(self.crosshair_pen.color())
 
         self.instruction_label.fill = pg.mkBrush(
             self.visual_preferences["instruction_label_fill_color"]
