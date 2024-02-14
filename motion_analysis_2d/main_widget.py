@@ -3,11 +3,11 @@ from queue import Queue
 from time import sleep
 
 import numpy as np
-from PySide6 import QtGui
 
 from motion_analysis_2d.controls import EditControls, MediaControls, MenuBar
 from motion_analysis_2d.defs import (
     QtCore,
+    QtGui,
     QtWidgets,
     settings_file,
     resource_dir,
