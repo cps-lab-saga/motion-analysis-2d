@@ -783,6 +783,8 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """save before closing"""
+        self.camera_frame_update_timer.stop()
+        self.autosave_timer.stop()
         self.docks["Save"].autosave_button_toggled()
 
         self.tracking_worker.set_stop()
