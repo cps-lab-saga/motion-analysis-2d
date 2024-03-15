@@ -783,13 +783,10 @@ class MainWidget(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """save before closing"""
-        self.camera_frame_update_timer.stop()
-        self.autosave_timer.stop()
         self.docks["Save"].autosave_button_toggled()
-
-        self.tracking_worker.set_stop()
         self.close_video()
 
+        self.tracking_worker.set_stop()
         while self.tracking_thread.isRunning():  # wait till threads have exited
             sleep(0.1)
             QtCore.QCoreApplication.processEvents()
