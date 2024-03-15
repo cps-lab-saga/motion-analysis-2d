@@ -21,6 +21,10 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
         if self.preferences_file.is_file():
             try:
                 self.visual_preferences = load_preferences(self.preferences_file)
+
+                # ignore file if outdated
+                if visual_preferences.keys() != self.visual_preferences.keys():
+                    self.shortcuts = visual_preferences.copy()
             except Exception as e:
                 self.load_error.emit(f"{self.preferences_file} is corrupted!\n{str(e)}")
                 self.visual_preferences = visual_preferences.copy()

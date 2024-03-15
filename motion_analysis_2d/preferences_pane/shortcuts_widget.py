@@ -22,6 +22,10 @@ class ShortcutsWidget(QtWidgets.QWidget):
         if self.shortcuts_file.is_file():
             try:
                 self.shortcuts = load_preferences(self.shortcuts_file)
+
+                # ignore file if outdated
+                if shortcut_keys.keys() != self.shortcuts.keys():
+                    self.shortcuts = shortcut_keys.copy()
             except Exception as e:
                 self.load_error.emit(f"{self.shortcuts_file} is corrupted!\n{str(e)}")
                 self.shortcuts = shortcut_keys.copy()
