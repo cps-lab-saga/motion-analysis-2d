@@ -44,7 +44,7 @@ shortcut_keys = {
     "toggle_play": "Key_G",
     "toggle_track": "Key_T",
     "reset_trackers": "Key_R",
-    "toggle_autosave": "Key_A",
+    "toggle_auto_save": "Key_A",
     "click_export": "Key_V",
     "next_video": "Key_D",
     "previous_video": "Key_E",
