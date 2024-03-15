@@ -184,9 +184,9 @@ class MainWidget(QtWidgets.QMainWindow):
                 shortcuts = load_preferences(shortcuts_f)
             except Exception as e:
                 self.error_dialog(f"{shortcuts_f} is corrupted!\n{str(e)}")
-                shortcuts = shortcut_keys
+                shortcuts = shortcut_keys.copy()
         else:
-            shortcuts = shortcut_keys
+            shortcuts = shortcut_keys.copy()
         return {QtCore.Qt.Key[v]: k for k, v in shortcuts.items()}
 
     def update_shortcuts(self):
@@ -199,9 +199,9 @@ class MainWidget(QtWidgets.QMainWindow):
                 preferences = load_preferences(visual_preferences_f)
             except Exception as e:
                 self.error_dialog(f"{visual_preferences_f} is corrupted!\n{str(e)}")
-                preferences = visual_preferences
+                preferences = visual_preferences.copy()
         else:
-            preferences = visual_preferences
+            preferences = visual_preferences.copy()
         return preferences
 
     def update_visual_preferences(self):
@@ -327,7 +327,7 @@ class MainWidget(QtWidgets.QMainWindow):
     def toggle_track(self):
         self.media_controls.track_button.toggle()
 
-    def toggle_autosave(self):
+    def toggle_auto_save(self):
         self.docks["Save"].autosave_button.toggle()
 
     def click_export(self):

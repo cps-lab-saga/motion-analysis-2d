@@ -16,21 +16,28 @@ class ShortcutsWidget(QtWidgets.QWidget):
 
         self.setWindowTitle("Shortcuts")
 
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+
         self.shortcuts_file = shortcuts_file()
         if self.shortcuts_file.is_file():
             try:
                 self.shortcuts = load_preferences(self.shortcuts_file)
             except Exception as e:
                 self.load_error.emit(f"{self.shortcuts_file} is corrupted!\n{str(e)}")
-                self.shortcuts = shortcut_keys
+                self.shortcuts = shortcut_keys.copy()
         else:
-            self.shortcuts = shortcut_keys
+            self.shortcuts = shortcut_keys.copy()
 
-        self.form_layout = QtWidgets.QFormLayout(self)
+        self.form_layout = QtWidgets.QFormLayout()
+        self.main_layout.addLayout(self.form_layout)
 
         self.keys_button = {}
         for command, key in self.shortcuts.items():
             self.generate_row(key, command)
+
+        self.default_button = QtWidgets.QPushButton("Restore Defaults")
+        self.default_button.clicked.connect(self.restore_defaults)
+        self.main_layout.addWidget(self.default_button)
 
     def generate_row(self, key, command):
         key_button = QtWidgets.QPushButton(self)
@@ -42,6 +49,15 @@ class ShortcutsWidget(QtWidgets.QWidget):
         self.form_layout.addRow(command.replace("_", " ").title(), key_button)
         self.keys_button[command] = key_button
         return key_button
+
+    def restore_defaults(self):
+        self.shortcuts = shortcut_keys.copy()
+        for command, key in self.shortcuts.items():
+            key_button = self.keys_button[command]
+            key_button.blockSignals(True)
+            key_button.setText(key.split("_")[-1])
+            key_button.blockSignals(False)
+        self.save_shortcut()
 
     def keyPressEvent(self, event):
         for key_button in self.keys_button.values():

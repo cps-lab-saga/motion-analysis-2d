@@ -23,13 +23,14 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
                 self.visual_preferences = load_preferences(self.preferences_file)
             except Exception as e:
                 self.load_error.emit(f"{self.preferences_file} is corrupted!\n{str(e)}")
-                self.visual_preferences = visual_preferences
+                self.visual_preferences = visual_preferences.copy()
         else:
-            self.visual_preferences = visual_preferences
+            self.visual_preferences = visual_preferences.copy()
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.scroll_area = QtWidgets.QScrollArea()
-        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_contents = QtWidgets.QWidget(self)
         self.scroll_area.setWidget(self.scroll_contents)
@@ -42,6 +43,15 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
         self.visual_widgets = {}
         for key, value in self.visual_preferences.items():
             self.generate_row(key, value)
+
+        self.default_button = QtWidgets.QPushButton("Restore Defaults")
+        self.default_button.clicked.connect(self.restore_defaults)
+        self.scroll_area_layout.addWidget(self.default_button)
+
+        contents_size = (
+            self.sizeHint() + self.scroll_area.verticalScrollBar().sizeHint()
+        )
+        self.scroll_area.setMinimumWidth(contents_size.width())
 
     def generate_row(self, key, value):
         preference_type = key.split("_")[-1]
@@ -70,7 +80,7 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
 
         else:
             widget = QtWidgets.QTextEdit(self)
-            widget.setText(value)
+            widget.setText(str(value))
 
         widget.setObjectName(key)
         self.form_layout.addRow(key.replace("_", " ").title(), widget)
@@ -88,6 +98,28 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
             self.visual_preferences[key] = widget.text()
         self.save_preferences()
 
+    def restore_defaults(self):
+        self.visual_preferences = visual_preferences.copy()
+        for key, value in visual_preferences.items():
+            preference_type = key.split("_")[-1]
+            widget = self.visual_widgets[key]
+            widget.blockSignals(True)
+            if preference_type == "color":
+                widget.set_rbg(value)
+            elif preference_type in [
+                "width",
+                "length",
+                "size",
+                "height",
+                "radius",
+                "transparency",
+            ]:
+                widget.setValue(value)
+            else:
+                widget.setText(str(value))
+            widget.blockSignals(False)
+        self.save_preferences()
+
     def save_preferences(self):
         self.preferences_file.parent.mkdir(exist_ok=True, parents=True)
         save_preferences(self.preferences_file, self.visual_preferences)
@@ -100,8 +132,8 @@ class VisualPreferencesWidget(QtWidgets.QWidget):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
-    app.processEvents()
-    widget = VisualPreferencesWidget()
-    widget.show()
+
+    pref_widget = VisualPreferencesWidget()
+    pref_widget.show()
 
     app.exec()
