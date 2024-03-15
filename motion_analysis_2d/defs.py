@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.4"
+app_version = "0.1.5"
 
 module_name = project_name.replace("-", "_")
 
@@ -62,7 +62,7 @@ def log_file() -> Path:
 
 
 def resource_dir() -> Path:
-    return project_root() / "resource"
+    return project_root() / module_name / "resource"
 
 
 def open_file(file_path):
