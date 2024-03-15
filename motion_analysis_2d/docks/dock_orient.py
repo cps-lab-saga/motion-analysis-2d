@@ -51,13 +51,6 @@ class OrientDock(BaseDock):
         self.orientation_layout.addWidget(self.rotate_button)
         self.orientation_layout.addStretch()
 
-        self.arrow_label = QtWidgets.QLabel(self)
-        self.arrow_label.setPixmap(
-            qta.icon("mdi.arrow-right", color="gray").pixmap(icon_size)
-        )
-        self.orientation_layout.addWidget(self.arrow_label)
-        self.orientation_layout.addStretch()
-
         self.flip_button = BadgeButton(
             badge_size, tab10_qcolor["blue"], "white", parent=self
         )
