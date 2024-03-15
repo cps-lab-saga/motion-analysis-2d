@@ -152,6 +152,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.tracking_worker.add_tracker_failed.connect(self.add_tracker_failed)
         self.tracking_worker.reached_end.connect(self.reached_end)
         self.tracking_worker.tracking_failed.connect(self.tracking_failed)
+        self.tracking_worker.finished.connect(self.tracking_finished)
         self.tracking_thread.started.connect(self.tracking_worker.run)
         self.tracking_thread.start()
 
@@ -340,6 +341,10 @@ class MainWidget(QtWidgets.QMainWindow):
         self.stream_thread.exit()
         self.stream_worker = None
         self.streaming = False
+
+    def tracking_finished(self):
+        self.tracking_thread.exit()
+        self.tracking_worker = None
 
     def track_enabled(self, track):
         if track:
@@ -779,6 +784,14 @@ class MainWidget(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """save before closing"""
         self.docks["Save"].autosave_button_toggled()
+
+        self.tracking_worker.set_stop()
+        self.close_video()
+
+        while self.tracking_thread.isRunning():  # wait till threads have exited
+            sleep(0.1)
+            QtCore.QCoreApplication.processEvents()
+
         settings = QtCore.QSettings(str(self.settings_file), QtCore.QSettings.IniFormat)
         self.gui_save(settings)
         event.accept()
