@@ -23,7 +23,7 @@ When opening video files, orientation might differ.
 
 <b>Perspective Correction and Scale:</b>
 
-## Preparation for Motion Analysis: 
+## Preparation for Motion Analysis 
 Once a valid video file is opened, buttons for trackers, angles, and distances will be enabled. 
 
 <b>Tracker:</b>
@@ -55,7 +55,7 @@ CSRT is set as default. Median Flow, KCF, Boosting, MOSSE, MIL are other availab
 <b>Items:</b>
 * All trackers, angles, and distances are listed here. They can be disabled and enabled. Clicking with the right button over an item allows the user to edit or delete it. 
 
-## Running Motion Analysis: 
+## Running Motion Analysis
 
 Once trackers are placed, click the <img src="https://github.com/cps-lab-saga/motion-analysis-2d/assets/54865993/00982162-56ac-4ab3-babd-f63b5ec286b5" width="25">
  button to enable automatic motion tracking `T` using the defined algorithms. 
@@ -69,7 +69,7 @@ Once trackers are placed, click the <img src="https://github.com/cps-lab-saga/mo
 <b>Data Plots:</b>
 * This tab shows values for y and x throughout the analysed footage for trackers, angles, and distances. 
 
-## Saving and Exporting Data:
+## Saving and Exporting Data
 
 The software will create a temporary .json file within the folder where the analysed video is located. This file is used by the program as a log. It can be dragged and dropped into new videos to use the same, already set, tracking points. 
 
@@ -77,7 +77,7 @@ The software will create a temporary .json file within the folder where the anal
 
 * <img src="https://github.com/cps-lab-saga/motion-analysis-2d/assets/54865993/e29a8d24-60b8-4784-9ba4-d77340ac5b55" height="25"> Will export `V` tracking point coordinates and calculated angles and distances as a .csv file.
   
-## Menu: 
+## Menu
 
 Edit > Shortcuts `Ctrl+Shift+S`: Lists all keyboard shortcuts.
 
