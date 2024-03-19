@@ -71,7 +71,7 @@ Once trackers are placed, click the <img src="https://github.com/cps-lab-saga/mo
 
 ## Saving and Exporting Data
 
-The software will create a temporary .json file within the folder where the analysed video is located. This file is used by the program as a log. It can be dragged and dropped into new videos to use the same, already set, tracking points. 
+The software will create a temporary .json file within the folder where the analysed video is located. This file is used by the program as a log.
 
 * <img src="https://github.com/cps-lab-saga/motion-analysis-2d/assets/54865993/137f68e9-7740-469f-8bdb-fcdee466c16e" height="25"> Enabling Auto Save `A` maintains the temporary .json file, even after finishing processing a video. This file can be used to process data, and can be dragged and dropped into new videos to use the same, already set, tracking points.
 
