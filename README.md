@@ -28,7 +28,7 @@ Once a valid video file is opened, buttons for trackers, angles, and distances w
 
 <b>Tracker:</b>
 
-* <img src="https://github.com/cps-lab-saga/motion-analysis-2d/assets/54865993/26f721a8-daa6-4d73-8cfb-0db552b81b00" width="25"> Enables tracking placement. The first click places the tracking point. Subsequent clicks delimit the tracking box. After placement, a pop up window will appear, allowing the user to name the tracker, choose tracking algorithm and colour. The R key on the keyboard resets the trackers. 
+* <img src="https://github.com/cps-lab-saga/motion-analysis-2d/assets/54865993/26f721a8-daa6-4d73-8cfb-0db552b81b00" width="25"> Enables tracking placement. The first click places the tracking point. Subsequent clicks delimit the tracking box. After placement, a pop up window will appear, allowing the user to name the tracker, choose tracking algorithm and colour. The `R` key on the keyboard resets the trackers. 
 
 <sup><b>Tracking algorithms:</b>
 CSRT is set as default. Median Flow, KCF, Boosting, MOSSE, MIL are other available options. Please check other [documentation](https://broutonlab.com/blog/opencv-object-tracking/) on specificities of each tracker. Making the tracking point static is also an option.</sup>
