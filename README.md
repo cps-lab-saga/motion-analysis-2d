@@ -1,5 +1,7 @@
 # Motion Analysis 2D
 
+![Clip](screenshots/clip.gif "Clip")
+
 ## Installation
 
 Download latest release from [here](https://github.com/cps-lab-saga/motion-analysis-2d/releases).
