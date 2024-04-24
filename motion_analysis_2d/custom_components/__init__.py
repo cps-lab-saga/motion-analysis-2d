@@ -11,3 +11,4 @@ from .pie_item import PieItem
 from .spinbox_slider import SpinBoxSlider
 from .static_tracker import StaticTracker
 from .steps_enum import StepsEnum
+from .webview import WebView

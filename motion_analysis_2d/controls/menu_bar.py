@@ -2,7 +2,8 @@ from pathlib import Path
 
 import qtawesome as qta
 
-from motion_analysis_2d.defs import QtWidgets, Signal
+from motion_analysis_2d.custom_components import WebView
+from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import get_extensions_for_type
 from motion_analysis_2d.preferences_pane import ShortcutsWidget, VisualPreferencesWidget
 
@@ -43,6 +44,12 @@ class MenuBar(QtWidgets.QMenuBar):
         self.visual_pref_action.setShortcut("Ctrl+Shift+P")
         self.visual_pref_action.triggered.connect(self.open_visual_preference_widget)
         self.visual_preference_widget = None
+
+        self.edit_menu = self.addMenu("Help")
+        self.help_action = self.edit_menu.addAction(qta.icon("mdi6.help"), "Help")
+        self.help_action.setShortcut("Ctrl+Shift+H")
+        self.help_action.triggered.connect(self.open_help)
+        self.help_view = None
 
     def add_file(self):
         extensions = [f"*{x}" for x, _ in get_extensions_for_type("video")]
@@ -85,6 +92,17 @@ class MenuBar(QtWidgets.QMenuBar):
 
     def visual_preference_widget_closed(self):
         self.visual_preference_widget = None
+
+    def open_help(self):
+        self.help_view = WebView()
+        self.help_view.closed.connect(self.help_dialog_closed)
+        self.help_view.setUrl(
+            QtCore.QUrl("https://cps-lab-saga.github.io/motion-analysis-2d/")
+        )
+        self.help_view.show()
+
+    def help_dialog_closed(self):
+        self.help_view = None
 
 
 if __name__ == "__main__":

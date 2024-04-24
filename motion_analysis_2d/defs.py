@@ -10,14 +10,14 @@ module_name = project_name.replace("-", "_")
 
 
 try:
-    from PySide6 import QtGui, QtWidgets, QtCore
+    from PySide6 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
     from PySide6.QtCore import Signal, Slot
 
     backend_name = "pyside6"
 
 except ModuleNotFoundError:
     try:
-        from PyQt6 import QtGui, QtWidgets, QtCore
+        from PyQt6 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
         from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
 
         backend_name = "pyqt6"
@@ -63,6 +63,10 @@ def log_file() -> Path:
 
 def resource_dir() -> Path:
     return project_root() / module_name / "resource"
+
+
+def readme_file() -> Path:
+    return project_root() / "README.md"
 
 
 def open_file(file_path):

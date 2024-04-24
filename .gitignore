@@ -192,4 +192,4 @@ motion-analysis-2d.ini
 motion-analysis-2d.log
 
 
-.hugo_build.lock
+hugo/public
