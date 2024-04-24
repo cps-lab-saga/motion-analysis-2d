@@ -1,0 +1,33 @@
+baseURL = "https://cps-lab-saga.github.io/motion-analysis-2d/"
+languageCode = 'en-us'
+title = 'Motion Analysis 2D'
+theme = 'PaperMod'
+
+
+[params]
+description = "Tracking objects in 2D"
+author = "WL Yeoh"
+    [params.homeInfoParams]
+    Title = "Links"
+
+    [[params.socialIcons]]
+    name = "GitHub"
+    url = "https://github.com/cps-lab-saga/motion-analysis-2d"
+
+    [[params.socialIcons]]
+    name = "Home Page"
+    url = "https://cps.ip.is.saga-u.ac.jp/"
+
+
+[module]
+    [[module.mounts]]
+    source = "../README.md"
+    target = "content/_index.md"
+
+    [[module.mounts]]
+    source = '../screenshots'
+    target = 'static/screenshots'
+
+
+[markup.goldmark.renderer]
+unsafe= true
