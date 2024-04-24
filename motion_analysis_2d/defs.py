@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.5"
+app_version = "0.1.6"
 
 module_name = project_name.replace("-", "_")
 
