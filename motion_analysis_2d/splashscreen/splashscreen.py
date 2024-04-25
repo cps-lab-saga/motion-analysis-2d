@@ -63,7 +63,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.subtitle_label = QtWidgets.QLabel(self.frame)
         self.subtitle_label.setObjectName("SubTitleLabel")
         self.subtitle_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.subtitle_label.setText(f"Fukuda-Yeoh Lab 2023\t v{app_version}")
+        self.subtitle_label.setText(f"CPS Lab Saga 2024\t v{app_version}")
         self.frame_layout.addWidget(self.subtitle_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self.frame)
