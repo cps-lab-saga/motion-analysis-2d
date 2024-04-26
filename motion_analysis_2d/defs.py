@@ -58,7 +58,7 @@ def visual_preferences_file():
 
 
 def log_file() -> Path:
-    return Path.cwd() / f"{project_name}.log"
+    return project_root() / f"{project_name}.log"
 
 
 def resource_dir() -> Path:

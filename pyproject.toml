@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "motion-analysis-2d"
 version = "0.1.6"
-description = ""
+description = "Tracking objects in 2D"
 authors = ["wenliangyeoh <wlyeoh@cc.saga-u.ac.jp>"]
 readme = "README.md"
-packages = [{include = "motion_analysis_2d"}]
+packages = [{ include = "motion_analysis_2d" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
@@ -14,13 +14,14 @@ pyqtgraph = "~0.13"
 scipy = "~1.12"
 opencv-contrib-python-headless = "~4.9"
 superqt = "~0.6"
-camera-calibration = {git = "https://github.com/cps-lab-saga/camera-calibration", rev = "main"}
+camera-calibration = { git = "https://github.com/cps-lab-saga/camera-calibration", rev = "main" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
 pytest-qt = "^4.3"
 pyinstaller = "^6.3"
-pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
+pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
+briefcase = "^0.3.17"
 
 [build-system]
 requires = ["poetry-core"]
@@ -28,3 +29,43 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 motion_analysis_2d = "motion_analysis_2d.main_widget:main"
+
+[tool.briefcase]
+project_name = "motion-analysis-2d"
+bundle = "jp.ac.saga-u.is.ip.cps"
+version = "0.1.6"
+url = "https://cps-lab-saga.github.io/motion-analysis-2d/"
+license = "MIT License"
+
+[tool.briefcase.app.motion-analysis-2d]
+formal_name = "Motion Analysis 2D"
+description = "Tracking objects in 2D"
+icon = "./motion_analysis_2d/resource/motion_analysis_2d" # Briecase will choose the right extension depending the os (png,ico,...)
+sources = ['./motion_analysis_2d']
+requires = [
+    'camera-calibration @ git+https://github.com/cps-lab-saga/camera-calibration@51e529f7cf8765aafe4ac0700d1decfec743b427 ; python_version >= "3.11" and python_version < "3.13"',
+    'numpy==1.26.4 ; python_version >= "3.11" and python_version < "3.13"',
+    'opencv-contrib-python-headless==4.9.0.80 ; python_version >= "3.11" and python_version < "3.13"',
+    'packaging==24.0 ; python_version >= "3.11" and python_version < "3.13"',
+    'pygments==2.17.2; python_version >= "3.11" and python_version < "3.13"',
+    'pyqtgraph==0.13.6 ; python_version >= "3.11" and python_version < "3.13"',
+    'pyside6-addons==6.6.3.1; python_version >= "3.11" and python_version < "3.13"',
+    'pyside6-essentials==6.6.3.1; python_version >= "3.11" and python_version < "3.13"',
+    'pyside6==6.6.3.1 ; python_version >= "3.11" and python_version < "3.13"',
+    'qtawesome==1.3.1 ; python_version >= "3.11" and python_version < "3.13"',
+    'qtpy==2.4.1 ; python_version >= "3.11" and python_version < "3.13"',
+    'scipy==1.12.0 ; python_version >= "3.11" and python_version < "3.13"',
+    'shiboken6==6.6.3.1 ; python_version >= "3.11" and python_version < "3.13"',
+    'superqt==0.6.3 ; python_version >= "3.11" and python_version < "3.13"',
+    'typing-extensions==4.11.0 ; python_version >= "3.11" and python_version < "3.13"',
+]
+
+[tool.briefcase.app.motion-analysis-2d.macOS]
+requires = []
+
+[tool.briefcase.app.motion-analysis-2d.linux]
+requires = []
+system_requires = []
+
+[tool.briefcase.app.motion-analysis-2d.windows]
+requires = []

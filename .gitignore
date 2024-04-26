@@ -191,5 +191,7 @@ cython_debug/
 motion-analysis-2d.ini
 motion-analysis-2d.log
 
-
 hugo/public
+
+logs
+motion_analysis_2d.dist-info
