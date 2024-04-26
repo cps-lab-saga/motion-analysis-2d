@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "motion-analysis-2d"
-version = "0.1.6"
+version = "0.1.7"
 description = "Tracking objects in 2D"
 authors = ["wenliangyeoh <wlyeoh@cc.saga-u.ac.jp>"]
 readme = "README.md"
@@ -33,7 +33,7 @@ motion_analysis_2d = "motion_analysis_2d.main_widget:main"
 [tool.briefcase]
 project_name = "motion-analysis-2d"
 bundle = "jp.ac.saga-u.is.ip.cps"
-version = "0.1.6"
+version = "0.1.7"
 url = "https://cps-lab-saga.github.io/motion-analysis-2d/"
 license = "MIT License"
 
@@ -43,7 +43,7 @@ description = "Tracking objects in 2D"
 icon = "./motion_analysis_2d/resource/motion_analysis_2d" # Briecase will choose the right extension depending the os (png,ico,...)
 sources = ['./motion_analysis_2d']
 requires = [
-    'camera-calibration @ git+https://github.com/cps-lab-saga/camera-calibration@51e529f7cf8765aafe4ac0700d1decfec743b427 ; python_version >= "3.11" and python_version < "3.13"',
+    'camera-calibration @ git+https://github.com/cps-lab-saga/camera-calibration@b5f06ed187c550e4d3e32ae4529006d4df68ee58 ; python_version >= "3.11" and python_version < "3.13"',
     'numpy==1.26.4 ; python_version >= "3.11" and python_version < "3.13"',
     'opencv-contrib-python-headless==4.9.0.80 ; python_version >= "3.11" and python_version < "3.13"',
     'packaging==24.0 ; python_version >= "3.11" and python_version < "3.13"',
@@ -56,7 +56,7 @@ requires = [
     'qtpy==2.4.1 ; python_version >= "3.11" and python_version < "3.13"',
     'scipy==1.12.0 ; python_version >= "3.11" and python_version < "3.13"',
     'shiboken6==6.6.3.1 ; python_version >= "3.11" and python_version < "3.13"',
-    'superqt==0.6.3 ; python_version >= "3.11" and python_version < "3.13"',
+    'superqt==0.6.4 ; python_version >= "3.11" and python_version < "3.13"',
     'typing-extensions==4.11.0 ; python_version >= "3.11" and python_version < "3.13"',
 ]
 

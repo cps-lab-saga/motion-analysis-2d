@@ -115,7 +115,7 @@ QtAwesome = "~1.3"
 type = "git"
 url = "https://github.com/cps-lab-saga/camera-calibration"
 reference = "main"
-resolved_reference = "51e529f7cf8765aafe4ac0700d1decfec743b427"
+resolved_reference = "b5f06ed187c550e4d3e32ae4529006d4df68ee58"
 
 [[package]]
 name = "certifi"
@@ -1216,13 +1216,13 @@ files = [
 
 [[package]]
 name = "superqt"
-version = "0.6.3"
+version = "0.6.4"
 description = "Missing widgets and components for PyQt/PySide"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "superqt-0.6.3-py3-none-any.whl", hash = "sha256:a54fe70b0b814bc9a9c68f35e0ad827c7acfee8c6e78d9f30ab8811e181ef082"},
-    {file = "superqt-0.6.3.tar.gz", hash = "sha256:f4a6bf76cf5b4d33dce3a58c2685cb32e395d96d16479c19381b09df254e47e0"},
+    {file = "superqt-0.6.4-py3-none-any.whl", hash = "sha256:c932b4c0052a6cbd2c08fb429f60d93c6a2242557a019d5a42a86dd8568297b2"},
+    {file = "superqt-0.6.4.tar.gz", hash = "sha256:e5c6dbef8aa549580d6d805e14ba4f85b9ae3a379bf083b27e2276d55208d03a"},
 ]
 
 [package.dependencies]
@@ -1240,7 +1240,7 @@ font-mi6 = ["fonticon-materialdesignicons6"]
 font-mi7 = ["fonticon-materialdesignicons7"]
 iconify = ["pyconify (>=0.1.4)"]
 pyqt5 = ["pyqt5"]
-pyqt6 = ["pyqt6"]
+pyqt6 = ["pyqt6 (<6.7)"]
 pyside2 = ["pyside2"]
 pyside6 = ["pyside6 (!=6.5.0,!=6.5.1,!=6.6.2)"]
 quantity = ["pint"]
