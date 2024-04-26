@@ -29,36 +29,31 @@ except ModuleNotFoundError:
         backend_name = "pyqt5"
 
 
+def config_dir() -> Path:
+    d = Path.home() / f".{project_name}"
+    d.mkdir(exist_ok=True)
+    return d
+
+
 def project_root() -> Path:
     Path(__file__).parent.parent.mkdir(exist_ok=True, parents=True)
     return Path(__file__).parent.parent
 
 
-def settings_file(file_name) -> Path:
-    p = project_root()
-    if "Temp" in p.parts:
-        f = (
-            p.parents[len(p.parts) - 2 - p.parts.index("Temp")]
-            / f"{project_name}"
-            / file_name
-        )
-    else:
-        f = project_root() / file_name
-
-    f.parent.mkdir(exist_ok=True, parents=True)
-    return f
+def ui_file() -> Path:
+    return config_dir() / "ma2d_ui_restore.ini"
 
 
 def shortcuts_file():
-    return settings_file("ma2d_shortcuts.json")
+    return config_dir() / "ma2d_shortcuts.json"
 
 
 def visual_preferences_file():
-    return settings_file("ma2d_visual.json")
+    return config_dir() / "ma2d_visual.json"
 
 
 def log_file() -> Path:
-    return project_root() / f"{project_name}.log"
+    return config_dir() / f"{project_name}.log"
 
 
 def resource_dir() -> Path:
@@ -77,6 +72,3 @@ def open_file(file_path):
     else:  # linux variants
         subprocess.call(("xdg-open", file_path))
     os.startfile(file_path)
-
-
-config_file_name = f"{project_name}-config.ini"

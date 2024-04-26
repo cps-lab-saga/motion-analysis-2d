@@ -9,7 +9,7 @@ from motion_analysis_2d.defs import (
     QtCore,
     QtGui,
     QtWidgets,
-    settings_file,
+    ui_file,
     resource_dir,
     shortcuts_file,
     visual_preferences_file,
@@ -169,7 +169,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.splashscreen.set_progress(90)
 
         # load settings from previous session
-        self.settings_file = settings_file("ma2d_ui_restore.ini")
+        self.settings_file = ui_file()
         if self.settings_file.is_file():
             settings = QtCore.QSettings(
                 str(self.settings_file), QtCore.QSettings.IniFormat
