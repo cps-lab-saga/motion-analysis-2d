@@ -15,7 +15,6 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         self.setFixedSize(500, 300)
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         self.move(  # move to centre of screen
@@ -25,7 +24,6 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         self.frame = QtWidgets.QFrame(self)
         self.frame.setObjectName("Frame")
-        self.frame.setAttribute(QtCore.Qt.WA_StyledBackground)
         self.frame_layout = QtWidgets.QVBoxLayout(self.frame)
         self.main_layout.addWidget(self.frame)
 
@@ -58,6 +56,11 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.title_label.setText("2D Motion\nAnalysis")
         title_row.addWidget(self.title_label)
 
+        self.title_font = QtGui.QFont()
+        self.title_font.setBold(True)
+        self.title_font.setPixelSize(48)
+        self.title_label.setFont(self.title_font)
+
         title_row.addStretch()
 
         self.subtitle_label = QtWidgets.QLabel(self.frame)
@@ -71,21 +74,8 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.progress_bar.setMaximum(length)
         self.frame_layout.addWidget(self.progress_bar)
 
-        self.frame.setStyleSheet(
-            """
-            #Frame {
-                background-color: #efefef;
-                border-radius: 20px;
-                border-color: white;
-            }
-            """
-        )
-        self.title_label.setStyleSheet(
-            'font-family: "Arial";'
-            "font-weight: Bold;"
-            "font-size: 48px;"
-            "color: black;"
-        )
+        self.frame_layout.addStretch()
+
         self.progress_bar.setStyleSheet(
             """
             QProgressBar {

@@ -38,11 +38,15 @@ class FrameWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
 
         self.setAcceptDrops(True)
+
         pg.setConfigOptions(
             background=None,
             foreground=self.palette().color(self.foregroundRole()),
             antialias=True,
         )
+        app = QtWidgets.QApplication.instance()
+        app.styleHints().colorSchemeChanged.connect(self.color_scheme_changed)
+
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.scaling = 1
 
@@ -490,6 +494,14 @@ class FrameWidget(QtWidgets.QWidget):
                 self.image_file_dropped.emit(img)
         else:
             super().dropEvent(e)
+
+    def color_scheme_changed(self, color_scheme):
+        pg.setConfigOptions(
+            background=None,
+            foreground=self.palette().color(self.foregroundRole()),
+            antialias=True,
+        )
+        self.fig.setBackground(None)
 
 
 class MouseModes(Enum):

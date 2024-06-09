@@ -103,7 +103,7 @@ class OrientDock(BaseDock):
         self.flip = next(self.flip_cycle)
         self.update_flip_button()
         logging.info(f"Flip changed to {self.flip}")
-        self.orient_settings_updated.emit()
+        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_flip_button(self):
         self.flip_button.setIcon(self.flip_icons[self.flip])
