@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import cv2 as cv
 import numpy as np
 import qtawesome as qta
 
@@ -116,6 +117,16 @@ class LoadExtrinsicDock(BaseDock):
             self.cal_ok, self.transformation_matrix, self.output_size
         )
         self.scaling_updated.emit(self.scaling)
+
+    def change_perspective(self, frame):
+        if self.transformation_matrix is not None:
+            return (
+                cv.warpPerspective(frame, self.transformation_matrix, self.output_size)
+                if self.cal_ok
+                else frame
+            )
+        else:
+            return frame
 
     def add_perspective_button_toggled(self, checked):
         if checked:

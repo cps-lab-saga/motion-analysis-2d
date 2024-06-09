@@ -135,6 +135,9 @@ class OrientDock(BaseDock):
         elif settings == "hv_flip":
             return cv.flip(img, -1)
 
+    def reorient(self, frame):
+        return self.flip_img(self.rotate_img(frame))
+
     def gui_save(self, settings):
         settings.setValue(f"{self.save_heading}/rotate_settings", self.rotation)
         settings.setValue(f"{self.save_heading}/flip_settings", self.flip)

@@ -10,6 +10,7 @@ from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import (
     get_undistort_funcs,
     load_intrinsic,
+    undistort_map,
 )
 
 
@@ -137,6 +138,13 @@ class LoadIntrinsicDock(BaseDock):
             self.intrinsic_settings_updated.emit(self.cal_ok, self.map_x, self.map_y)
         else:
             self.intrinsic_settings_updated.emit(False, None, None)
+
+    def undistort(self, frame):
+        if not self.cal_ok:
+            return frame
+        if self.frame_shape is None:
+            self.set_frame_shape(frame.shape)
+        return undistort_map(frame, self.map_x, self.map_y)
 
     def start_calibration_widget(self):
         calibration_widget = CalibrationWidget(self)

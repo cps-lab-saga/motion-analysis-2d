@@ -417,7 +417,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 sleep(0.1)
 
             self.stream_worker.set_orient_prop(flip, rotate)
-            self.frame_shape_changed()
+        self.frame_shape_changed()
 
     def intrinsic_settings_updated(self, cal_ok, map_x, map_y):
         if self.stream_worker is not None:
@@ -426,7 +426,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 sleep(0.1)
 
             self.stream_worker.set_intrinsic_prop(cal_ok, map_x, map_y)
-            self.frame_shape_changed()
+        self.frame_shape_changed()
 
     def extrinsic_settings_updated(self, cal_ok, trans_mat, output_size):
         if self.stream_worker is not None:
@@ -435,7 +435,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 sleep(0.1)
 
             self.stream_worker.set_extrinsic_prop(cal_ok, trans_mat, output_size)
-            self.frame_shape_changed()
+        self.frame_shape_changed()
 
     def frame_shape_changed(self):
         if self.stream_worker is not None:
@@ -742,8 +742,8 @@ class MainWidget(QtWidgets.QMainWindow):
         else:
             self.docks["Extrinsic"].add_perspective_button.setDisabled(False)
 
-        frame = self.docks["Intrinsic"].undistort_map(frame)
-        frame = self.docks["Orient"].orient_img(frame)
+        frame = self.docks["Intrinsic"].undistort(frame)
+        frame = self.docks["Orient"].reorient(frame)
         frame = self.docks["Extrinsic"].change_perspective(frame)
         self.frame_widget.set_image(frame)
         self.frame_widget.auto_range()
