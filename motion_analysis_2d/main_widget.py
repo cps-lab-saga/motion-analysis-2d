@@ -108,8 +108,15 @@ class MainWidget(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.docks["DataPlot"])
         self.docks["Files"].video_file_changed.connect(self.video_file_changed)
         self.docks["Files"].batch_button_toggled.connect(self.batch_toggled)
-        self.docks["Intrinsic"].settings_updated.connect(self.frame_shape_changed)
-        self.docks["Extrinsic"].settings_updated.connect(self.frame_shape_changed)
+        self.docks["Orient"].orient_settings_updated.connect(
+            self.orient_settings_updated
+        )
+        self.docks["Intrinsic"].intrinsic_settings_updated.connect(
+            self.intrinsic_settings_updated
+        )
+        self.docks["Extrinsic"].extrinsic_settings_updated.connect(
+            self.extrinsic_settings_updated
+        )
         self.docks["Extrinsic"].add_perspective_started.connect(
             self.start_add_perspective
         )
@@ -117,7 +124,6 @@ class MainWidget(QtWidgets.QMainWindow):
             self.new_settings_ended
         )
         self.docks["Extrinsic"].add_perspective_button.setDisabled(True)
-        self.docks["Orient"].settings_updated.connect(self.frame_shape_changed)
         self.docks["Items"].show_item.connect(self.show_item)
         self.docks["Items"].hide_item.connect(self.hide_item)
         self.docks["Items"].edit_item_suggested.connect(self.edit_item_suggested)
@@ -278,9 +284,6 @@ class MainWidget(QtWidgets.QMainWindow):
         self.stream_worker = StreamWorker(
             path,
             self.stream_queue,
-            self.docks["Intrinsic"],
-            self.docks["Extrinsic"],
-            self.docks["Orient"],
         )
         self.stream_worker.moveToThread(self.stream_thread)
         self.stream_thread.started.connect(self.stream_worker.stream)
@@ -289,10 +292,11 @@ class MainWidget(QtWidgets.QMainWindow):
         self.stream_thread.start()
         self.streaming = True
 
-    def set_stream_props(self, frame_rate, no_of_frames):
+    def set_stream_props(self, frame_shape, frame_rate, no_of_frames):
         self.tracking_worker.set_props(no_of_frames)
         self.media_controls.set_seeking_props(no_of_frames - 2)
         self.docks["DataPlot"].set_frame_bound((0, no_of_frames - 2))
+        self.docks["Intrinsic"].set_frame_shape(frame_shape)
 
     def play_video(self, play):
         if self.stream_worker is not None:
@@ -405,6 +409,33 @@ class MainWidget(QtWidgets.QMainWindow):
     def move_frame_backwards(self):
         if self.stream_worker is not None:
             self.stream_worker.move_frame_backwards()
+
+    def orient_settings_updated(self, flip, rotate):
+        if self.stream_worker is not None:
+            self.play_video(False)
+            while not self.stream_queue.empty():
+                sleep(0.1)
+
+            self.stream_worker.set_orient_prop(flip, rotate)
+            self.frame_shape_changed()
+
+    def intrinsic_settings_updated(self, cal_ok, map_x, map_y):
+        if self.stream_worker is not None:
+            self.play_video(False)
+            while not self.stream_queue.empty():
+                sleep(0.1)
+
+            self.stream_worker.set_intrinsic_prop(cal_ok, map_x, map_y)
+            self.frame_shape_changed()
+
+    def extrinsic_settings_updated(self, cal_ok, trans_mat, output_size):
+        if self.stream_worker is not None:
+            self.play_video(False)
+            while not self.stream_queue.empty():
+                sleep(0.1)
+
+            self.stream_worker.set_extrinsic_prop(cal_ok, trans_mat, output_size)
+            self.frame_shape_changed()
 
     def frame_shape_changed(self):
         if self.stream_worker is not None:
@@ -819,6 +850,7 @@ def main():
     setup_logger(logging.INFO)
 
     app = QtWidgets.QApplication([])
+
     win = MainWidget()
     win.show()
 

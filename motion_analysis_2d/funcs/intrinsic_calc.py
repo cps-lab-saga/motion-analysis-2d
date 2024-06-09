@@ -6,8 +6,6 @@ from pathlib import Path
 import cv2 as cv
 import numpy as np
 
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
 
 def find_points(img, nx, ny, pattern="Checkerboard", spacing=1):
     objpoints = np.zeros((nx * ny, 3), np.float32)
@@ -21,7 +19,13 @@ def find_points(img, nx, ny, pattern="Checkerboard", spacing=1):
         if not ret:
             return img, ret, None, None
 
-        imgpoints = cv.cornerSubPix(gray, corners, (5, 5), (-1, -1), criteria)
+        imgpoints = cv.cornerSubPix(
+            gray,
+            corners,
+            (5, 5),
+            (-1, -1),
+            criteria=(cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001),
+        )
         return img, ret, objpoints, imgpoints
 
     elif pattern == "Circles":
@@ -54,34 +58,30 @@ def calibrate_camera(img_files, nx=9, ny=6):
         if ret:
             objpoints.append(objp)
 
-            corners2 = cv.cornerSubPix(gray, corners, (5, 5), (-1, -1), criteria)
+            corners2 = cv.cornerSubPix(
+                gray,
+                corners,
+                (5, 5),
+                (-1, -1),
+                criteria=(cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001),
+            )
             imgpoints.append(corners2)
 
     return cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
 
-def undistort(img, intrinsic_matrix, distortion_coeffs):
-    h, w = img.shape[:2]
-    newcameramtx, roi = cv.getOptimalNewCameraMatrix(
-        intrinsic_matrix, distortion_coeffs, (w, h), 1, (w, h)
-    )
-
-    dst = cv.undistort(img, intrinsic_matrix, distortion_coeffs, None, newcameramtx)
-
-    # # crop the image
-    # x, y, w, h = roi
-    # dst = dst[y:y + h, x:x + w]
-
-    return dst
-
-
-def get_undistort_funcs(shape, intrinsic_matrix, distortion_coeffs, fisheye=False):
+def get_undistort_funcs(
+    shape, intrinsic_matrix, distortion_coeffs, fisheye=False, scale=1.0
+):
     h, w = shape[:2]
 
     if fisheye:
         newcameramtx = cv.fisheye.estimateNewCameraMatrixForUndistortRectify(
             intrinsic_matrix, distortion_coeffs, (w, h), np.eye(3), balance=0
         )
+        newcameramtx[0, 0] = newcameramtx[0, 0] * scale
+        newcameramtx[1, 1] = newcameramtx[1, 1] * scale
+
         map_x, map_y = cv.fisheye.initUndistortRectifyMap(
             intrinsic_matrix,
             distortion_coeffs,
@@ -98,6 +98,9 @@ def get_undistort_funcs(shape, intrinsic_matrix, distortion_coeffs, fisheye=Fals
             1,
             (w, h),
         )
+        newcameramtx[0, 0] = newcameramtx[0, 0] * scale
+        newcameramtx[1, 1] = newcameramtx[1, 1] * scale
+
         map_x, map_y = cv.initUndistortRectifyMap(
             intrinsic_matrix,
             distortion_coeffs,
@@ -108,6 +111,53 @@ def get_undistort_funcs(shape, intrinsic_matrix, distortion_coeffs, fisheye=Fals
         )
 
     return map_x, map_y, newcameramtx
+
+
+def undistort_map(img, map_x, map_y):
+    return cv.remap(img, map_x, map_y, cv.INTER_LINEAR)
+
+
+def undistort_points(
+    points, intrinsic_matrix, distortion_coeffs, newcameramtx, fisheye=False
+):
+    if fisheye:
+        return cv.fisheye.undistortPoints(
+            points, intrinsic_matrix, distortion_coeffs, None, newcameramtx
+        )
+    else:
+        return cv.undistortPoints(
+            points, intrinsic_matrix, distortion_coeffs, None, newcameramtx
+        )
+
+
+def redistort_points(
+    points, intrinsic_matrix, distortion_coeffs, newcameramtx, fisheye=False
+):
+    scaled_points = np.vstack(
+        [
+            (points[:, 0] - newcameramtx[0, 2]) / newcameramtx[0, 0],
+            (points[:, 1] - newcameramtx[1, 2]) / newcameramtx[1, 1],
+            np.zeros(points.shape[0]),
+        ]
+    ).T
+    if fisheye:
+        distorted_points, _ = cv.fisheye.projectPoints(
+            scaled_points,
+            np.zeros(3),
+            np.zeros(3),
+            intrinsic_matrix,
+            distortion_coeffs,
+        )
+    else:
+        distorted_points, _ = cv.projectPoints(
+            scaled_points,
+            np.zeros(3),
+            np.zeros(3),
+            intrinsic_matrix,
+            distortion_coeffs,
+            aspectRatio=newcameramtx[0, 0] / newcameramtx[1, 1],
+        )
+    return distorted_points
 
 
 if __name__ == "__main__":

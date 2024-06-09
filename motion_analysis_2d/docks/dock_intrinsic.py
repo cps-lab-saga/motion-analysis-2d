@@ -1,18 +1,20 @@
 import logging
 from pathlib import Path
 
-import cv2 as cv
 import numpy as np
 import qtawesome as qta
 from camera_calibration import CalibrationWidget
 
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
 from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.funcs import get_undistort_funcs, load_intrinsic
+from motion_analysis_2d.funcs import (
+    get_undistort_funcs,
+    load_intrinsic,
+)
 
 
 class LoadIntrinsicDock(BaseDock):
-    settings_updated = Signal()
+    intrinsic_settings_updated = Signal(bool, object, object)
 
     def __init__(self):
         super().__init__()
@@ -24,10 +26,20 @@ class LoadIntrinsicDock(BaseDock):
         self.D = None
         self.fisheye = None
         self.map_x, self.map_y, self.new_K = None, None, None
-        self.img_shape = None
+        self.frame_shape = None
+        self.mutex = QtCore.QMutex()
 
-        row = QtWidgets.QHBoxLayout()
-        self.dock_layout.addLayout(row)
+        grid = QtWidgets.QGridLayout()
+        self.dock_layout.addLayout(grid)
+
+        self.icon_size = 18
+        self.cal_status_label = QtWidgets.QLabel(self)
+        self.cross_icon = qta.icon("mdi.close-circle", color="red")
+        self.tick_icon = qta.icon("mdi.check-circle", color="green")
+        self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
+        self.cal_status_label.setToolTip("Calibration unsuccessful.")
+        grid.addWidget(self.cal_status_label, 0, 0)
+
         self.intrinsic_cal_file_edit = PathEdit("file", self)
         self.intrinsic_cal_file_edit.acceptDrops()
         self.intrinsic_cal_file_edit.setSizePolicy(
@@ -35,7 +47,7 @@ class LoadIntrinsicDock(BaseDock):
         )
         self.intrinsic_cal_file_edit.textChanged.connect(self.update_intrinsic_cal)
         self.intrinsic_cal_file_edit.setToolTip("Calibration file path.")
-        row.addWidget(self.intrinsic_cal_file_edit)
+        grid.addWidget(self.intrinsic_cal_file_edit, 0, 1)
 
         self.dir_button = QtWidgets.QPushButton(self)
         self.dir_button.setText("…")
@@ -44,15 +56,15 @@ class LoadIntrinsicDock(BaseDock):
         self.dir_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.dir_button.clicked.connect(self.set_dir)
         self.dir_button.setToolTip("Get calibration file.")
-        row.addWidget(self.dir_button)
+        grid.addWidget(self.dir_button, 0, 2)
 
-        self.icon_size = 18
-        self.cal_status_label = QtWidgets.QLabel(self)
-        self.cross_icon = qta.icon("mdi.close-circle", color="red")
-        self.tick_icon = qta.icon("mdi.check-circle", color="green")
-        self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
-        self.cal_status_label.setToolTip("Calibration unsuccessful.")
-        row.insertWidget(0, self.cal_status_label)
+        self.scale_spinbox = QtWidgets.QDoubleSpinBox(self)
+        self.scale_spinbox.setRange(0.1, 2.0)
+        self.scale_spinbox.setDecimals(1)
+        self.scale_spinbox.setSingleStep(0.1)
+        self.scale_spinbox.setValue(1)
+        self.scale_spinbox.valueChanged.connect(self.update_intrinsic_cal)
+        grid.addWidget(self.scale_spinbox, 1, 1)
 
         self.add_calibration_button = QtWidgets.QPushButton(self)
         # self.select_points_button.setText("Select Points")
@@ -60,14 +72,17 @@ class LoadIntrinsicDock(BaseDock):
         self.add_calibration_button.setFlat(True)
         self.add_calibration_button.setIcon(qta.icon("mdi6.checkerboard"))
         self.add_calibration_button.clicked.connect(self.start_calibration_widget)
-        row.addWidget(self.add_calibration_button)
+        grid.addWidget(self.add_calibration_button, 0, 3)
 
         self.dock_layout.addStretch()
 
     def set_dir(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self)
         if file_name:
+            self.intrinsic_cal_file_edit.blockSignals(True)
             self.intrinsic_cal_file_edit.setText(file_name)
+            self.intrinsic_cal_file_edit.blockSignals(False)
+            self.update_intrinsic_cal()
 
     def set_cal_ok(self):
         self.cal_ok = True
@@ -85,18 +100,23 @@ class LoadIntrinsicDock(BaseDock):
 
         self.map_x, self.map_y, self.new_K = None, None, None
 
-    def set_image_shape(self, shape):
-        self.img_shape = shape
+    def set_frame_shape(self, shape):
+        self.frame_shape = shape
         self.update_intrinsic_cal()
 
+    @property
+    def scale(self):
+        return self.scale_spinbox.value()
+
     def update_intrinsic_cal(self):
+        self.mutex.lock()
         try:
             file_name = self.intrinsic_cal_file_edit.text()
             self.K, self.D, self.fisheye = load_intrinsic(Path(file_name).resolve())
             self.set_cal_ok()
-            if self.img_shape is not None:
+            if self.frame_shape is not None:
                 self.map_x, self.map_y, self.new_K = get_undistort_funcs(
-                    self.img_shape, self.K, self.D, self.fisheye
+                    self.frame_shape, self.K, self.D, self.fisheye, self.scale
                 )
             logging.info(f"Intrinsic calibration load successful. File: {file_name}")
             logging_repr = (
@@ -105,62 +125,18 @@ class LoadIntrinsicDock(BaseDock):
             logging.info(f"K: {logging_repr(self.K)}")
             logging.info(f"D: {logging_repr(self.D)}")
             logging.info(f"fisheye: {self.fisheye}")
-            if self.img_shape is not None:
+            if self.frame_shape is not None:
                 logging.info(f"new_K: {logging_repr(self.new_K)}")
 
         except Exception as e:
             self.set_cal_bad()
             logging.warning(f"Intrinsic calibration load unsuccessful. {e}")
-        self.settings_updated.emit()
+        self.mutex.unlock()
 
-    def undistort_map(self, img):
-        if not self.cal_ok:
-            return img
-        if self.img_shape is None:
-            self.set_image_shape(img.shape)
-
-        return cv.remap(img, self.map_x, self.map_y, cv.INTER_LINEAR)
-
-    def undistort_points(self, points):
-        if self.cal_ok:
-            if self.fisheye:
-                return cv.fisheye.undistortPoints(
-                    points, self.K, self.D, None, self.new_K
-                )
-            else:
-                return cv.undistortPoints(points, self.K, self.D, None, self.new_K)
+        if self.frame_shape and self.cal_ok:
+            self.intrinsic_settings_updated.emit(self.cal_ok, self.map_x, self.map_y)
         else:
-            return points
-
-    def redistort_points(self, points):
-        if not self.cal_ok:
-            return points
-
-        scaled_points = np.vstack(
-            [
-                (points[:, 0] - self.new_K[0, 2]) / self.new_K[0, 0],
-                (points[:, 1] - self.new_K[1, 2]) / self.new_K[1, 1],
-                np.zeros(points.shape[0]),
-            ]
-        ).T
-        if self.fisheye:
-            distorted_points, _ = cv.fisheye.projectPoints(
-                scaled_points,
-                np.zeros(3),
-                np.zeros(3),
-                self.K,
-                self.D,
-            )
-        else:
-            distorted_points, _ = cv.projectPoints(
-                scaled_points,
-                np.zeros(3),
-                np.zeros(3),
-                self.K,
-                self.D,
-                aspectRatio=self.new_K[0, 0] / self.new_K[1, 1],
-            )
-        return distorted_points
+            self.intrinsic_settings_updated.emit(False, None, None)
 
     def start_calibration_widget(self):
         calibration_widget = CalibrationWidget(self)

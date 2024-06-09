@@ -9,7 +9,7 @@ from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 
 
 class OrientDock(BaseDock):
-    settings_updated = Signal()
+    orient_settings_updated = Signal(str, str)
 
     def __init__(self):
         super().__init__()
@@ -89,7 +89,7 @@ class OrientDock(BaseDock):
         self.rotation = next(self.rot_cycle)
         self.update_rotate_button()
         logging.info(f"Rotation changed to {self.rotation}")
-        self.settings_updated.emit()
+        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_rotate_button(self):
         self.rotate_button.setIcon(self.rotate_icons[self.rotation])
@@ -103,7 +103,7 @@ class OrientDock(BaseDock):
         self.flip = next(self.flip_cycle)
         self.update_flip_button()
         logging.info(f"Flip changed to {self.flip}")
-        self.settings_updated.emit()
+        self.orient_settings_updated.emit()
 
     def update_flip_button(self):
         self.flip_button.setIcon(self.flip_icons[self.flip])
@@ -134,9 +134,6 @@ class OrientDock(BaseDock):
             return cv.flip(img, 0)
         elif settings == "hv_flip":
             return cv.flip(img, -1)
-
-    def orient_img(self, img):
-        return self.flip_img(self.rotate_img(img))
 
     def gui_save(self, settings):
         settings.setValue(f"{self.save_heading}/rotate_settings", self.rotation)

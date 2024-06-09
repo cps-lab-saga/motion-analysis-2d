@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 
-import cv2 as cv
 import numpy as np
 import qtawesome as qta
 
@@ -11,7 +10,8 @@ from motion_analysis_2d.funcs import load_extrinsic, save_perspective_points
 
 
 class LoadExtrinsicDock(BaseDock):
-    settings_updated = Signal()
+    extrinsic_settings_updated = Signal(bool, object, object)
+    scaling_updated = Signal(float)
     add_perspective_started = Signal()
     add_perspective_finished = Signal()
 
@@ -21,7 +21,12 @@ class LoadExtrinsicDock(BaseDock):
         self.setWindowTitle("Perspective Correction and Scale")
 
         self.cal_ok = False
-        self.M, self.mask, self.output_size, self.scaling = None, None, None, 1
+        self.transformation_matrix, self.mask, self.output_size, self.scaling = (
+            None,
+            None,
+            None,
+            1,
+        )
 
         row = QtWidgets.QHBoxLayout()
         self.dock_layout.addLayout(row)
@@ -77,38 +82,40 @@ class LoadExtrinsicDock(BaseDock):
         self.cal_status_label.setPixmap(self.cross_icon.pixmap(self.icon_size))
         self.cal_status_label.setToolTip("Calibration unsuccessful.")
 
-        self.M, self.mask, self.output_size, self.scaling = None, None, None, 1
+        self.transformation_matrix, self.mask, self.output_size, self.scaling = (
+            None,
+            None,
+            None,
+            1,
+        )
 
     def update_extrinsic_cal(self):
         try:
             file_name = self.extrinsic_cal_file_edit.text()
-            self.M, self.mask, self.output_size, self.scaling = load_extrinsic(
-                Path(file_name).resolve()
-            )
+            (
+                self.transformation_matrix,
+                self.mask,
+                self.output_size,
+                self.scaling,
+            ) = load_extrinsic(Path(file_name).resolve())
             self.set_cal_ok()
             logging.info(f"Extrinsic calibration load successful. File: {file_name}")
-            if self.M is not None:
+            if self.transformation_matrix is not None:
                 logging_repr = (
                     lambda x: np.array_repr(x).replace(" ", "").replace("\n", " ")
                 )
-                logging.info(f"M: {logging_repr(self.M)}")
+                logging.info(f"M: {logging_repr(self.transformation_matrix)}")
                 logging.info(f"output_size: {logging_repr(self.output_size)}")
             logging.info(f"scaling: {self.scaling}")
 
         except Exception as e:
             self.set_cal_bad()
             logging.warning(f"Extrinsic calibration load unsuccessful. {e}")
-        self.settings_updated.emit()
 
-    def change_perspective(self, img):
-        if self.M is not None:
-            return (
-                cv.warpPerspective(img, self.M, self.output_size)
-                if self.cal_ok
-                else img
-            )
-        else:
-            return img
+        self.extrinsic_settings_updated.emit(
+            self.cal_ok, self.transformation_matrix, self.output_size
+        )
+        self.scaling_updated.emit(self.scaling)
 
     def add_perspective_button_toggled(self, checked):
         if checked:

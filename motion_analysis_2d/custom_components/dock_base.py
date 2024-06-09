@@ -11,8 +11,6 @@ class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):
         self.setObjectName(self.__class__.__name__)
         self.save_heading = self.__class__.__name__
 
-        self.setStyleSheet(style_sheet)
-
         self.dock_contents = QtWidgets.QFrame(parent=self)
         self.dock_contents.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding,
@@ -40,14 +38,6 @@ class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):
             self.dock_layout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
             self.layout_direction_changed.emit(QtWidgets.QBoxLayout.TopToBottom)
 
-
-style_sheet = """
-QDockWidget::title {
-    text-align: left; /* align the text to the left */
-    background: lightgray;
-    padding-left: 5px;
-}
-"""
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
