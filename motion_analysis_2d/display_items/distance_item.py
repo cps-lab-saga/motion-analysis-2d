@@ -1,7 +1,6 @@
 import logging
 
 import pyqtgraph as pg
-
 from motion_analysis_2d.custom_components import tab10_rgb_cycle, ArrowItem
 from motion_analysis_2d.dialogs import DistanceDialog
 from .base_item_display import BaseDisplayItem

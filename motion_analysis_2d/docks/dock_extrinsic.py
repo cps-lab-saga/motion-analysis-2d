@@ -4,17 +4,16 @@ from pathlib import Path
 import cv2 as cv
 import numpy as np
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import load_extrinsic, save_perspective_points
+from qtpy import QtCore, QtWidgets
 
 
 class LoadExtrinsicDock(BaseDock):
-    extrinsic_settings_updated = Signal(bool, object, object)
-    scaling_updated = Signal(float)
-    add_perspective_started = Signal()
-    add_perspective_finished = Signal()
+    extrinsic_settings_updated = QtCore.Signal(bool, object, object)
+    scaling_updated = QtCore.Signal(float)
+    add_perspective_started = QtCore.Signal()
+    add_perspective_finished = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -34,7 +33,7 @@ class LoadExtrinsicDock(BaseDock):
         self.extrinsic_cal_file_edit = PathEdit("file", self)
         self.extrinsic_cal_file_edit.acceptDrops()
         self.extrinsic_cal_file_edit.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+            QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum
         )
         self.extrinsic_cal_file_edit.textChanged.connect(self.update_extrinsic_cal)
         self.extrinsic_cal_file_edit.setToolTip("Calibration file path.")

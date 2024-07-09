@@ -6,8 +6,6 @@ from pathlib import Path
 import cv2 as cv
 import numpy as np
 import pyqtgraph as pg
-
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.display_items import (
     TrackerItem,
     AngleItem,
@@ -22,17 +20,18 @@ from motion_analysis_2d.funcs import (
 from motion_analysis_2d.preferences_pane import (
     visual_preferences as default_preferences,
 )
+from qtpy import QtCore, QtWidgets
 
 
 class FrameWidget(QtWidgets.QWidget):
-    new_item_suggested = Signal(str, object)
-    edit_item_suggested = Signal(str, str, object)
-    item_moved = Signal(str, object)
-    item_removal_suggested = Signal(str, str)
-    marker_file_dropped = Signal(object)
-    image_file_dropped = Signal(object)
-    new_settings_suggested = Signal(str, object)
-    new_settings_ended = Signal()
+    new_item_suggested = QtCore.Signal(str, object)
+    edit_item_suggested = QtCore.Signal(str, str, object)
+    item_moved = QtCore.Signal(str, object)
+    item_removal_suggested = QtCore.Signal(str, str)
+    marker_file_dropped = QtCore.Signal(object)
+    image_file_dropped = QtCore.Signal(object)
+    new_settings_suggested = QtCore.Signal(str, object)
+    new_settings_ended = QtCore.Signal()
 
     def __init__(self, visual_preferences=None, parent=None):
         super().__init__(parent=parent)
@@ -44,8 +43,6 @@ class FrameWidget(QtWidgets.QWidget):
             foreground=self.palette().color(self.foregroundRole()),
             antialias=True,
         )
-        app = QtWidgets.QApplication.instance()
-        app.styleHints().colorSchemeChanged.connect(self.color_scheme_changed)
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.scaling = 1
@@ -494,14 +491,6 @@ class FrameWidget(QtWidgets.QWidget):
                 self.image_file_dropped.emit(img)
         else:
             super().dropEvent(e)
-
-    def color_scheme_changed(self, color_scheme):
-        pg.setConfigOptions(
-            background=None,
-            foreground=self.palette().color(self.foregroundRole()),
-            antialias=True,
-        )
-        self.fig.setBackground(None)
 
 
 class MouseModes(Enum):

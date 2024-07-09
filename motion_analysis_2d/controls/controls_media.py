@@ -1,15 +1,15 @@
 import qtawesome as qta
 
 from motion_analysis_2d.custom_components import SpinBoxSlider
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class MediaControls(QtWidgets.QFrame):
-    play = Signal(bool)
-    previous_frame = Signal()
-    next_frame = Signal()
-    seek_bar_moved = Signal(int)
-    track_enabled = Signal(bool)
+    play = QtCore.Signal(bool)
+    previous_frame = QtCore.Signal()
+    next_frame = QtCore.Signal()
+    seek_bar_moved = QtCore.Signal(int)
+    track_enabled = QtCore.Signal(bool)
 
     def __init__(self, parent=None, orientation="horizontal"):
         super().__init__(parent=parent)
@@ -19,11 +19,11 @@ class MediaControls(QtWidgets.QFrame):
 
         if orientation == "horizontal":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.LeftToRight, self
+                QtWidgets.QBoxLayout.Direction.LeftToRight, self
             )
         elif orientation == "vertical":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.TopToBottom, self
+                QtWidgets.QBoxLayout.Direction.TopToBottom, self
             )
 
         icon_size = 24

@@ -1,12 +1,11 @@
 import pyqtgraph as pg
-
 from motion_analysis_2d.custom_components import tab10_rgb
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.display_widgets.plot_splitter import PlotSplitter
+from qtpy import QtCore, QtWidgets
 
 
 class DataPlotWidget(QtWidgets.QWidget):
-    frame_line_dragged = Signal(int)
+    frame_line_dragged = QtCore.Signal(int)
 
     def __init__(self, plots=("x", "y"), parent=None):
         super().__init__(parent=parent)

@@ -3,13 +3,12 @@ from itertools import cycle
 
 import cv2 as cv
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import BaseDock, BadgeButton, tab10_qcolor
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class OrientDock(BaseDock):
-    orient_settings_updated = Signal(str, str)
+    orient_settings_updated = QtCore.Signal(str, str)
 
     def __init__(self):
         super().__init__()

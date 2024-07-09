@@ -1,18 +1,17 @@
 from pathlib import Path
 
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import HelpView
-from motion_analysis_2d.defs import QtWidgets, Signal
 from motion_analysis_2d.funcs import get_extensions_for_type
 from motion_analysis_2d.preferences_pane import ShortcutsWidget, VisualPreferencesWidget
+from qtpy import QtCore, QtWidgets
 
 
 class MenuBar(QtWidgets.QMenuBar):
-    open_video_file = Signal(object)
-    open_video_folder = Signal(object)
-    update_shortcuts = Signal(object)
-    update_visual_preferences = Signal(object)
+    open_video_file = QtCore.Signal(object)
+    open_video_folder = QtCore.Signal(object)
+    update_shortcuts = QtCore.Signal(object)
+    update_visual_preferences = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -57,7 +56,7 @@ class MenuBar(QtWidgets.QMenuBar):
         file_names, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self,
             "Open Video File",
-            None,
+            "",
             f"Video Files ({' '.join(extensions)})",
         )
         if file_names:

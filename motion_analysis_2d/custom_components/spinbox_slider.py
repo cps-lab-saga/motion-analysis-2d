@@ -1,28 +1,32 @@
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class SpinBoxSlider(QtWidgets.QWidget):
-    valueChanged = Signal(int)
-    valueChangeFinished = Signal(int)
+    valueChanged = QtCore.Signal(int)
+    valueChangeFinished = QtCore.Signal(int)
 
-    def __init__(self, orientation="horizontal", parent=None, **kargs):
+    def __init__(self, orientation="horizontal", parent=None):
         super().__init__(parent=parent)
 
         if orientation == "horizontal":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.LeftToRight, self
+                QtWidgets.QBoxLayout.Direction.LeftToRight, self
             )
-            self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, **kargs, parent=self)
+            self.slider = QtWidgets.QSlider(
+                QtCore.Qt.Orientation.Horizontal, parent=self
+            )
         elif orientation == "vertical":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.TopToBottom, self
+                QtWidgets.QBoxLayout.Direction.TopToBottom, self
             )
-            self.slider = QtWidgets.QSlider(QtCore.Qt.Vertical, **kargs, parent=self)
+            self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Vertical, parent=self)
         else:
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.TopToBottom, self
+                QtWidgets.QBoxLayout.Direction.TopToBottom, self
             )
-            self.slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, **kargs, parent=self)
+            self.slider = QtWidgets.QSlider(
+                QtCore.Qt.Orientation.Horizontal, parent=self
+            )
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.slider.valueChanged.connect(self.emitValueChanged)

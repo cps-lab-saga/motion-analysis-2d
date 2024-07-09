@@ -1,5 +1,5 @@
 import pyqtgraph as pg
-from pyqtgraph import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 
 class PieItem(pg.GraphicsObject):

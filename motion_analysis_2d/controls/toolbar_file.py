@@ -1,6 +1,7 @@
 import qtawesome as qta
 
-from motion_analysis_2d.defs import QtWidgets, QtGui
+
+from qtpy import QtGui, QtWidgets
 
 
 class FileToolBar(QtWidgets.QToolBar):

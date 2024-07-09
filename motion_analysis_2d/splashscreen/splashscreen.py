@@ -1,12 +1,10 @@
 from time import sleep
 
 from motion_analysis_2d.defs import (
-    QtCore,
-    QtGui,
-    QtWidgets,
     resource_dir,
     app_version,
 )
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 class SplashScreen(QtWidgets.QSplashScreen):
@@ -45,7 +43,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         )
         self.icon_label.setAlignment(QtCore.Qt.AlignCenter)
         self.icon_label.setSizePolicy(
-            QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
+            QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum
         )
         title_row.addWidget(self.icon_label)
 

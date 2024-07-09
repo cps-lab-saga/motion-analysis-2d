@@ -1,20 +1,23 @@
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal, shortcuts_file
+import qtawesome as qta
+from motion_analysis_2d.defs import shortcuts_file
 from motion_analysis_2d.preferences_pane.default_preferences import shortcut_keys
 from motion_analysis_2d.preferences_pane.load_preferences import (
     load_preferences,
     save_preferences,
 )
+from qtpy import QtCore, QtWidgets
 
 
 class ShortcutsWidget(QtWidgets.QWidget):
-    closed = Signal()
-    load_error = Signal(str)
-    update_shortcuts = Signal(object)
+    closed = QtCore.Signal()
+    load_error = QtCore.Signal(str)
+    update_shortcuts = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         self.setWindowTitle("Shortcuts")
+        self.setWindowIcon(qta.icon("mdi6.keyboard"))
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
 

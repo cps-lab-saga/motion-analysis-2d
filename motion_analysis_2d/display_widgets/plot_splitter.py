@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 
-from motion_analysis_2d.defs import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 
 class PlotSplitter(QtWidgets.QSplitter):

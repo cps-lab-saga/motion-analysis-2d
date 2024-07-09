@@ -1,15 +1,14 @@
 from pathlib import Path
 
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import BaseDock, FileListWidget, tab10_qcolor
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
 from motion_analysis_2d.funcs import check_file_type
+from qtpy import QtCore, QtWidgets
 
 
 class FilesDock(BaseDock):
-    video_file_changed = Signal(Path)
-    batch_button_toggled = Signal(Path)
+    video_file_changed = QtCore.Signal(Path)
+    batch_button_toggled = QtCore.Signal(Path)
 
     def __init__(self, filetypes=None):
         super().__init__()
@@ -42,7 +41,7 @@ class FilesDock(BaseDock):
         self.dock_layout.addWidget(self.file_list_widget)
 
         self.files_action_layout = QtWidgets.QBoxLayout(
-            QtWidgets.QBoxLayout.LeftToRight
+            QtWidgets.QBoxLayout.Direction.LeftToRight
         )
         self.dock_layout.addLayout(self.files_action_layout)
 
@@ -112,10 +111,14 @@ class FilesDock(BaseDock):
             path = None
 
     def change_action_layout(self, direction):
-        if direction == QtWidgets.QBoxLayout.LeftToRight:
-            self.files_action_layout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
-        elif direction == QtWidgets.QBoxLayout.TopToBottom:
-            self.files_action_layout.setDirection(QtWidgets.QBoxLayout.LeftToRight)
+        if direction == QtWidgets.QBoxLayout.Direction.LeftToRight:
+            self.files_action_layout.setDirection(
+                QtWidgets.QBoxLayout.Direction.TopToBottom
+            )
+        elif direction == QtWidgets.QBoxLayout.Direction.TopToBottom:
+            self.files_action_layout.setDirection(
+                QtWidgets.QBoxLayout.Direction.LeftToRight
+            )
 
     def add_files(self, paths):
         self.file_list_widget.add_items(

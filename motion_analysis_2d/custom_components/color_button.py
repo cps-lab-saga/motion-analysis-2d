@@ -1,9 +1,9 @@
 from motion_analysis_2d.custom_components.my_colors import tab10_qcolor
-from motion_analysis_2d.defs import QtWidgets, QtGui, Signal
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 class ColorButton(QtWidgets.QPushButton):
-    color_changed = Signal(object)
+    color_changed = QtCore.Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

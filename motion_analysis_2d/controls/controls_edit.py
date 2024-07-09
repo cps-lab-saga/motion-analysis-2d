@@ -1,13 +1,12 @@
 from functools import partial
 
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import BadgeButton, tab10_qcolor
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class EditControls(QtWidgets.QFrame):
-    mode_changed = Signal(str)
+    mode_changed = QtCore.Signal(str)
 
     def __init__(self, parent=None, orientation="horizontal"):
         super().__init__(parent=parent)
@@ -16,11 +15,11 @@ class EditControls(QtWidgets.QFrame):
         # self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         if orientation == "horizontal":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.LeftToRight, self
+                QtWidgets.QBoxLayout.Direction.LeftToRight, self
             )
         elif orientation == "vertical":
             self.main_layout = QtWidgets.QBoxLayout(
-                QtWidgets.QBoxLayout.TopToBottom, self
+                QtWidgets.QBoxLayout.Direction.TopToBottom, self
             )
 
         self.buttons = []

@@ -1,8 +1,8 @@
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class PerspectiveDialog(QtWidgets.QDialog):
-    completed = Signal(float, float)
+    completed = QtCore.Signal(float, float)
 
     def __init__(self, title="Adjust perspective"):
         super().__init__()

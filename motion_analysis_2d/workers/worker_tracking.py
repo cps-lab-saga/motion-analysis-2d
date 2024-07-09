@@ -4,17 +4,16 @@ from time import sleep
 
 import cv2 as cv
 import numpy as np
-
 from motion_analysis_2d.custom_components import StaticTracker
-from motion_analysis_2d.defs import QtCore, Signal
 from motion_analysis_2d.funcs import angle_vec
+from qtpy import QtCore
 
 
 class TrackingWorker(QtCore.QObject):
-    finished = Signal()
-    tracking_failed = Signal(str, int)
-    reached_end = Signal()
-    add_tracker_failed = Signal(str, object)
+    finished = QtCore.Signal()
+    tracking_failed = QtCore.Signal(str, int)
+    reached_end = QtCore.Signal()
+    add_tracker_failed = QtCore.Signal(str, object)
 
     def __init__(
         self,

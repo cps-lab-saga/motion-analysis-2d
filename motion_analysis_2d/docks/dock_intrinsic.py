@@ -4,18 +4,17 @@ from pathlib import Path
 import numpy as np
 import qtawesome as qta
 from camera_calibration import CalibrationWidget
-
-from motion_analysis_2d.custom_components import BaseDock, PathEdit
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
-from motion_analysis_2d.funcs import (
+from camera_calibration.funcs import (
     get_undistort_funcs,
     load_intrinsic,
     undistort_map,
 )
+from motion_analysis_2d.custom_components import BaseDock, PathEdit
+from qtpy import QtCore, QtWidgets
 
 
 class LoadIntrinsicDock(BaseDock):
-    intrinsic_settings_updated = Signal(bool, object, object)
+    intrinsic_settings_updated = QtCore.Signal(bool, object, object)
 
     def __init__(self):
         super().__init__()
@@ -44,7 +43,8 @@ class LoadIntrinsicDock(BaseDock):
         self.intrinsic_cal_file_edit = PathEdit("file", self)
         self.intrinsic_cal_file_edit.acceptDrops()
         self.intrinsic_cal_file_edit.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Preferred,
         )
         self.intrinsic_cal_file_edit.textChanged.connect(self.update_intrinsic_cal)
         self.intrinsic_cal_file_edit.setToolTip("Calibration file path.")

@@ -1,12 +1,12 @@
 import logging
 
 from motion_analysis_2d.custom_components import BaseDock
-from motion_analysis_2d.defs import QtWidgets, Signal
 from motion_analysis_2d.display_widgets import DataPlotWidget
+from qtpy import QtCore, QtWidgets
 
 
 class DataPlotDock(BaseDock):
-    frame_line_dragged = Signal(int)
+    frame_line_dragged = QtCore.Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -247,8 +247,8 @@ class DataPlotDock(BaseDock):
             plot_widget.clear()
 
     def change_layout_based_on_dock_area(self, area):
-        self.dock_layout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
-        self.layout_direction_changed.emit(QtWidgets.QBoxLayout.TopToBottom)
+        self.dock_layout.setDirection(QtWidgets.QBoxLayout.Direction.TopToBottom)
+        self.layout_direction_changed.emit(QtWidgets.QBoxLayout.Direction.TopToBottom)
 
 
 if __name__ == "__main__":

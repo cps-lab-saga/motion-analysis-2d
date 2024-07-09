@@ -1,10 +1,9 @@
 import pyqtgraph as pg
-from pyqtgraph import QtCore, QtGui
-
 from motion_analysis_2d.funcs.geometric_calc import (
     make_offset_polygon,
     distance_from_line,
 )
+from qtpy import QtCore, QtGui
 
 
 class PerspectiveItem(pg.GraphicsObject):

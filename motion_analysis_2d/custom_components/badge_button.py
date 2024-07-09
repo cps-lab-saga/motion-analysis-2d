@@ -1,4 +1,4 @@
-from motion_analysis_2d.defs import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 class BadgeButton(QtWidgets.QWidget):
@@ -77,15 +77,16 @@ def create_badge_pixmap(text, radius, badge_color, badge_text_color, point_size=
 
     painter = QtGui.QPainter(pixmap)
     painter.setRenderHints(
-        QtGui.QPainter.Antialiasing | QtGui.QPainter.TextAntialiasing
+        QtGui.QPainter.RenderHint.Antialiasing
+        | QtGui.QPainter.RenderHint.TextAntialiasing
     )
     painter.setBrush(QtGui.QBrush(QtGui.QColor(badge_color)))
     if point_size is None:
         painter.setFont(
-            QtGui.QFont("Arial", round(radius * 0.8), QtGui.QFont.ExtraBold)
+            QtGui.QFont("Arial", round(radius * 0.8), QtGui.QFont.Weight.ExtraBold)
         )
     else:
-        painter.setFont(QtGui.QFont("Arial", point_size, QtGui.QFont.ExtraBold))
+        painter.setFont(QtGui.QFont("Arial", point_size, QtGui.QFont.Weight.ExtraBold))
 
     text_pen = QtGui.QPen()
     text_pen.setColor(QtGui.QColor(badge_text_color))

@@ -3,12 +3,8 @@ from queue import Queue
 from time import sleep
 
 import numpy as np
-
 from motion_analysis_2d.controls import EditControls, MediaControls, MenuBar
 from motion_analysis_2d.defs import (
-    QtCore,
-    QtGui,
-    QtWidgets,
     ui_file,
     resource_dir,
     shortcuts_file,
@@ -37,6 +33,7 @@ from motion_analysis_2d.preferences_pane import (
 )
 from motion_analysis_2d.splashscreen import SplashScreen
 from motion_analysis_2d.workers import StreamWorker, TrackingWorker
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 class MainWidget(QtWidgets.QMainWindow):
@@ -178,7 +175,7 @@ class MainWidget(QtWidgets.QMainWindow):
         self.settings_file = ui_file()
         if self.settings_file.is_file():
             settings = QtCore.QSettings(
-                str(self.settings_file), QtCore.QSettings.IniFormat
+                str(self.settings_file), QtCore.QSettings.Format.IniFormat
             )
             self.gui_restore(settings)
 

@@ -1,10 +1,9 @@
 from pathlib import Path
 
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components.my_colors import tab10_qcolor
-from motion_analysis_2d.defs import QtCore, QtWidgets
 from motion_analysis_2d.funcs import guess_file_type, check_file_type
+from qtpy import QtCore, QtWidgets
 
 
 class FileListWidget(QtWidgets.QListWidget):
@@ -15,8 +14,8 @@ class FileListWidget(QtWidgets.QListWidget):
         self.setAcceptDrops(True)
 
         self.setWordWrap(True)
-        self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
         self.full_paths = {}
 
         self.image_file_icons = {

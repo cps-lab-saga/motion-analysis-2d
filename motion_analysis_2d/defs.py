@@ -1,38 +1,15 @@
-import os
-import platform
-import subprocess
 from pathlib import Path
 
+from platformdirs import user_config_path, user_log_path
+
 project_name = "motion-analysis-2d"
-app_version = "0.1.7"
+app_version = "0.1.8"
 
 module_name = project_name.replace("-", "_")
 
 
-try:
-    from PySide6 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
-    from PySide6.QtCore import Signal, Slot
-
-    backend_name = "pyside6"
-
-except ModuleNotFoundError:
-    try:
-        from PyQt6 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
-        from PyQt6.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
-
-        backend_name = "pyqt6"
-
-    except ModuleNotFoundError:
-        from PyQt5 import QtGui, QtWidgets, QtCore
-        from PyQt5.QtCore import pyqtSignal as Signal, pyqtSlot as Slot
-
-        backend_name = "pyqt5"
-
-
 def config_dir() -> Path:
-    d = Path.home() / f".{project_name}"
-    d.mkdir(exist_ok=True)
-    return d
+    return user_config_path(project_name, ensure_exists=True)
 
 
 def project_root() -> Path:
@@ -41,19 +18,19 @@ def project_root() -> Path:
 
 
 def ui_file() -> Path:
-    return config_dir() / "ma2d_ui_restore.ini"
+    return config_dir() / f"{module_name}_restore.ini"
 
 
 def shortcuts_file():
-    return config_dir() / "ma2d_shortcuts.json"
+    return config_dir() / f"{module_name}_shortcuts.json"
 
 
 def visual_preferences_file():
-    return config_dir() / "ma2d_visual.json"
+    return config_dir() / f"{module_name}_visual.json"
 
 
 def log_file() -> Path:
-    return config_dir() / f"{project_name}.log"
+    return user_log_path(project_name, ensure_exists=True) / f"{project_name}.log"
 
 
 def resource_dir() -> Path:
@@ -62,13 +39,3 @@ def resource_dir() -> Path:
 
 def readme_file() -> Path:
     return project_root() / "README.md"
-
-
-def open_file(file_path):
-    if platform.system() == "Darwin":  # macOS
-        subprocess.call(("open", file_path))
-    elif platform.system() == "Windows":  # Windows
-        os.startfile(file_path)
-    else:  # linux variants
-        subprocess.call(("xdg-open", file_path))
-    os.startfile(file_path)

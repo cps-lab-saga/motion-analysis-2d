@@ -1,9 +1,9 @@
 from motion_analysis_2d.custom_components.gui_save_base import BaseGuiSave
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):
-    layout_direction_changed = Signal(object)
+    layout_direction_changed = QtCore.Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -25,18 +25,22 @@ class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):
         )
 
         self.dock_layout = QtWidgets.QBoxLayout(
-            QtWidgets.QBoxLayout.TopToBottom, self.dock_contents
+            QtWidgets.QBoxLayout.Direction.TopToBottom, self.dock_contents
         )
 
         self.dockLocationChanged.connect(self.change_layout_based_on_dock_area)
 
     def change_layout_based_on_dock_area(self, area):
         if area in [QtCore.Qt.TopDockWidgetArea, QtCore.Qt.BottomDockWidgetArea]:
-            self.dock_layout.setDirection(QtWidgets.QBoxLayout.LeftToRight)
-            self.layout_direction_changed.emit(QtWidgets.QBoxLayout.LeftToRight)
+            self.dock_layout.setDirection(QtWidgets.QBoxLayout.Direction.LeftToRight)
+            self.layout_direction_changed.emit(
+                QtWidgets.QBoxLayout.Direction.LeftToRight
+            )
         else:
-            self.dock_layout.setDirection(QtWidgets.QBoxLayout.TopToBottom)
-            self.layout_direction_changed.emit(QtWidgets.QBoxLayout.TopToBottom)
+            self.dock_layout.setDirection(QtWidgets.QBoxLayout.Direction.TopToBottom)
+            self.layout_direction_changed.emit(
+                QtWidgets.QBoxLayout.Direction.TopToBottom
+            )
 
 
 if __name__ == "__main__":

@@ -1,17 +1,14 @@
 from time import sleep
 
 import cv2 as cv
-
-from motion_analysis_2d.defs import QtCore, Signal
-from motion_analysis_2d.funcs import (
-    undistort_map,
-)
+from camera_calibration.funcs import undistort_map
+from qtpy import QtCore
 
 
 class StreamWorker(QtCore.QObject):
-    stream_props = Signal(tuple, float, int)
-    finished = Signal()
-    progress = Signal()
+    stream_props = QtCore.Signal(tuple, float, int)
+    finished = QtCore.Signal()
+    progress = QtCore.Signal()
 
     def __init__(
         self,

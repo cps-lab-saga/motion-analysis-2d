@@ -1,14 +1,13 @@
 from pathlib import Path
 
 import qtawesome as qta
-
 from motion_analysis_2d.custom_components import BaseDock
-from motion_analysis_2d.defs import QtCore, QtWidgets, Signal
+from qtpy import QtCore, QtWidgets
 
 
 class SaveDock(BaseDock):
-    autosave_toggled = Signal(bool)
-    export_clicked = Signal(Path)
+    autosave_toggled = QtCore.Signal(bool)
+    export_clicked = QtCore.Signal(Path)
 
     def __init__(self):
         super().__init__()
@@ -43,9 +42,7 @@ class SaveDock(BaseDock):
         self.autosave_toggled.emit(self.autosave_button.isChecked())
 
     def export_button_clicked(self):
-        path = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Export", None, "CSV (*.csv)"
-        )
+        path = QtWidgets.QFileDialog.getSaveFileName(self, "Export", "", "CSV (*.csv)")
         if path[1] == "CSV (*.csv)":
             export_path = Path(path[0]).resolve()
             self.export_clicked.emit(export_path)

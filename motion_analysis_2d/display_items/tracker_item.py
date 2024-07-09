@@ -3,7 +3,6 @@ from functools import partial
 
 import numpy as np
 import pyqtgraph as pg
-
 from motion_analysis_2d.custom_components import tab10_rgb_cycle
 from motion_analysis_2d.dialogs import TrackerDialog
 from .base_item_display import BaseDisplayItem

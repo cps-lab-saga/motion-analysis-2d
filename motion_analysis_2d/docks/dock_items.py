@@ -2,18 +2,17 @@ import logging
 from functools import partial
 
 import qtawesome as qta
-from superqt import QCollapsible
-
 from motion_analysis_2d.custom_components import BaseDock
-from motion_analysis_2d.defs import QtCore, QtWidgets, QtGui, Signal
+from qtpy import QtCore, QtGui, QtWidgets
+from superqt import QCollapsible
 
 
 class ItemsDock(BaseDock):
-    edit_item_suggested = Signal(str, str)
-    remove_item_suggested = Signal(str, str)
+    edit_item_suggested = QtCore.Signal(str, str)
+    remove_item_suggested = QtCore.Signal(str, str)
 
-    show_item = Signal(str, str)
-    hide_item = Signal(str, str)
+    show_item = QtCore.Signal(str, str)
+    hide_item = QtCore.Signal(str, str)
 
     def __init__(self):
         super().__init__()
@@ -21,7 +20,7 @@ class ItemsDock(BaseDock):
         self.setWindowTitle("Items")
 
         self.rows = {}
-        self.collapsibles = {}
+        self.collapsable = {}
 
         self.add_item_type("tracker")
         self.add_item_type("angle")
@@ -31,7 +30,7 @@ class ItemsDock(BaseDock):
         collapsible = QCollapsible(item_type.capitalize())
         collapsible.expand(animate=False)
         self.dock_layout.addWidget(collapsible)
-        self.collapsibles[item_type] = collapsible
+        self.collapsable[item_type] = collapsible
         self.rows[item_type] = {}
 
     def add_row(self, item_type, item_props):
@@ -43,7 +42,7 @@ class ItemsDock(BaseDock):
         row.edit_item_suggested.connect(self.edit_item_suggested.emit)
         row.remove_item_suggested.connect(self.remove_item_suggested.emit)
         self.rows[item_type][name] = row
-        self.collapsibles[item_type].addWidget(row)
+        self.collapsable[item_type].addWidget(row)
         logging.debug(f"{item_type.capitalize()} {name} added to items dock.")
 
     def edit_row(self, item_type, name, props):
@@ -57,7 +56,7 @@ class ItemsDock(BaseDock):
 
     def remove_row(self, item_type, name):
         row = self.rows[item_type].pop(name)
-        self.collapsibles[item_type].removeWidget(row)
+        self.collapsable[item_type].removeWidget(row)
         row.deleteLater()
         logging.debug(f"{item_type.capitalize()} {name} removed from items dock.")
 
@@ -70,15 +69,15 @@ class ItemsDock(BaseDock):
     def clear(self):
         for item_type, rows in self.rows.items():
             for row in rows.values():
-                self.collapsibles[item_type].removeWidget(row)
+                self.collapsable[item_type].removeWidget(row)
                 row.deleteLater()
             self.rows[item_type].clear()
 
 
 class ItemsRow(QtWidgets.QWidget):
-    checkbox_toggled = Signal(str, object)
-    edit_item_suggested = Signal(str, object)
-    remove_item_suggested = Signal(str, object)
+    checkbox_toggled = QtCore.Signal(str, object)
+    edit_item_suggested = QtCore.Signal(str, object)
+    remove_item_suggested = QtCore.Signal(str, object)
 
     def __init__(self, name, color, item_type="tracker", parent=None):
         super().__init__(parent)

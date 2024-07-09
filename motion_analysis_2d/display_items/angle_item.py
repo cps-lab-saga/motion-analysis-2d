@@ -1,7 +1,6 @@
 import logging
 
 import pyqtgraph as pg
-
 from motion_analysis_2d.custom_components import tab10_rgb_cycle, PieItem
 from motion_analysis_2d.dialogs import AngleDialog
 from motion_analysis_2d.funcs import angle_vec
