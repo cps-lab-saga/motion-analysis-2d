@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from pathlib import Path
 
 import cv2 as cv
@@ -99,18 +103,18 @@ class LoadExtrinsicDock(BaseDock):
                 self.scaling,
             ) = load_extrinsic(Path(file_name).resolve())
             self.set_cal_ok()
-            logging.info(f"Extrinsic calibration load successful. File: {file_name}")
+            logger.info(f"Extrinsic calibration load successful. File: {file_name}")
             if self.transformation_matrix is not None:
                 logging_repr = (
                     lambda x: np.array_repr(x).replace(" ", "").replace("\n", " ")
                 )
-                logging.info(f"M: {logging_repr(self.transformation_matrix)}")
-                logging.info(f"output_size: {logging_repr(self.output_size)}")
-            logging.info(f"scaling: {self.scaling}")
+                logger.info(f"M: {logging_repr(self.transformation_matrix)}")
+                logger.info(f"output_size: {logging_repr(self.output_size)}")
+            logger.info(f"scaling: {self.scaling}")
 
         except Exception as e:
             self.set_cal_bad()
-            logging.warning(f"Extrinsic calibration load unsuccessful. {e}")
+            logger.warning(f"Extrinsic calibration load unsuccessful. {e}")
 
         self.extrinsic_settings_updated.emit(
             self.cal_ok, self.transformation_matrix, self.output_size

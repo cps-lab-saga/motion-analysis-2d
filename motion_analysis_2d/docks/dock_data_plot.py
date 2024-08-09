@@ -1,4 +1,7 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
 
 from motion_analysis_2d.custom_components import BaseDock
 from motion_analysis_2d.display_widgets import DataPlotWidget
@@ -114,7 +117,7 @@ class DataPlotDock(BaseDock):
             "x": self.plot_widgets["Trackers"].add_line("x", label=name, color=color),
             "y": self.plot_widgets["Trackers"].add_line("y", label=name, color=color),
         }
-        logging.debug(f"Tracker {name} added to data plot dock.")
+        logger.debug(f"Tracker {name} added to data plot dock.")
 
     def edit_tracker(self, name, props):
         if props["name"] != name:
@@ -146,7 +149,7 @@ class DataPlotDock(BaseDock):
         self.trackers.pop(name, None)
         self.plot_widgets["Trackers"].remove_line("x", name)
         self.plot_widgets["Trackers"].remove_line("y", name)
-        logging.debug(f"Tracker {name} removed from data plot dock.")
+        logger.debug(f"Tracker {name} removed from data plot dock.")
 
     def update_tracker(self, name, target, frames=None):
         self.plot_widgets["Trackers"].update_line("x", name, target[:, 0], frames)
@@ -156,7 +159,7 @@ class DataPlotDock(BaseDock):
         self.angles[name] = {
             "θ": self.plot_widgets["Angles"].add_line("θ", name, color),
         }
-        logging.debug(f"Angle {name} added to data plot dock.")
+        logger.debug(f"Angle {name} added to data plot dock.")
 
     def edit_angle(self, name, props):
         if props["name"] != name:
@@ -180,7 +183,7 @@ class DataPlotDock(BaseDock):
     def remove_angle(self, name):
         self.angles.pop(name, None)
         self.plot_widgets["Angles"].remove_line("θ", name)
-        logging.debug(f"Angle {name} removed from data plot dock.")
+        logger.debug(f"Angle {name} removed from data plot dock.")
 
     def update_angle(self, name, angle, frames=None):
         self.plot_widgets["Angles"].update_line("θ", name, angle, frames)
@@ -190,7 +193,7 @@ class DataPlotDock(BaseDock):
             "x": self.plot_widgets["Distances"].add_line("x", name, color),
             "y": self.plot_widgets["Distances"].add_line("y", name, color),
         }
-        logging.debug(f"Distance {name} added to data plot dock.")
+        logger.debug(f"Distance {name} added to data plot dock.")
 
     def edit_distance(self, name, props):
         if props["name"] != name:
@@ -222,7 +225,7 @@ class DataPlotDock(BaseDock):
         self.distances.pop(name, None)
         self.plot_widgets["Distances"].remove_line("x", name)
         self.plot_widgets["Distances"].remove_line("y", name)
-        logging.debug(f"Distance {name} removed from data plot dock.")
+        logger.debug(f"Distance {name} removed from data plot dock.")
 
     def update_distance(self, name, distance, frames=None):
         self.plot_widgets["Distances"].update_line("x", name, distance[:, 0], frames)

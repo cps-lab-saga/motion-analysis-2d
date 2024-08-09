@@ -1,4 +1,7 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
 
 from motion_analysis_2d.funcs import prevent_name_collision
 
@@ -78,13 +81,13 @@ class BaseDisplayItem:
 
     def emit_new_item(self, item_props):
         self.display.new_item_suggested.emit(self.item_type_name, item_props)
-        logging.debug(f"New {self.item_type_name} suggested, {item_props}.")
+        logger.debug(f"New {self.item_type_name} suggested, {item_props}.")
 
     def emit_edit_item(self, original_name, item_props):
         self.display.edit_item_suggested.emit(
             self.item_type_name, original_name, item_props
         )
-        logging.debug(
+        logger.debug(
             f"Edit {self.item_type_name} {original_name} suggested, {item_props}."
         )
 
@@ -96,7 +99,7 @@ class BaseDisplayItem:
 
     def item_moved(self, item_type, item_props):
         self.display.item_moved.emit(item_type, item_props)
-        logging.debug(f"Item {item_type} moved in frame display, {item_props}.")
+        logger.debug(f"Item {item_type} moved in frame display, {item_props}.")
 
     def frame_shape_changed(self):
         pass
@@ -155,7 +158,7 @@ class BaseDisplayItem:
         for item in self._items.values():
             item.pop(i)
 
-        logging.debug(
+        logger.debug(
             f"{self.item_type_name.capitalize()} {name} removed from frame display."
         )
 
@@ -163,14 +166,12 @@ class BaseDisplayItem:
         i = self.parent["name"].index(parent_name)
         if (name, self.item_type_name) not in self.parent["children"][i]:
             self.parent["children"][i].add((name, self.item_type_name))
-        logging.debug(f"Child {(name, self.item_type_name)} added to {parent_name}.")
+        logger.debug(f"Child {(name, self.item_type_name)} added to {parent_name}.")
 
     def remove_child_from_parent(self, parent_name, name):
         i = self.parent["name"].index(parent_name)
         self.parent["children"][i].discard((name, self.item_type_name))
-        logging.debug(
-            f"Child {(name, self.item_type_name)} removed from {parent_name}."
-        )
+        logger.debug(f"Child {(name, self.item_type_name)} removed from {parent_name}.")
 
     def hide_item(self, name, index=0):
         i = self._items["name"].index(name)
@@ -184,7 +185,7 @@ class BaseDisplayItem:
                 [self._items[x][i] for x in self.display_item_names]
             )
             self._items["show"][i][index] = False
-            logging.debug(
+            logger.debug(
                 f"{self.item_type_name.capitalize()} {name} hidden in frame display."
             )
 
@@ -201,7 +202,7 @@ class BaseDisplayItem:
                 self.add_items_to_display(
                     [self._items[x][i] for x in self.display_item_names]
                 )
-                logging.debug(
+                logger.debug(
                     f"{self.item_type_name.capitalize()} {name} shown in frame display."
                 )
 

@@ -1,8 +1,9 @@
 from pathlib import Path
 
 import qtawesome as qta
-from motion_analysis_2d.custom_components import BaseDock
 from qtpy import QtCore, QtWidgets
+
+from motion_analysis_2d.custom_components import BaseDock
 
 
 class SaveDock(BaseDock):

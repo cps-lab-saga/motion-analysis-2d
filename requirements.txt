@@ -2,6 +2,7 @@ camera-calibration @ git+https://github.com/cps-lab-saga/camera-calibration@14ff
 numpy==2.0.0 ; python_version >= "3.11" and python_version < "3.13"
 opencv-contrib-python-headless==4.10.0.84 ; python_version >= "3.11" and python_version < "3.13"
 packaging==24.1 ; python_version >= "3.11" and python_version < "3.13"
+platformdirs==4.2.2 ; python_version >= "3.11" and python_version < "3.13"
 pygments==2.18.0 ; python_version >= "3.11" and python_version < "3.13"
 pyqtgraph==0.13.7 ; python_version >= "3.11" and python_version < "3.13"
 pyside6-addons==6.7.2 ; python_version >= "3.11" and python_version < "3.13"

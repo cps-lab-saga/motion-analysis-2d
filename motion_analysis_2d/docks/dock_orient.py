@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from itertools import cycle
 
 import cv2 as cv
@@ -87,7 +91,7 @@ class OrientDock(BaseDock):
     def rotate_button_clicked(self):
         self.rotation = next(self.rot_cycle)
         self.update_rotate_button()
-        logging.info(f"Rotation changed to {self.rotation}")
+        logger.info(f"Rotation changed to {self.rotation}")
         self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_rotate_button(self):
@@ -101,7 +105,7 @@ class OrientDock(BaseDock):
     def flip_button_clicked(self):
         self.flip = next(self.flip_cycle)
         self.update_flip_button()
-        logging.info(f"Flip changed to {self.flip}")
+        logger.info(f"Flip changed to {self.flip}")
         self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_flip_button(self):

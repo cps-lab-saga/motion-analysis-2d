@@ -1,4 +1,6 @@
 import qtawesome as qta
+from qtpy import QtCore, QtWidgets
+
 from motion_analysis_2d.custom_components import ColorButton
 from motion_analysis_2d.defs import visual_preferences_file
 from motion_analysis_2d.preferences_pane.default_preferences import visual_preferences
@@ -6,7 +8,6 @@ from motion_analysis_2d.preferences_pane.load_preferences import (
     load_preferences,
     save_preferences,
 )
-from qtpy import QtCore, QtWidgets
 
 
 class VisualPreferencesWidget(QtWidgets.QWidget):

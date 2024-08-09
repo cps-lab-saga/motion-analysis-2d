@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from functools import partial
 
 import qtawesome as qta
@@ -43,7 +47,7 @@ class ItemsDock(BaseDock):
         row.remove_item_suggested.connect(self.remove_item_suggested.emit)
         self.rows[item_type][name] = row
         self.collapsable[item_type].addWidget(row)
-        logging.debug(f"{item_type.capitalize()} {name} added to items dock.")
+        logger.debug(f"{item_type.capitalize()} {name} added to items dock.")
 
     def edit_row(self, item_type, name, props):
         if props["name"] != name:
@@ -58,7 +62,7 @@ class ItemsDock(BaseDock):
         row = self.rows[item_type].pop(name)
         self.collapsable[item_type].removeWidget(row)
         row.deleteLater()
-        logging.debug(f"{item_type.capitalize()} {name} removed from items dock.")
+        logger.debug(f"{item_type.capitalize()} {name} removed from items dock.")
 
     def checkbox_toggled(self, item_type, name, show):
         if show:

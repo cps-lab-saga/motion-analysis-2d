@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import qtawesome as qta
+from qtpy import QtCore, QtWidgets
+
 from motion_analysis_2d.custom_components.my_colors import tab10_qcolor
 from motion_analysis_2d.funcs import guess_file_type, check_file_type
-from qtpy import QtCore, QtWidgets
 
 
 class FileListWidget(QtWidgets.QListWidget):

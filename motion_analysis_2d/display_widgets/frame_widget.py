@@ -1,5 +1,9 @@
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 import contextlib
-import logging
 from enum import Enum
 from pathlib import Path
 
@@ -236,11 +240,11 @@ class FrameWidget(QtWidgets.QWidget):
     def range_changed(self):
         self.adjust_crosshairs()
         self.adjust_instruction_label()
-        logging.debug(f"Frame range changed.")
+        logger.debug(f"Frame range changed.")
 
     def auto_range(self):
         self.fig.autoRange()
-        logging.debug(f"Auto range frame.")
+        logger.debug(f"Auto range frame.")
 
     def set_image(self, img, raw=False):
         if img is None:
@@ -250,12 +254,12 @@ class FrameWidget(QtWidgets.QWidget):
         self.img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         self.im_item.setImage(self.img)
 
-        logging.trace(f"Set image.")
+        logger.trace(f"Set image.")
 
     def update_frame(self, img, frame_no, t_sec):
         self.set_image(img)
         self.update_frame_label(frame_no, t_sec)
-        logging.trace(f"Frame updated.")
+        logger.trace(f"Frame updated.")
 
     def add_frame_label(self):
         frame_label = pg.TextItem(
@@ -274,11 +278,11 @@ class FrameWidget(QtWidgets.QWidget):
             self.frame_label.setText(
                 f"Frame: {frame_no}\n" f"Time: {time:.2f} s\n" f"FPS: {fps:.0f}\n"
             )
-        logging.trace(f"Frame label updated: {frame_no}.")
+        logger.trace(f"Frame label updated: {frame_no}.")
 
     def update_scaling(self, scaling):
         self.scaling = scaling
-        logging.debug(f"Frame scaling updated to {scaling}.")
+        logger.debug(f"Frame scaling updated to {scaling}.")
 
     def add_instruction_label(self):
         frame_label = pg.TextItem(
@@ -299,12 +303,12 @@ class FrameWidget(QtWidgets.QWidget):
     def show_instruction(self, text):
         self.instruction_label.setText(text)
         self.instruction_label.setParentItem(self.fig.getViewBox())
-        logging.debug(f"Instruction '{text}' shown.")
+        logger.debug(f"Instruction '{text}' shown.")
 
     def hide_instruction(self):
         self.instruction_label.setText("")
         self.fig.getViewBox().removeItem(self.instruction_label)
-        logging.debug(f"Instruction hidden.")
+        logger.debug(f"Instruction hidden.")
 
     def update_instructions(self, instruction=None):
         if instruction is not None:
@@ -337,7 +341,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.set_perspective_item.start_item_suggestion()
         else:
             self.update_instructions()
-        logging.debug(f"Mouse mode set to {mode}.")
+        logger.debug(f"Mouse mode set to {mode}.")
 
     def frame_shape_changed(self, frame_data=None):
         if frame_data is not None:
@@ -363,7 +367,7 @@ class FrameWidget(QtWidgets.QWidget):
         self.raw_img = None
         self.im_item = pg.ImageItem(axisOrder="row-major")
         self.fig.addItem(self.im_item)
-        logging.debug(f"Frame display cleared.")
+        logger.debug(f"Frame display cleared.")
 
     def get_image_size(self):
         im_x, im_y = self.im_item.pos()
@@ -432,7 +436,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.removeItem(self.h_crosshair)
             self.fig.removeItem(self.h_crosshair_label)
             self.fig.removeItem(self.intensity_crosshair_label)
-            logging.debug("Show crosshairs.")
+            logger.debug("Show crosshairs.")
         else:
             self.show_crosshairs = True
             self.fig.addItem(self.v_crosshair, ignoreBounds=True)
@@ -441,7 +445,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.fig.addItem(self.h_crosshair_label, ignoreBounds=True)
             self.fig.addItem(self.intensity_crosshair_label, ignoreBounds=True)
             self.mouse_moved(evt.scenePos())
-            logging.debug("Hide crosshairs.")
+            logger.debug("Hide crosshairs.")
 
     def adjust_crosshairs(self):
         """
@@ -477,12 +481,12 @@ class FrameWidget(QtWidgets.QWidget):
             if is_json_file(path):
                 e.accept()
 
-                logging.debug("Marker file dropped.")
+                logger.debug("Marker file dropped.")
                 self.marker_file_dropped.emit(path)
             elif check_file_type(path, ["image"]):
                 e.accept()
 
-                logging.debug("Image file dropped.")
+                logger.debug("Image file dropped.")
                 try:
                     img = cv.imread(str(path))
                 except Exception as e:

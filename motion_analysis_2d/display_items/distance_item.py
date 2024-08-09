@@ -1,4 +1,7 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
 
 import pyqtgraph as pg
 from motion_analysis_2d.custom_components import tab10_rgb_cycle, ArrowItem
@@ -198,7 +201,7 @@ class DistanceItem(BaseDisplayItem):
         self._items["color"].append(props["color"])
         self._items["show"].append([True, True, True])
 
-        logging.debug(f"Distance {props['name']} added to frame display.")
+        logger.debug(f"Distance {props['name']} added to frame display.")
 
     def edit_item_props(self, name, props):
         i = self._items["name"].index(name)

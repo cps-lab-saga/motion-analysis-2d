@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from pathlib import Path
 
 import numpy as np
@@ -119,19 +123,19 @@ class LoadIntrinsicDock(BaseDock):
                 self.map_x, self.map_y, self.new_K = get_undistort_funcs(
                     self.frame_shape, self.K, self.D, self.fisheye, self.scale
                 )
-            logging.info(f"Intrinsic calibration load successful. File: {file_name}")
+            logger.info(f"Intrinsic calibration load successful. File: {file_name}")
             logging_repr = (
                 lambda x: np.array_repr(x).replace(" ", "").replace("\n", " ")
             )
-            logging.info(f"K: {logging_repr(self.K)}")
-            logging.info(f"D: {logging_repr(self.D)}")
-            logging.info(f"fisheye: {self.fisheye}")
+            logger.info(f"K: {logging_repr(self.K)}")
+            logger.info(f"D: {logging_repr(self.D)}")
+            logger.info(f"fisheye: {self.fisheye}")
             if self.frame_shape is not None:
-                logging.info(f"new_K: {logging_repr(self.new_K)}")
+                logger.info(f"new_K: {logging_repr(self.new_K)}")
 
         except Exception as e:
             self.set_cal_bad()
-            logging.warning(f"Intrinsic calibration load unsuccessful. {e}")
+            logger.warning(f"Intrinsic calibration load unsuccessful. {e}")
         self.mutex.unlock()
 
         if self.frame_shape and self.cal_ok:

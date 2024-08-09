@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from queue import Queue
 from time import sleep
 
@@ -21,7 +25,6 @@ from motion_analysis_2d.docks import (
     DataPlotDock,
 )
 from motion_analysis_2d.funcs import (
-    setup_logger,
     save_tracking_data,
     load_tracking_data,
     export_csv,
@@ -250,7 +253,7 @@ class MainWidget(QtWidgets.QMainWindow):
 
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
-                logging.info(f"Loaded data file {track_file.name}")
+                logger.info(f"Loaded data file {track_file.name}")
                 self.load_data(track_file)
 
             self.frame_widget.auto_range()
@@ -265,11 +268,11 @@ class MainWidget(QtWidgets.QMainWindow):
                 QtCore.QCoreApplication.processEvents()
 
     def next_video(self):
-        logging.debug("Go to next video")
+        logger.debug("Go to next video")
         self.docks["Files"].next_file()
 
     def previous_video(self):
-        logging.debug("Go to previous video")
+        logger.debug("Go to previous video")
         self.docks["Files"].previous_file()
 
     def reached_end(self):
@@ -508,7 +511,7 @@ class MainWidget(QtWidgets.QMainWindow):
                 "Tracking Failure!",
                 msg,
             )
-            logging.info(msg)
+            logger.info(msg)
             self.stream_worker.move_frame_to(frame_no - 2, track=False)
             self.next_video()
         else:
@@ -840,12 +843,10 @@ class MainWidget(QtWidgets.QMainWindow):
     @staticmethod
     def log_new_session():
         banner = "-" * 20 + " New Session " + "-" * 20
-        logging.info(banner)
+        logger.info(banner)
 
 
 def main():
-    setup_logger(logging.INFO)
-
     app = QtWidgets.QApplication([])
 
     win = MainWidget()

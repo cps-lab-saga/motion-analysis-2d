@@ -1,5 +1,6 @@
-from motion_analysis_2d.custom_components.gui_save_base import BaseGuiSave
 from qtpy import QtCore, QtWidgets
+
+from motion_analysis_2d.custom_components.gui_save_base import BaseGuiSave
 
 
 class BaseDock(QtWidgets.QDockWidget, BaseGuiSave):

@@ -1,4 +1,8 @@
-import logging
+from motion_analysis_2d.funcs import setup_logger
+
+logger = setup_logger(__name__)
+
+
 from functools import partial
 
 import numpy as np
@@ -278,7 +282,7 @@ class TrackerItem(BaseDisplayItem):
         self._items["children"].append(set())
         self._items["show"].append([True, True, True])
 
-        logging.debug(f"Tracker {props['name']} added to frame display.")
+        logger.debug(f"Tracker {props['name']} added to frame display.")
 
     def edit_item_props(self, name, props):
         i = self._items["name"].index(name)
@@ -440,7 +444,7 @@ class TrackerItem(BaseDisplayItem):
             target.setPos((roi.pos()[0] + offset[0], roi.pos()[1] + offset[1]))
             roi.blockSignals(False)
             target.blockSignals(False)
-            logging.trace(f"Tracker move pos are not available.")
+            logger.trace(f"Tracker move pos are not available.")
         else:
             bbox_pos = bbox_i[:2]
             bbox_size = bbox_i[2:]
@@ -456,7 +460,7 @@ class TrackerItem(BaseDisplayItem):
             self._items["offset"][i] = [
                 round(a) for a in target.pos() - self.calc_centre_roi(roi)
             ]
-            logging.trace(f"Tracker {name} moved.")
+            logger.trace(f"Tracker {name} moved.")
 
         if len(children) > 0:
             for child_name, child_type in children:

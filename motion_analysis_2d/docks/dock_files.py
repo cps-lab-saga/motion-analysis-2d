@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import qtawesome as qta
+from qtpy import QtCore, QtWidgets
+
 from motion_analysis_2d.custom_components import BaseDock, FileListWidget, tab10_qcolor
 from motion_analysis_2d.funcs import check_file_type
-from qtpy import QtCore, QtWidgets
 
 
 class FilesDock(BaseDock):

@@ -1,8 +1,9 @@
 from functools import partial
 
 import qtawesome as qta
-from motion_analysis_2d.custom_components import BadgeButton, tab10_qcolor
 from qtpy import QtCore, QtWidgets
+
+from motion_analysis_2d.custom_components import BadgeButton, tab10_qcolor
 
 
 class EditControls(QtWidgets.QFrame):

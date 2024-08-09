@@ -1,10 +1,11 @@
 from pathlib import Path
 
 import qtawesome as qta
+from qtpy import QtCore, QtWidgets
+
 from motion_analysis_2d.custom_components import HelpView
 from motion_analysis_2d.funcs import get_extensions_for_type
 from motion_analysis_2d.preferences_pane import ShortcutsWidget, VisualPreferencesWidget
-from qtpy import QtCore, QtWidgets
 
 
 class MenuBar(QtWidgets.QMenuBar):

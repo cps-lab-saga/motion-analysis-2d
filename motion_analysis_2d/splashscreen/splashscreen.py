@@ -1,10 +1,11 @@
 from time import sleep
 
+from qtpy import QtCore, QtGui, QtWidgets
+
 from motion_analysis_2d.defs import (
     resource_dir,
     app_version,
 )
-from qtpy import QtCore, QtGui, QtWidgets
 
 
 class SplashScreen(QtWidgets.QSplashScreen):

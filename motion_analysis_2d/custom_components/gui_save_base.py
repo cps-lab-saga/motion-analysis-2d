@@ -1,7 +1,8 @@
 import inspect
 
-from motion_analysis_2d.custom_components.path_edit import PathEdit
 from qtpy import QtWidgets
+
+from motion_analysis_2d.custom_components.path_edit import PathEdit
 
 
 class BaseGuiSave:

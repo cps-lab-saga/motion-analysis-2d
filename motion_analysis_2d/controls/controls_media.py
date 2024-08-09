@@ -1,7 +1,7 @@
 import qtawesome as qta
+from qtpy import QtCore, QtWidgets
 
 from motion_analysis_2d.custom_components import SpinBoxSlider
-from qtpy import QtCore, QtWidgets
 
 
 class MediaControls(QtWidgets.QFrame):

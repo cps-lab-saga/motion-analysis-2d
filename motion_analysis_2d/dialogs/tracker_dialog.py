@@ -1,5 +1,6 @@
-from motion_analysis_2d.custom_components import ColorButton, tab10_rgb
 from qtpy import QtCore, QtGui, QtWidgets
+
+from motion_analysis_2d.custom_components import ColorButton, tab10_rgb
 
 
 class TrackerDialog(QtWidgets.QDialog):

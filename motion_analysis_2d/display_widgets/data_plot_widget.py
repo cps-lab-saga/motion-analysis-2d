@@ -1,7 +1,8 @@
 import pyqtgraph as pg
+from qtpy import QtCore, QtWidgets
+
 from motion_analysis_2d.custom_components import tab10_rgb
 from motion_analysis_2d.display_widgets.plot_splitter import PlotSplitter
-from qtpy import QtCore, QtWidgets
 
 
 class DataPlotWidget(QtWidgets.QWidget):
