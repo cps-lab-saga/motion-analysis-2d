@@ -174,7 +174,7 @@ class StreamWorker(QtCore.QObject):
             self.intrinsic_prop = None
 
     def set_extrinsic_prop(self, cal_ok, trans_mat, output_size):
-        if cal_ok:
+        if cal_ok and trans_mat is not None and output_size is not None:
             self.extrinsic_prop = (trans_mat, output_size)
         else:
             self.extrinsic_prop = None

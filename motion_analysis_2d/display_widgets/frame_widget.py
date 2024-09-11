@@ -254,12 +254,12 @@ class FrameWidget(QtWidgets.QWidget):
         self.img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         self.im_item.setImage(self.img)
 
-        logger.trace(f"Set image.")
+        logger.debug(f"Set image.")
 
     def update_frame(self, img, frame_no, t_sec):
         self.set_image(img)
         self.update_frame_label(frame_no, t_sec)
-        logger.trace(f"Frame updated.")
+        logger.debug(f"Frame updated.")
 
     def add_frame_label(self):
         frame_label = pg.TextItem(
@@ -278,7 +278,7 @@ class FrameWidget(QtWidgets.QWidget):
             self.frame_label.setText(
                 f"Frame: {frame_no}\n" f"Time: {time:.2f} s\n" f"FPS: {fps:.0f}\n"
             )
-        logger.trace(f"Frame label updated: {frame_no}.")
+        logger.debug(f"Frame label updated: {frame_no}.")
 
     def update_scaling(self, scaling):
         self.scaling = scaling

@@ -444,7 +444,7 @@ class TrackerItem(BaseDisplayItem):
             target.setPos((roi.pos()[0] + offset[0], roi.pos()[1] + offset[1]))
             roi.blockSignals(False)
             target.blockSignals(False)
-            logger.trace(f"Tracker move pos are not available.")
+            logger.debug(f"Tracker move pos are not available.")
         else:
             bbox_pos = bbox_i[:2]
             bbox_size = bbox_i[2:]
@@ -460,7 +460,7 @@ class TrackerItem(BaseDisplayItem):
             self._items["offset"][i] = [
                 round(a) for a in target.pos() - self.calc_centre_roi(roi)
             ]
-            logger.trace(f"Tracker {name} moved.")
+            logger.debug(f"Tracker {name} moved.")
 
         if len(children) > 0:
             for child_name, child_type in children:
