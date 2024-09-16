@@ -92,7 +92,6 @@ class OrientDock(BaseDock):
         self.rotation = next(self.rot_cycle)
         self.update_rotate_button()
         logger.info(f"Rotation changed to {self.rotation}")
-        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_rotate_button(self):
         self.rotate_button.setIcon(self.rotate_icons[self.rotation])
@@ -101,12 +100,12 @@ class OrientDock(BaseDock):
             self.rotate_button.set_no_badge()
         else:
             self.rotate_button.set_badge(self.rotation)
+        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def flip_button_clicked(self):
         self.flip = next(self.flip_cycle)
         self.update_flip_button()
         logger.info(f"Flip changed to {self.flip}")
-        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def update_flip_button(self):
         self.flip_button.setIcon(self.flip_icons[self.flip])
@@ -115,6 +114,7 @@ class OrientDock(BaseDock):
             self.flip_button.set_no_badge()
         else:
             self.flip_button.set_badge("✱")
+        self.orient_settings_updated.emit(self.flip, self.rotation)
 
     def rotate_img(self, img):
         settings = self.rotation

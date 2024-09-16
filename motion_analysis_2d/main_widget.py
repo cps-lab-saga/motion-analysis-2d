@@ -251,6 +251,11 @@ class MainWidget(QtWidgets.QMainWindow):
                 QtCore.QCoreApplication.processEvents()
                 sleep(0.2)
 
+            self.docks["Orient"].update_rotate_button()
+            self.docks["Orient"].update_flip_button()
+            self.docks["Intrinsic"].update_intrinsic_cal()
+            self.docks["Extrinsic"].update_extrinsic_cal()
+
             track_file = path.parent / (path.stem + ".json")
             if track_file.is_file():
                 logger.info(f"Loaded data file {track_file.name}")

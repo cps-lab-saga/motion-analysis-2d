@@ -53,6 +53,7 @@ class MediaControls(QtWidgets.QFrame):
         self.main_layout.addWidget(self.play_button)
 
         self.seek_bar = SpinBoxSlider(orientation, self)
+        self.seek_bar.spinbox.setMinimumWidth(120)
         self.seek_bar.spinbox.setPrefix("Frame ")
         self.seek_bar.setSingleStep(1)
         self.seek_bar.setMinimum(0)
