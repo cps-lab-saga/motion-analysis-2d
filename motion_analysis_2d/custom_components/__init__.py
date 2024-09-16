@@ -5,6 +5,7 @@ from .dock_base import BaseDock
 from .file_list import FileListWidget
 from .gui_save_base import BaseGuiSave
 from .help_widget import HelpView
+from .length_item import LengthItem
 from .my_colors import tab10_rgb, tab10_qcolor, tab10_gbr, tab10_rgb_cycle
 from .path_edit import PathEdit
 from .perspective_item import PerspectiveItem

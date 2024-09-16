@@ -10,7 +10,7 @@ from .geometric_calc import (
     offset_at_centre,
     area_quadrilateral,
 )
-from .load_extrinsic import load_extrinsic, save_perspective_points
+from .load_extrinsic import load_extrinsic, save_perspective_points, save_only_scaling
 from .load_settings import load_application_settings
 from .logger_setup import setup_logger
 from .motion_funcs import angle_vec

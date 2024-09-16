@@ -790,9 +790,7 @@ class MainWidget(QtWidgets.QMainWindow):
         props,
     ):
         if item_type == "set_perspective":
-            self.docks["Extrinsic"].save_points(
-                props["img_points"], props["obj_points"], props["output_size"]
-            )
+            self.docks["Extrinsic"].save_points(props)
         self.set_normal_mode()
 
     def batch_toggled(self, checked):

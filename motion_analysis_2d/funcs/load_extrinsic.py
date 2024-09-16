@@ -26,30 +26,34 @@ def save_perspective_points(img_points, obj_points, output_size_real, file_path)
     corners_in = np.array(img_points)
     corners_out = np.array(obj_points)
 
-    if len(img_points) == 2:
-        pixel_distance = np.linalg.norm(corners_in[1] - corners_in[0])
-        real_distance = np.linalg.norm(corners_out[1] - corners_out[0])
-        scaling = np.round(pixel_distance / real_distance, 2)
-        save_data = {
-            "corners_in": None,
-            "corners_out": None,
-            "output_size": None,
-            "scaling": scaling,
-        }
+    in_width, in_height = corners_in.max(axis=0) - corners_in.min(axis=0)
+    out_width, out_height = corners_out.max(axis=0) - corners_out.min(axis=0)
+    scaling = np.mean([in_width / out_width, in_height / out_height])
 
-    else:
-        in_width, in_height = corners_in.max(axis=0) - corners_in.min(axis=0)
-        out_width, out_height = corners_out.max(axis=0) - corners_out.min(axis=0)
-        scaling = np.mean([in_width / out_width, in_height / out_height])
+    output_size = np.array(output_size_real) * scaling
+    corners_out *= scaling
+    save_data = {
+        "corners_in": corners_in.tolist(),
+        "corners_out": corners_out.tolist(),
+        "output_size": output_size.tolist(),
+        "scaling": scaling,
+    }
 
-        output_size = np.array(output_size_real) * scaling
-        corners_out *= scaling
-        save_data = {
-            "corners_in": corners_in.tolist(),
-            "corners_out": corners_out.tolist(),
-            "output_size": output_size.tolist(),
-            "scaling": scaling,
-        }
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(save_data, f, sort_keys=False, indent=4)
+
+
+def save_only_scaling(img_points, real_distance, file_path):
+    corners_in = np.array(img_points)
+
+    pixel_distance = np.linalg.norm(corners_in[1] - corners_in[0])
+    scaling = np.round(pixel_distance / real_distance, 2)
+    save_data = {
+        "corners_in": None,
+        "corners_out": None,
+        "output_size": None,
+        "scaling": scaling,
+    }
 
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(save_data, f, sort_keys=False, indent=4)

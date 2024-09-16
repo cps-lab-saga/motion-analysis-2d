@@ -9,7 +9,11 @@ import cv2 as cv
 import numpy as np
 import qtawesome as qta
 from motion_analysis_2d.custom_components import BaseDock, PathEdit
-from motion_analysis_2d.funcs import load_extrinsic, save_perspective_points
+from motion_analysis_2d.funcs import (
+    load_extrinsic,
+    save_perspective_points,
+    save_only_scaling,
+)
 from qtpy import QtCore, QtWidgets
 
 
@@ -138,14 +142,29 @@ class LoadExtrinsicDock(BaseDock):
         else:
             self.add_perspective_finished.emit()
 
-    def save_points(self, img_points, obj_points, output_size_real):
+    def save_points(self, props):
         self.uncheck_select_points_button()
         path = QtWidgets.QFileDialog.getSaveFileName(
             self, "Save points", "perspective_points", "JSON (*.json)"
         )
         if path[1] == "JSON (*.json)":
             save_path = Path(path[0]).resolve()
-            save_perspective_points(img_points, obj_points, output_size_real, save_path)
+            if props["mode"] == "Perspective":
+                save_perspective_points(
+                    props["img_points"],
+                    props["obj_points"],
+                    props["output_size"],
+                    save_path,
+                )
+            elif props["mode"] == "Scaling":
+                save_only_scaling(
+                    props["img_points"],
+                    props["real_distance"],
+                    save_path,
+                )
+            else:
+                logger.critical("Invalid extrinsic data!")
+
             self.extrinsic_cal_file_edit.setText(str(save_path.resolve()))
 
     def uncheck_select_points_button(self):
