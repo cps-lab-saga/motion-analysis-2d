@@ -49,7 +49,6 @@ class LoadExtrinsicDock(BaseDock):
 
         self.dir_button = QtWidgets.QPushButton(self)
         self.dir_button.setText("…")
-        self.dir_button.setFlat(True)
         self.dir_button.setMaximumWidth(20)
         self.dir_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.dir_button.clicked.connect(self.set_dir)
@@ -67,7 +66,6 @@ class LoadExtrinsicDock(BaseDock):
         self.add_perspective_button = QtWidgets.QPushButton(self)
         # self.select_points_button.setText("Select Points")
         self.add_perspective_button.setToolTip("Select calibration points from frame.")
-        self.add_perspective_button.setFlat(True)
         self.add_perspective_button.setCheckable(True)
         self.add_perspective_button.setIcon(qta.icon("mdi6.cursor-default-click"))
         self.add_perspective_button.toggled.connect(self.add_perspective_button_toggled)

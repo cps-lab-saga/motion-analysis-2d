@@ -70,7 +70,6 @@ class EditControls(QtWidgets.QFrame):
         button.setToolTip(label)
         button.setIcon(icon)
         button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        button.setFlat(True)
         button.setCheckable(True)
         button.toggled.connect(partial(self.button_toggled, button, mode))
         self.main_layout.addWidget(button)

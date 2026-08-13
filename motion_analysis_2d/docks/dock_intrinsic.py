@@ -56,7 +56,6 @@ class LoadIntrinsicDock(BaseDock):
 
         self.dir_button = QtWidgets.QPushButton(self)
         self.dir_button.setText("…")
-        self.dir_button.setFlat(True)
         self.dir_button.setMaximumWidth(20)
         self.dir_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.dir_button.clicked.connect(self.set_dir)
@@ -74,7 +73,6 @@ class LoadIntrinsicDock(BaseDock):
         self.add_calibration_button = QtWidgets.QPushButton(self)
         # self.select_points_button.setText("Select Points")
         self.add_calibration_button.setToolTip("Add calibration.")
-        self.add_calibration_button.setFlat(True)
         self.add_calibration_button.setIcon(qta.icon("mdi6.checkerboard"))
         self.add_calibration_button.clicked.connect(self.start_calibration_widget)
         grid.addWidget(self.add_calibration_button, 0, 3)

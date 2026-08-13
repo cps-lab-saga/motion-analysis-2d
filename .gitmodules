@@ -1,3 +1,6 @@
 [submodule "hugo/themes/PaperMod"]
 	path = hugo/themes/PaperMod
 	url = https://github.com/adityatelange/hugo-PaperMod.git
+[submodule "deps/camera-calibration"]
+	path = deps/camera-calibration
+	url = https://github.com/cps-lab-saga/camera-calibration.git

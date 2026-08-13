@@ -3,7 +3,7 @@ from pathlib import Path
 from platformdirs import user_config_path, user_log_path
 
 project_name = "motion-analysis-2d"
-app_version = "0.1.8"
+app_version = "0.1.9"
 
 module_name = project_name.replace("-", "_")
 

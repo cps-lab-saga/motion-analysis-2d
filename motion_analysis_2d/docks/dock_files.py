@@ -28,7 +28,6 @@ class FilesDock(BaseDock):
         self.batch_button.setIcon(self.continue_icon)
         self.batch_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.batch_button.setCheckable(True)
-        self.batch_button.setFlat(True)
         self.batch_button.setText("Batch Processing")
         self.batch_button.setToolTip(
             "Automatically continue to next video in queue and start playing."
@@ -50,7 +49,6 @@ class FilesDock(BaseDock):
         self.sort_ascend_button.setIcon(qta.icon("mdi.sort-alphabetical-ascending"))
         self.sort_ascend_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.sort_ascend_button.setToolTip("Sort ascending.")
-        self.sort_ascend_button.setFlat(True)
         self.sort_ascend_button.clicked.connect(self.file_list_widget.sort_ascend)
         self.files_action_layout.addWidget(self.sort_ascend_button)
 
@@ -58,7 +56,6 @@ class FilesDock(BaseDock):
         self.sort_descend_button.setIcon(qta.icon("mdi.sort-alphabetical-descending"))
         self.sort_descend_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.sort_descend_button.setToolTip("Sort descending.")
-        self.sort_descend_button.setFlat(True)
         self.sort_descend_button.clicked.connect(self.file_list_widget.sort_descend)
         self.files_action_layout.addWidget(self.sort_descend_button)
 
@@ -68,7 +65,6 @@ class FilesDock(BaseDock):
         )
         self.remove_selection_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.remove_selection_button.setToolTip("Remove selection.")
-        self.remove_selection_button.setFlat(True)
         self.remove_selection_button.clicked.connect(
             self.file_list_widget.remove_selection
         )
@@ -80,7 +76,6 @@ class FilesDock(BaseDock):
         )
         self.remove_all_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.remove_all_button.setToolTip("Remove all.")
-        self.remove_all_button.setFlat(True)
         self.remove_all_button.clicked.connect(self.file_list_widget.remove_all)
         self.files_action_layout.addWidget(self.remove_all_button)
 

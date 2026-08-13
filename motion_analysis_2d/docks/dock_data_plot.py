@@ -233,7 +233,6 @@ class DataPlotDock(BaseDock):
 
     def make_button(self, text):
         button = QtWidgets.QPushButton(text, self)
-        button.setFlat(True)
         button.setCheckable(True)
         button.toggled.connect(self.switch_page)
         self.buttons.append(button)

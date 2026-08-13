@@ -36,7 +36,6 @@ class MediaControls(QtWidgets.QFrame):
         self.track_button.setIcon(self.tracking_not_icon)
         self.track_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.track_button.setCheckable(True)
-        self.track_button.setFlat(True)
         self.track_button.setToolTip("Activate tracking.")
         self.track_button.toggled.connect(self.track_button_toggled)
         self.main_layout.addWidget(self.track_button)
@@ -47,7 +46,6 @@ class MediaControls(QtWidgets.QFrame):
         self.pause_icon = qta.icon("mdi6.pause")
         self.play_button.setIcon(self.play_icon)
         self.play_button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        self.play_button.setFlat(True)
         self.play_button.setCheckable(True)
         self.play_button.toggled.connect(self.play_button_toggled)
         self.main_layout.addWidget(self.play_button)
@@ -65,7 +63,6 @@ class MediaControls(QtWidgets.QFrame):
         self.previous_button.setToolTip("Previous Frame")
         self.previous_button.setIcon(qta.icon("mdi6.step-backward"))
         self.previous_button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        self.previous_button.setFlat(True)
         self.previous_button.clicked.connect(self.previous_frame.emit)
         self.seek_bar.main_layout.insertWidget(1, self.previous_button)
 
@@ -73,7 +70,6 @@ class MediaControls(QtWidgets.QFrame):
         self.next_button.setToolTip("Next Frame")
         self.next_button.setIcon(qta.icon("mdi6.step-forward"))
         self.next_button.setIconSize(QtCore.QSize(icon_size, icon_size))
-        self.next_button.setFlat(True)
         self.next_button.clicked.connect(self.next_frame.emit)
         self.seek_bar.main_layout.insertWidget(2, self.next_button)
 

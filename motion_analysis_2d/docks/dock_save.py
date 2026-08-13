@@ -25,7 +25,6 @@ class SaveDock(BaseDock):
         self.autosave_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.autosave_button.setToolTip("Auto save data.")
         self.autosave_button.setCheckable(True)
-        self.autosave_button.setFlat(True)
         self.autosave_button.toggled.connect(self.autosave_button_toggled)
         self.gui_save_exceptions.append(self.autosave_button)
         row.addWidget(self.autosave_button)
@@ -35,7 +34,6 @@ class SaveDock(BaseDock):
         self.export_button.setText("Export")
         self.export_button.setIconSize(QtCore.QSize(icon_size, icon_size))
         self.export_button.setToolTip("Export data.")
-        self.export_button.setFlat(True)
         self.export_button.clicked.connect(self.export_button_clicked)
         row.addWidget(self.export_button)
 
